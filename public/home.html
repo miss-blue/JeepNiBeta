@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>JeepNi — Home</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>#map{height:70vh;border-radius:12px}</style>
+</head>
+<body>
+<nav class="navbar bg-light border-bottom">
+  <div class="container">
+    <a class="navbar-brand fw-semibold" href="index.html">JeepNi</a>
+    <div class="ms-auto">
+      <a href="login.html" class="btn btn-sm btn-outline-primary">Login</a>
+    </div>
+  </div>
+</nav>
+
+<main class="container my-3">
+  <div id="map"></div>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="module">
+import { db, ref, get } from "./js/authentication.js";
+
+const map=L.map("map").setView([16.043,120.333],13);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19}).addTo(map);
+
+const colors={gueset:"blue",boquig:"red",longos:"green",binloc:"yellow",tondaligan:"purple"};
+
+async function loadDrivers(){
+  const snap=await get(ref(db,"drivers_location"));
+  if(!snap.exists())return;
+  const d=snap.val();
+  for(const uid in d){
+    const drv=d[uid];
+    if(drv.lat && drv.lng){
+      const icon=L.divIcon({className:"",html:`<div style="color:${colors[drv.route]||"black"}">🚌</div>`});
+      L.marker([drv.lat,drv.lng],{icon}).addTo(map).bindPopup(`${drv.route||"Route"} driver`);
+    }
+  }
+}
+await loadDrivers();
+</script>
+</body>
+</html>

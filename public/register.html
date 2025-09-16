@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>JeepNi — Register</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: #AFDDFF; 
+      font-family: 'Nunito', sans-serif;
+    }
+    .card {
+      max-width: 520px;
+      margin: 8vh auto;
+      border-radius: 16px;
+      border: none;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+    .navbar {
+      background: #4ED7F1 !important;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .navbar-brand {
+      color: #fff !important;
+      font-weight: 800;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    }
+    .btn-primary {
+      background-color: #FFD63A;
+      border-color: #FFD63A;
+      color: #333;
+      font-weight: 600;
+    }
+    .btn-primary:hover {
+      background-color: #ffc800;
+      border-color: #ffc800;
+      color: #333;
+    }
+    .btn-outline-primary {
+      color: #FFD63A;
+      border-color: #FFD63A;
+    }
+    .btn-outline-primary:hover {
+      background-color: #FFD63A;
+      border-color: #FFD63A;
+      color: #333;
+    }
+    .form-control:focus {
+      border-color: #4ED7F1;
+      box-shadow: 0 0 0 0.25rem rgba(78, 215, 241, 0.25);
+    }
+    h3 {
+      color: #4ED7F1;
+      font-weight: 700;
+    }
+    #driverFields {
+      background-color: rgba(78, 215, 241, 0.1);
+      border-color: #4ED7F1 !important;
+    }
+  </style>
+  <style>
+    /* Soft Background 2 overlay */
+    body{ position: relative; }
+    body::before{ content:""; position: fixed; inset:0; background: url('icons/Background2.png') center bottom / cover no-repeat; opacity:.12; pointer-events:none; z-index:-1; }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg shadow-sm">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold" href="index.html">JeepNi</a>
+    <div class="ms-auto">
+      <a class="btn btn-outline-primary me-2" href="login.html">Login</a>
+      <a class="btn btn-primary" href="register.html">Register</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero jeep with banners -->
+<div class="mb-3" style="max-width:520px; width:100%; margin:6vh auto 0; position:relative">
+  <img src="icons/Background1.png" alt="" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:blur(6px); opacity:.25; border-radius:18px;">
+  <img src="icons/21 Jeepney Face.png" alt="Jeepney" style="position:relative; width:100%; height:auto; display:block; filter: drop-shadow(0 10px 22px rgba(0,0,0,.25));">
+  <a id="regPassenger" href="#" aria-label="Passenger" style="position:absolute; left:18%; top:18%; width:40%; display:block">
+    <img src="icons/17 Passenger Button.png" alt="Pasahero Para Po!" style="width:100%; height:auto;">
+  </a>
+  <a id="regDriver" href="#" aria-label="Driver" style="position:absolute; left:46%; top:28%; width:44%; display:block">
+    <img src="icons/18 Driver Button.png" alt="Manong Driver" style="width:100%; height:auto;">
+  </a>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body p-4">
+    <h3 id="regTitle" class="mb-4 text-center">Create account</h3>
+    <div id="alert"></div>
+
+    <form id="formReg" novalidate>
+      <div class="mb-3">
+        <label class="form-label">Full name</label>
+        <input id="name" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input id="email" type="email" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Password</label>
+        <input id="password" type="password" class="form-control" required>
+      </div>
+
+      <div class="form-check mb-2">
+        <input class="form-check-input" type="checkbox" id="isDriver">
+        <label class="form-check-label" for="isDriver">I'm a driver</label>
+      </div>
+
+      <div id="driverFields" class="border rounded p-3 mb-3 d-none">
+        <div class="mb-2">
+          <label class="form-label">Driver Code</label>
+          <input id="driverCode" class="form-control" placeholder="Enter driver code">
+        </div>
+        <div class="row g-2">
+          <div class="col-md-6">
+            <label class="form-label">Route</label>
+            <input id="driverRoute" class="form-control" placeholder="e.g., boquig">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Plate / Unit</label>
+            <input id="driverPlate" class="form-control" placeholder="e.g., ABC-1234">
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Phone (optional)</label>
+        <input id="phone" class="form-control">
+      </div>
+
+      <div class="d-grid">
+        <button class="btn btn-primary py-2 fw-bold" id="btnReg" type="submit">Create account</button>
+      </div>
+      <div class="text-center mt-3">
+        <a class="small" href="login.html">Already have an account? Sign in</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script type="module">
+import { auth, db, ref, set, get } from "./js/authentication.js";
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { runTransaction } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+
+const alertBox = document.getElementById("alert");
+const show = (m,t="warning") => alertBox.innerHTML =
+  `<div class="alert alert-${t} alert-dismissible fade show" role="alert">${m}<button class="btn-close" data-bs-dismiss="alert"></button></div>`;
+
+const isDriverEl = document.getElementById("isDriver");
+const driverFields = document.getElementById("driverFields");
+isDriverEl.addEventListener("change", () => {
+  driverFields.classList.toggle("d-none", !isDriverEl.checked);
+});
+
+// Initialize by role hint from query (?role=driver|passenger)
+const params = new URLSearchParams(location.search);
+const rolePref = (params.get('role')||'').toLowerCase();
+if(rolePref==='driver'){
+  isDriverEl.checked = true;
+  driverFields.classList.remove('d-none');
+  document.getElementById('regTitle').textContent = 'Register as Driver';
+} else if(rolePref==='passenger'){
+  isDriverEl.checked = false;
+  driverFields.classList.add('d-none');
+  document.getElementById('regTitle').textContent = 'Register as Passenger';
+}
+
+// Banner clicks toggle role seamlessly
+document.getElementById('regPassenger')?.addEventListener('click', (e)=>{
+  e.preventDefault(); isDriverEl.checked=false; driverFields.classList.add('d-none'); document.getElementById('regTitle').textContent='Register as Passenger'; history.replaceState(null,'','?role=passenger');
+});
+document.getElementById('regDriver')?.addEventListener('click', (e)=>{
+  e.preventDefault(); isDriverEl.checked=true; driverFields.classList.remove('d-none'); document.getElementById('regTitle').textContent='Register as Driver'; history.replaceState(null,'','?role=driver');
+});
+
+/**
+ * Validate a driver code.
+ * Simple approach: store codes in RTDB at driver_invite_codes/{CODE}:
+ * { is_active: true, uses_left: 10, expires_at: 4102444800000 }
+ */
+async function validateDriverCode(code) {
+  if (!code) return { ok:false, reason:"No code entered." };
+  const snap = await get(ref(db, `driver_invite_codes/${code}`));
+  if (!snap.exists()) return { ok:false, reason:"Invalid code." };
+  const c = snap.val();
+  if (c.is_active === false) return { ok:false, reason:"Code is disabled." };
+  if (c.expires_at && Date.now() > c.expires_at) return { ok:false, reason:"Code has expired." };
+  if (typeof c.uses_left === "number" && c.uses_left <= 0) return { ok:false, reason:"Code has no remaining uses." };
+  return { ok:true, meta:c };
+}
+
+/** Atomically decrement uses_left (optional but recommended) */
+async function claimDriverCode(code) {
+  const codeRef = ref(db, `driver_invite_codes/${code}/uses_left`);
+  await runTransaction(codeRef, current => {
+    if (current === null) return current;      // no uses_left field
+    if (current <= 0) return;                  // abort
+    return current - 1;
+  });
+}
+
+document.getElementById("formReg").addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  const name = document.getElementById("name").value.trim();
+  const email= document.getElementById("email").value.trim();
+  const pass = document.getElementById("password").value;
+  const phone= document.getElementById("phone").value.trim();
+
+  const wantsDriver = isDriverEl.checked;
+  const code  = document.getElementById("driverCode").value.trim();
+  const route = document.getElementById("driverRoute").value.trim();
+  const plate = document.getElementById("driverPlate").value.trim();
+
+  if (!name || !email || !pass) { show("Please complete name, email and password."); return; }
+  if (wantsDriver && !code) { show("Please enter a driver code.", "danger"); return; }
+
+  const btn = document.getElementById("btnReg"); btn.disabled = true; btn.textContent = "Creating…";
+  try {
+    // If they want driver, validate code first
+    let role = "passenger";
+    if (wantsDriver) {
+      const res = await validateDriverCode(code);
+      if (!res.ok) { show(res.reason, "danger"); btn.disabled=false; btn.textContent="Create account"; return; }
+      role = "driver";
+    }
+
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    await updateProfile(cred.user, { displayName: name });
+    try { await sendEmailVerification(cred.user); } catch (_) {}
+
+    const uid = cred.user.uid;
+    const base = { uid, name, email, phone, role, created_at:new Date().toISOString(), created_ts:Date.now() };
+
+    // Write main profile
+    await set(ref(db, `all_users/${uid}`), base);
+
+    if (role === "passenger") {
+      await set(ref(db, `passengers/${uid}`), base);
+    } else {
+      // role === "driver"
+      await set(ref(db, `drivers/${uid}`), { ...base, route, plate });
+      // Optional: decrement uses_left
+      if (code) {
+        try { await claimDriverCode(code); }
+        catch (e) { console.warn("claimDriverCode failed (non-fatal):", e); }
+      }
+    }
+
+    show(`Account created as ${role}. Please verify your email, then sign in.`, "success");
+    setTimeout(()=> location.href = "login.html", 1500);
+  } catch (err) {
+    show("Failed to register: " + err.message, "danger");
+  } finally {
+    btn.disabled = false; btn.textContent = "Create account";
+  }
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

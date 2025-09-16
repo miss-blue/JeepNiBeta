@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>JeepNi — Driver Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    body {
+      background: #AFDDFF;
+      font-family: 'Nunito', sans-serif;
+    }
+    .navbar {
+      background: #4ED7F1 !important;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .navbar-brand {
+      color: #fff !important;
+      font-weight: 700;
+    }
+    .card {
+      border-radius: 16px;
+      border: none;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    }
+    .btn-primary {
+      background-color: #FFD63A;
+      border-color: #FFD63A;
+      color: #333;
+      font-weight: 600;
+    }
+    .btn-primary:hover {
+      background-color: #ffc800;
+      border-color: #ffc800;
+      color: #333;
+    }
+    .btn-outline-primary {
+      color: #4ED7F1;
+      border-color: #4ED7F1;
+    }
+    .btn-outline-primary:hover {
+      background-color: #4ED7F1;
+      border-color: #4ED7F1;
+      color: white;
+    }
+    .btn-outline-secondary {
+      color: #6c757d;
+      border-color: #6c757d;
+    }
+    .btn-outline-secondary:hover {
+      background-color: #6c757d;
+      border-color: #6c757d;
+      color: white;
+    }
+    .btn-outline-danger {
+      color: #dc3545;
+      border-color: #dc3545;
+    }
+    .btn-outline-danger:hover {
+      background-color: #dc3545;
+      border-color: #dc3545;
+      color: white;
+    }
+    .btn-outline-success {
+      color: #28a745;
+      border-color: #28a745;
+    }
+    .btn-outline-success:hover {
+      background-color: #28a745;
+      border-color: #28a745;
+      color: white;
+    }
+    .card-title {
+      color: #4ED7F1;
+      font-weight: 700;
+    }
+    #map {
+      height: 400px;
+      width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .table th {
+      background-color: #4ED7F1;
+      color: white;
+    }
+  </style>
+  <style>
+    /* Light scenic background */
+    body{ position: relative; }
+    body::before{ content:""; position: fixed; inset:0; background: url('icons/Background2.png') center bottom / cover no-repeat; opacity:.12; pointer-events:none; z-index:-1; }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar border-bottom">
+  <div class="container">
+    <span class="navbar-brand fw-semibold">JeepNi — Driver Dashboard</span>
+    <div class="ms-auto d-flex align-items-center gap-2">
+      <span id="driverInfo" class="small text-muted">Checking session…</span>
+      <button id="btnLogout" class="btn btn-outline-danger btn-sm">Logout</button>
+    </div>
+  </div>
+</nav>
+
+<main class="container my-4">
+  <div id="alerts"></div>
+    <!-- NEW: Driver assignment -->
+  <div class="card shadow-sm mb-3">
+    <div class="card-body">
+      <h5 class="card-title d-flex align-items-center justify-content-between">
+        Today’s Assignment
+        <div class="d-flex gap-2">
+          <button id="btnAccept"   class="btn btn-sm btn-outline-primary">Accept</button>
+          <button id="btnEnroute"  class="btn btn-sm btn-outline-success">Start (En-route)</button>
+          <button id="btnComplete" class="btn btn-sm btn-outline-secondary">Complete</button>
+        </div>
+      </h5>
+      <div id="assignBox" class="small text-muted">Loading…</div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Profile</h5>
+          <div id="profileBox">Loading…</div>
+          <hr>
+          <button id="btnEdit" class="btn btn-outline-primary btn-sm">Edit Profile</button>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mt-3">
+        <div class="card-body">
+          <h5 class="card-title">Trip Logs</h5>
+          <button id="btnExportTrips" class="btn btn-sm btn-outline-secondary">Export My Trips</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card shadow-sm mt-3">
+            <div class="card-body">
+              <h5 class="card-title d-flex justify-content-between align-items-center">
+                Live Map
+                <div class="d-flex align-items-center gap-2">
+                  <span id="capBadge" class="badge bg-success">Available</span>
+                  <button id="btnToggleFull" class="btn btn-sm btn-outline-danger">Mark FULL</button>
+                </div>
+              </h5>
+              <div id="map"></div>
+            </div>
+          </div>
+        <div class="card-body">
+          <h5 class="card-title d-flex justify-content-between align-items-center mb-0">
+            My Recent Trips
+            <button id="btnReload" class="btn btn-sm btn-outline-secondary">Reload</button>
+          </h5>
+          <div class="table-responsive mt-3">
+            <table class="table table-striped table-hover table-sm">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Route</th>
+                  <th>Start</th>
+                  <th>End</th>
+                  <th>Duration</th>
+                </tr>
+              </thead>
+              <tbody id="tripRows">
+                <tr><td colspan="5" class="text-center text-muted py-4">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+<script type="module">
+  /* Imports */
+  import { requireLogin, signOutAndRedirect, auth, db, ref, get, update, onValue, serverTimestamp } from "./js/authentication.js";
+  import { query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+  import { startTrip } from "./js/create-trip.js";
+  import { updateLocation, endTrip } from "./js/trip-tracking.js";
+  import { myAssignments, setStatus } from "./js/scheduling.js";
+  // Use tracker helpers to begin/stop sharing tied to trips
+  import { beginSharing, stopSharing, isSharing } from "./js/map-tracker.js";
+
+  /* UI helpers */
+  const alertBox = document.getElementById("alerts");
+  function showAlert(msg, type = "warning") {
+    alertBox.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">
+      ${msg}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>`;
+  }
+
+  /* Auth */
+  const user = await requireLogin("login.html");
+  document.getElementById("driverInfo").textContent = user.email;
+
+  /* Profile */
+  async function loadProfile() {
+    const snap = await get(ref(db, `drivers/${user.uid}`));
+    if (!snap.exists()) { showAlert("Profile not found.", "danger"); return; }
+    const d = snap.val();
+    document.getElementById("profileBox").innerHTML = `
+      <div><strong>Name:</strong> ${d.name || ""}</div>
+      <div><strong>Email:</strong> ${d.email || ""}</div>
+      <div><strong>Route:</strong> ${d.route || ""}</div>
+      <div><strong>Plate:</strong> ${d.plate || ""}</div>
+    `;
+  }
+
+  /* Trips (query by driver_uid to satisfy your rules) */
+  async function fetchMyTrips() {
+    const q = query(ref(db, "trip_logs"), orderByChild("driver_uid"), equalTo(auth.currentUser.uid));
+    const snap = await get(q);
+    if (!snap.exists()) return [];
+    // trip_logs/<tripId> => { ...fields }
+    return Object.entries(snap.val() || {}).map(([id, t]) => ({ id, ...t }));
+  }
+
+  async function loadTrips() {
+    const tbody = document.getElementById("tripRows");
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Loading…</td></tr>`;
+
+    const trips = await fetchMyTrips();
+    if (trips.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No trips yet</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = trips.map(t => `
+      <tr>
+        <td>${t.date || ""}</td>
+        <td>${t.route || ""}</td>
+        <td>${t.start?.ts ? new Date(t.start.ts).toLocaleString() : ""}</td>
+        <td>${t.end?.ts ? new Date(t.end.ts).toLocaleString() : ""}</td>
+        <td>${t.duration || ""}</td>
+      </tr>
+    `).join("");
+  }
+
+  /* Export trips as CSV using same query */
+  async function exportTripsCsv() {
+    const trips = await fetchMyTrips();
+    if (trips.length === 0) { showAlert("No trips to export.", "info"); return; }
+    const rows = [["Date", "Route", "Start", "End", "Duration"]];
+    for (const t of trips) {
+      rows.push([
+        t.date || "",
+        t.route || "",
+        t.start?.ts ? new Date(t.start.ts).toISOString() : "",
+        t.end?.ts ? new Date(t.end.ts).toISOString() : "",
+        t.duration || ""
+      ]);
+    }
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "my_trips.csv"; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  /* Wire buttons */
+  document.getElementById("btnReload").addEventListener("click", loadTrips);
+  document.getElementById("btnEdit").addEventListener("click", () => location.href = "driver-edit.html");
+  document.getElementById("btnExportTrips").addEventListener("click", exportTripsCsv);
+  document.getElementById("btnLogout").addEventListener("click", () => signOutAndRedirect("login.html"));
+
+  await loadProfile();
+  try {
+    await loadTrips();
+  } catch (e) {
+    console.warn('loadTrips failed but continuing UI init:', e?.message || e);
+    // Keep the page functional even if trips are not readable
+    const tbody = document.getElementById('tripRows');
+    if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Trips unavailable.</td></tr>`;
+  }
+
+  /* Capacity FULL toggle (near map) */
+  const capBadge = document.getElementById('capBadge');
+  const btnToggleFull = document.getElementById('btnToggleFull');
+  let fullState = false;
+
+  function renderCapUI() {
+    if (fullState) {
+      capBadge.className = 'badge bg-danger';
+      capBadge.textContent = 'FULL';
+      btnToggleFull.className = 'btn btn-sm btn-danger';
+      btnToggleFull.textContent = 'Set Available';
+    } else {
+      capBadge.className = 'badge bg-success';
+      capBadge.textContent = 'Available';
+      btnToggleFull.className = 'btn btn-sm btn-outline-danger';
+      btnToggleFull.textContent = 'Mark FULL';
+    }
+  }
+
+  onValue(ref(db, `drivers_location/${user.uid}`), (snap) => {
+    const v = snap.exists() ? snap.val() : {};
+    fullState = !!v.full;
+    renderCapUI();
+    try { window.JeepNiTracker?.setMyFull(fullState); } catch {}
+  });
+
+  btnToggleFull.addEventListener('click', async () => {
+    try {
+      fullState = !fullState;
+      renderCapUI();
+      await update(ref(db, `drivers_location/${user.uid}`), { full: fullState, last_update: serverTimestamp() });
+      // Update my marker badge immediately if tracker is loaded
+      try { window.JeepNiTracker?.setMyFull(fullState); } catch {}
+      showAlert(fullState ? 'You are now marked FULL.' : 'You are now Available.', 'success');
+    } catch (e) {
+      showAlert('Failed to update capacity: ' + e.message, 'danger');
+    }
+  });
+
+  /* Dispatch (assignments) */
+  const assignBox = document.getElementById("assignBox");
+  let currentDispatch = null;
+
+  function fmtAssign(a) {
+    if (!a) return "No assignment yet.";
+    return `Time: <strong>${a.dep_time || ""}</strong> — Route: <strong>${a.route || ""}</strong> — Jeep: <strong>${a.jeep_id || ""}</strong> — Status: <strong>${a.status || ""}</strong>`;
+  }
+
+  async function loadMyAssignment() {
+    const today = new Date().toISOString().slice(0, 10);
+    const mine = await myAssignments(today);
+    currentDispatch = mine[0] || null; // pick earliest if multiple
+    assignBox.innerHTML = fmtAssign(currentDispatch);
+
+    const has = !!currentDispatch;
+    document.getElementById("btnAccept").disabled   = !has || currentDispatch.status !== "assigned";
+    document.getElementById("btnEnroute").disabled  = !has || !["assigned", "accepted"].includes(currentDispatch.status);
+    document.getElementById("btnComplete").disabled = !has || currentDispatch.status !== "enroute";
+  }
+
+  async function changeStatus(next) {
+    if (!currentDispatch) return;
+    await setStatus({ date: currentDispatch.date, dispatchId: currentDispatch.id, status: next });
+
+    try {
+      if (next === "enroute") {
+        // Start a trip if not already sharing
+        if (!isSharing()) {
+          await beginSharing();
+          showAlert("Trip started and location sharing active.", "success");
+        }
+      } else if (next === "completed") {
+        // End the current trip (if any)
+        await stopSharing({ completed: true });
+        showAlert("Trip completed.", "success");
+      }
+    } catch (err) {
+      console.error("Trip start/stop error:", err);
+      showAlert("Trip action failed: " + err.message, "danger");
+    }
+
+    await loadMyAssignment();
+    await loadTrips();
+  }
+
+  document.getElementById("btnAccept").addEventListener("click", () => changeStatus("accepted"));
+  document.getElementById("btnEnroute").addEventListener("click", () => changeStatus("enroute"));
+  document.getElementById("btnComplete").addEventListener("click", () => changeStatus("completed"));
+
+  await loadMyAssignment();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Ensure proper em dash in title/brand regardless of file encoding
+  (function(){
+    const em = String.fromCharCode(8212);
+    try {
+      document.title = `JeepNi ${em} Driver Dashboard`;
+      const brand = document.querySelector('.navbar .navbar-brand');
+      if (brand) brand.textContent = `JeepNi ${em} Driver Dashboard`;
+    } catch (_) {}
+  })();
+</script>
+</body>
+</html>
+

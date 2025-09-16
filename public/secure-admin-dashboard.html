@@ -1,0 +1,1809 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>JeepNi - Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Preconnects for faster CDN handshakes -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+  <link rel="dns-prefetch" href="https://unpkg.com">
+  <link rel="dns-prefetch" href="https://www.gstatic.com">
+  <!-- Fonts / Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- CSS / JS libs -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    :root{
+      --bg: #f6f7fb;
+      --card-bg: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --brand: #4ED7F1;
+      --accent: #FFD63A;
+      --danger: #dc3545;
+      --radius: 16px;
+      --shadow: 0 8px 24px rgba(0,0,0,.08);
+    }
+    .theme-dark{
+      --bg: #0f172a;
+      --card-bg: #111827;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --brand: #22d3ee;
+      --accent: #fbbf24;
+      --shadow: 0 12px 30px rgba(0,0,0,.5);
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    .navbar {
+      background: linear-gradient(90deg, var(--brand), #7ee9ff) !important;
+      box-shadow: var(--shadow);
+    }
+    .navbar-brand {
+      color: #fff !important;
+      font-weight: 700;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      border: 1px solid rgba(0,0,0,.04);
+      box-shadow: var(--shadow);
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .card:hover{ transform: translateY(-2px); box-shadow: 0 12px 28px rgba(0,0,0,.12); }
+    .btn-primary {
+      background-color: var(--accent);
+      border-color: var(--accent);
+      color: #111;
+      font-weight: 600;
+    }
+    .btn-primary:hover {
+      background-color: #ffc107;
+      border-color: #ffc107;
+      color: #111;
+    }
+    .btn-outline-primary {
+      color: var(--brand);
+      border-color: var(--brand);
+    }
+    .btn-outline-primary:hover {
+      background-color: var(--brand);
+      border-color: var(--brand);
+      color: #0b1220;
+    }
+    .btn-outline-secondary {
+      color: #6c757d;
+      border-color: #6c757d;
+    }
+    .btn-outline-secondary:hover {
+      background-color: #6c757d;
+      border-color: #6c757d;
+      color: white;
+    }
+    .btn-outline-danger {
+      color: #dc3545;
+      border-color: #dc3545;
+    }
+    .btn-outline-danger:hover {
+      background-color: #dc3545;
+      border-color: #dc3545;
+      color: white;
+    }
+    .card-title { color: var(--brand); font-weight: 700; }
+    #map {
+      height: 450px;
+      width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .table thead th { position: sticky; top: 0; z-index: 5; background: var(--card-bg); }
+    .table-hover tbody tr:hover{ background-color: rgba(78,215,241,.08); }
+    .badge.bg-success {
+      background-color: var(--accent) !important;
+      color: #111;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 0.25rem rgba(78, 215, 241, 0.25);
+    }
+    /* Subtle scenic background to avoid overpowering content */
+    body{ position: relative; }
+    body::before{
+      content:""; position: fixed; inset:0;
+      background: url('icons/Background2.png') center bottom / cover no-repeat;
+      opacity:.15; pointer-events:none; z-index:-1;
+    }
+    /* Skeleton shimmer */
+    .skeleton{ position: relative; overflow: hidden; background: linear-gradient(90deg, rgba(0,0,0,.05), rgba(0,0,0,.08), rgba(0,0,0,.05)); min-height: 12px; border-radius: 8px; }
+    .skeleton::after{ content:""; position:absolute; inset:0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent); animation: shimmer 1.15s infinite; }
+    @keyframes shimmer { 100% { transform: translateX(100%);} }
+    .kpi h3, .kpi h4{ margin: 0; }
+    .nav-tabs .nav-link { display:flex; align-items:center; gap:.5rem; }
+    .nav-tabs .nav-link .bi { opacity:.8; }
+    /* Tighten spacing below feature tabs and inside Data & Reports */
+    #adminFeatureTabs{ margin-bottom: .5rem !important; }
+    #tab-data .card{ margin-top: 0 !important; }
+    #tab-data .card-body{ padding-top: .75rem; }
+  </style>
+  <style>
+    #map{height:450px;width:100%;border-radius:12px}
+  </style>
+  <link rel="icon" href="/icons/JEEPNi.png" type="image/png">
+</head>
+<body>
+<nav class="navbar bg-light border-bottom">
+  <div class="container">
+    <span class="navbar-brand fw-semibold d-flex align-items-center gap-2">
+      <i class="bi bi-speedometer2"></i> JeepNi - Admin Dashboard
+    </span>
+    <div class="ms-auto d-flex align-items-center gap-2">
+      <button id="btnTheme" class="btn btn-outline-primary btn-sm" data-bs-toggle="tooltip" title="Toggle theme">
+        <i class="bi bi-moon-stars"></i>
+      </button>
+      <span id="adminInfo" class="small text-light opacity-75">Checking session...</span>
+      <button id="btnLogout" class="btn btn-outline-danger btn-sm">Logout</button>
+    </div>
+  </div>
+</nav>
+
+<main class="container my-4">
+  <div id="alerts"></div>
+
+  <!-- Top-level feature tabs -->
+  <ul class="nav nav-tabs mb-3" id="adminFeatureTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="tab-dashboard-tab" data-bs-toggle="tab" data-bs-target="#tab-dashboard" type="button" role="tab" aria-controls="tab-dashboard" aria-selected="true">
+        <i class="bi bi-grid-1x2"></i> Dashboard
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="tab-scheduling-tab" data-bs-toggle="tab" data-bs-target="#tab-scheduling" type="button" role="tab" aria-controls="tab-scheduling" aria-selected="false">
+        <i class="bi bi-truck"></i> Scheduling
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="tab-monitoring-tab" data-bs-toggle="tab" data-bs-target="#tab-monitoring" type="button" role="tab" aria-controls="tab-monitoring" aria-selected="false">
+        <i class="bi bi-geo-alt"></i> Monitoring
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="tab-data-tab" data-bs-toggle="tab" data-bs-target="#tab-data" type="button" role="tab" aria-controls="tab-data" aria-selected="false">
+        <i class="bi bi-table"></i> Data & Reports
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+  <!-- ===== Pane: Dashboard ===== -->
+  <div class="tab-pane fade show active" id="tab-dashboard" role="tabpanel" aria-labelledby="tab-dashboard-tab" tabindex="0">
+  <!-- Row: Driver Codes -->
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body text-center">
+          <h5 class="card-title">Driver Codes</h5>
+          <p class="card-text">Create and manage invite codes for new driver registrations.</p>
+          <a href="manage-driver-codes.html" class="btn btn-primary">Manage Codes</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row: Quick Actions / Counters (kept on Dashboard) -->
+  <div class="row g-3 mt-1">
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title d-flex align-items-center gap-2"><i class="bi bi-lightning-charge"></i> Quick Actions</h5>
+          <div class="d-grid gap-2">
+            <a class="btn btn-primary" href="add-driver.html">Add Driver</a>
+            <a class="btn btn-primary" href="add-passenger.html">Add Passenger</a>
+            <button id="btnAddAdmin" class="btn btn-warning">Add Admin</button>
+            <button id="btnExportDrivers" class="btn btn-outline-secondary">Export Drivers (CSV)</button>
+            <button id="btnExportPassengers" class="btn btn-outline-secondary">Export Passengers (CSV)</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mt-3">
+        <div class="card-body">
+          <h6 class="card-title mb-2">Live Counters</h6>
+          <div class="row text-center kpi g-2">
+            <div class="col-4">
+              <div class="p-2 rounded-3" style="background:rgba(78,215,241,.12)">
+                <div class="small text-muted">Drivers</div>
+                <h3 id="countDrivers">-</h3>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="p-2 rounded-3" style="background:rgba(255,214,58,.18)">
+                <div class="small text-muted">Passengers</div>
+                <h3 id="countPassengers">-</h3>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="p-2 rounded-3" style="background:rgba(13,110,253,.12)">
+                <div class="small text-muted">Online</div>
+                <h3 id="countOnline">-</h3>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /tab-dashboard -->
+
+  <!-- ===== Pane: Scheduling ===== -->
+  <div class="tab-pane fade" id="tab-scheduling" role="tabpanel" aria-labelledby="tab-scheduling-tab" tabindex="0">
+  <!-- Row: Create Dispatch + Today's Dispatches -->
+  <div class="row g-3 mt-1">
+    <!-- Create Dispatch -->
+    <div class="col-md-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title d-flex align-items-center gap-2"><i class="bi bi-truck"></i> Create Dispatch</h5>
+          <form id="formDispatch" class="small">
+            <div class="mb-2">
+              <label class="form-label">Date</label>
+              <input id="schDate" type="date" class="form-control form-control-sm">
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Departure Time</label>
+              <input id="schTime" type="time" class="form-control form-control-sm" required>
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Route</label>
+              <select id="schRoute" class="form-select form-select-sm" required>
+                <option value="gueset">Gueset</option>
+                <option value="boquig">Boquig</option>
+                <option value="longos">Longos</option>
+                <option value="binloc">Binloc</option>
+                <option value="tondaligan">Tondaligan</option>
+              </select>
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Jeep / Plate</label>
+              <input id="schJeep" class="form-control form-control-sm" placeholder="e.g., ABC-1234">
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Assign Driver</label>
+              <select id="schDriver" class="form-select form-select-sm">
+                <option value="">(Unassigned)</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Notes (optional)</label>
+              <input id="schNotes" class="form-control form-control-sm">
+            </div>
+            <div class="d-grid">
+              <button class="btn btn-primary btn-sm" type="submit">Create</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today's Dispatches -->
+    <div class="col-md-8">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title d-flex align-items-center justify-content-between">
+            Today's Dispatches
+            <div class="d-flex gap-2 align-items-center">
+              <input id="listDate" type="date" class="form-control form-control-sm" style="width:auto">
+              <button id="btnReloadSch" class="btn btn-outline-secondary btn-sm">Reload</button>
+            </div>
+          </h5>
+          <div class="table-responsive mt-2">
+            <table class="table table-striped table-hover table-sm align-middle">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Route</th>
+                  <th>Jeep</th>
+                  <th>Driver</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="schRows">
+                <tr><td colspan="6" class="text-center text-muted py-3">
+                  <div class="d-flex align-items-center justify-content-center gap-2">
+                    <div class="spinner-border spinner-border-sm text-info" role="status"></div>
+                    Loading schedule...
+                  </div>
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+  </div><!-- /tab-scheduling -->
+
+  <!-- ===== Pane: Monitoring ===== -->
+  <div class="tab-pane fade" id="tab-monitoring" role="tabpanel" aria-labelledby="tab-monitoring-tab" tabindex="0">
+    <div class="row g-3 mt-1">
+      <div class="col-12">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">Live Map</h5>
+            <div id="map"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /tab-monitoring -->
+
+  <!-- ===== Pane: Data & Reports ===== -->
+  <div class="tab-pane fade" id="tab-data" role="tabpanel" aria-labelledby="tab-data-tab" tabindex="0">
+    <div class="row g-3 mt-0">
+      <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <!-- Side tabs layout -->
+          <div class="row">
+            <div class="col-md-3 border-end">
+              <div class="nav flex-column nav-pills" id="dataSideTabs" role="tablist" aria-orientation="vertical">
+                <button class="nav-link active text-start" id="drivers-tab" data-bs-toggle="tab" data-bs-target="#drivers" type="button" role="tab" aria-controls="drivers" aria-selected="true">
+                  <i class="bi bi-people"></i> Drivers Online
+                </button>
+                <button class="nav-link text-start" id="passengers-tab" data-bs-toggle="tab" data-bs-target="#passengers" type="button" role="tab" aria-controls="passengers" aria-selected="false">
+                  <i class="bi bi-person-badge"></i> All Passengers
+                </button>
+                <button class="nav-link text-start" id="predictions-tab" data-bs-toggle="tab" data-bs-target="#predictions" type="button" role="tab" aria-controls="predictions" aria-selected="false">
+                  <i class="bi bi-graph-up"></i> Peak Hours
+                </button>
+                <button class="nav-link text-start" id="trips-tab" data-bs-toggle="tab" data-bs-target="#trips" type="button" role="tab" aria-controls="trips" aria-selected="false">
+                  <i class="bi bi-geo-alt"></i> Trip Monitoring
+                </button>
+                <button class="nav-link text-start" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab" aria-controls="history" aria-selected="false">
+                  <i class="bi bi-clock-history"></i> Dispatch History
+                </button>
+                <div class="mt-3">
+                  <button id="btnReloadDrivers" class="btn btn-sm btn-outline-secondary w-100 mb-2" data-bs-toggle="tooltip" title="Reload drivers"><i class="bi bi-arrow-clockwise"></i> Reload Drivers</button>
+                  <button id="btnReloadPassengers" class="btn btn-sm btn-outline-secondary w-100 mb-2" data-bs-toggle="tooltip" title="Reload passengers"><i class="bi bi-arrow-clockwise"></i> Reload Passengers</button>
+                  <button id="btnReloadPredictions" class="btn btn-sm btn-outline-secondary w-100" data-bs-toggle="tooltip" title="Reload predictions"><i class="bi bi-arrow-clockwise"></i> Reload Predictions</button>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-9">
+              <!-- Tab content -->
+              <div class="tab-content" id="myTabContent">
+            <!-- Drivers Tab -->
+            <div class="tab-pane fade show active" id="drivers" role="tabpanel" aria-labelledby="drivers-tab">
+              <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="input-group input-group-sm" style="max-width:280px">
+                  <span class="input-group-text bg-transparent"><i class="bi bi-search"></i></span>
+                  <input id="searchDrivers" class="form-control" placeholder="Search drivers...">
+                </div>
+              </div>
+              <div class="table-responsive mt-2">
+                <table class="table table-striped table-hover table-sm align-middle">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Route</th>
+                      <th>Status</th>
+                      <th>Last Update</th>
+                    </tr>
+                  </thead>
+                  <tbody id="rowsDrivers">
+                    <tr><td colspan="4" class="text-center text-muted py-4">
+                      <div class="d-flex align-items-center justify-content-center gap-2">
+                        <div class="spinner-border spinner-border-sm text-info" role="status"></div>
+                        Loading drivers...
+                      </div>
+                    </td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Passengers Tab -->
+            <div class="tab-pane fade" id="passengers" role="tabpanel" aria-labelledby="passengers-tab">
+              <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="input-group input-group-sm" style="max-width:280px">
+                  <span class="input-group-text bg-transparent"><i class="bi bi-search"></i></span>
+                  <input id="searchPassengers" class="form-control" placeholder="Search passengers...">
+                </div>
+              </div>
+              <div class="table-responsive mt-2">
+                <table class="table table-striped table-hover table-sm align-middle">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Phone</th>
+                      <th>Joined</th>
+                    </tr>
+                  </thead>
+                  <tbody id="rowsPassengers">
+                    <tr><td colspan="4" class="text-center text-muted py-4">
+                      <div class="d-flex align-items-center justify-content-center gap-2">
+                        <div class="spinner-border spinner-border-sm text-info" role="status"></div>
+                        Loading passengers...
+                      </div>
+                    </td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Predictions Tab -->
+            <div class="tab-pane fade" id="predictions" role="tabpanel" aria-labelledby="predictions-tab">
+              <div class="row mt-3">
+                <!-- Controls -->
+                <div class="col-12 mb-3">
+                  <div class="d-flex gap-2 align-items-center">
+                    <label class="form-label mb-0">Date:</label>
+                    <input id="predictionDate" type="date" class="form-control form-control-sm" style="width: auto;">
+                    <button id="btnGeneratePredictions" class="btn btn-primary btn-sm">Generate</button>
+                    <button id="btnSendPredictions" class="btn btn-success btn-sm">Send to Drivers</button>
+                    <div class="ms-auto">
+                      <span class="badge bg-info" id="predictionStatus">No predictions</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="col-md-3">
+                  <div class="card bg-primary">
+                    <div class="card-body">
+                      <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                          <h6 class="card-title text-white">Today's Predictions</h6>
+                          <h3 class="text-white mb-0" id="ph_count">0</h3>
+                        </div>
+                        <i class="bi bi-graph-up text-white" style="font-size:1.6rem; opacity:.7"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="card bg-success">
+                    <div class="card-body">
+                      <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                          <h6 class="card-title text-white">Registered Users</h6>
+                          <h3 class="text-white mb-0" id="ph_users">-</h3>
+                        </div>
+                        <i class="bi bi-people text-white" style="font-size:1.6rem; opacity:.7"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="card bg-info">
+                    <div class="card-body">
+                      <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                          <h6 class="card-title text-white">Messages Sent</h6>
+                          <h3 class="text-white mb-0" id="ph_sent">0</h3>
+                        </div>
+                        <i class="bi bi-send text-white" style="font-size:1.6rem; opacity:.7"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="card bg-warning">
+                    <div class="card-body">
+                      <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                          <h6 class="card-title text-white">Total Stops</h6>
+                          <h3 class="text-white mb-0" id="ph_stops">-</h3>
+                        </div>
+                        <i class="bi bi-geo-alt text-white" style="font-size:1.6rem; opacity:.7"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Preview Cards -->
+                <div class="col-12 mt-3">
+                  <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                      <h6 class="mb-0"><i class="bi bi-eye me-2"></i>Today's Peak Hours Preview</h6>
+                      <div>
+                        <span class="badge bg-primary me-2" id="ph_date_badge">-</span>
+                        <button class="btn btn-success btn-sm" id="btnSendAllPH"><i class="bi bi-send me-1"></i>Send All</button>
+                      </div>
+                    </div>
+                    <div class="card-body">
+                      <div id="predictionsCards" class="row g-3">
+                        <div class="text-center text-muted py-3">No predictions available</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div><!-- /row -->
+            </div><!-- /tab-pane predictions -->
+
+            <!-- Trip Monitoring Tab (Viewer) -->
+            <div class="tab-pane fade" id="trips" role="tabpanel" aria-labelledby="trips-tab">
+              <div class="row g-2 mt-3">
+                <div class="col-md-3">
+                  <label class="form-label">Date</label>
+                  <input id="tripDate" type="date" class="form-control form-control-sm">
+                </div>
+                <div class="col-md-5">
+                  <label class="form-label">Driver</label>
+                  <select id="tripDriver" class="form-select form-select-sm">
+                    <option value="">Select a driver…</option>
+                  </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end gap-2">
+                  <button id="btnLoadTrips" class="btn btn-outline-secondary btn-sm">Load Trips</button>
+                  <button id="btnExportTripCSV" class="btn btn-outline-primary btn-sm" disabled>Export CSV</button>
+                  <button id="btnExportTripAll" class="btn btn-outline-success btn-sm" disabled>Export All</button>
+                </div>
+              </div>
+
+              <div class="table-responsive mt-3">
+                <table class="table table-striped table-hover table-sm align-middle">
+                  <thead>
+                    <tr>
+                      <th>Trip ID</th>
+                      <th>Start</th>
+                      <th>End</th>
+                      <th>Duration</th>
+                      <th>Samples</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tripRows">
+                    <tr><td colspan="5" class="text-center text-muted py-3">No trips loaded.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div><!-- /tab-pane trips -->
+
+            <!-- Dispatch History Tab -->
+            <div class="tab-pane fade" id="history" role="tabpanel" aria-labelledby="history-tab">
+              <div class="row g-2 mt-3 align-items-end">
+                <div class="col-sm-4">
+                  <label class="form-label">Start Date</label>
+                  <input id="histStart" type="date" class="form-control form-control-sm">
+                </div>
+                <div class="col-sm-4">
+                  <label class="form-label">End Date</label>
+                  <input id="histEnd" type="date" class="form-control form-control-sm">
+                </div>
+                <div class="col-sm-4 d-flex gap-2">
+                  <div class="flex-grow-1">
+                    <label class="form-label">Sort</label>
+                    <select id="histSort" class="form-select form-select-sm">
+                      <option value="desc">Newest first</option>
+                      <option value="asc">Oldest first</option>
+                    </select>
+                  </div>
+                  <div class="d-flex align-items-end gap-2">
+                    <button id="btnLoadHistory" class="btn btn-outline-secondary btn-sm">Load</button>
+                    <button id="btnExportHistory" class="btn btn-outline-primary btn-sm" disabled>Export CSV</button>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="btn-group btn-group-sm" role="group" aria-label="Quick ranges">
+                    <button type="button" class="btn btn-outline-secondary" data-range="today">Today</button>
+                    <button type="button" class="btn btn-outline-secondary" data-range="7">Last 7 days</button>
+                    <button type="button" class="btn btn-outline-secondary" data-range="30">Last 30 days</button>
+                    <button type="button" class="btn btn-outline-secondary" data-range="month">This month</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="table-responsive mt-3">
+                <table class="table table-striped table-hover table-sm align-middle">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Time</th>
+                      <th>Route</th>
+                      <th>Jeep</th>
+                      <th>Driver</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="historyRows">
+                    <tr><td colspan="6" class="text-center text-muted py-3">Choose a range and click Load</td></tr>
+                  </tbody>
+                </table>
+                <div class="small text-muted mt-1" id="histSummary"></div>
+              </div>
+            </div><!-- /tab-pane history -->
+
+          </div><!-- /tab-content -->
+            </div><!-- /col-md-9 -->
+          </div><!-- /row (side tabs + content) -->
+        </div>
+      </div>
+    </div>
+  </div><!-- /tab-data -->
+
+  </div><!-- /tab-content (feature tabs) -->
+  </div>
+</main>
+
+<!-- Add Admin Modal -->
+<div class="modal fade" id="modalAddAdmin" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-person-gear me-2"></i>Add Admin</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info small">
+          Only <strong>super_admin</strong> can promote users to admin.
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Identifier Type</label>
+          <select id="adminIdType" class="form-select form-select-sm">
+            <option value="email" selected>Email</option>
+            <option value="uid">UID</option>
+          </select>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Email or UID</label>
+          <input id="adminIdentifier" class="form-control" placeholder="user@example.com or Firebase UID">
+        </div>
+        <div class="form-text">User must already exist in <code>all_users</code>.</div>
+        <div class="text-danger small mt-2 d-none" id="addAdminError"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="btnConfirmAddAdmin">Promote to Admin</button>
+      </div>
+    </div>
+  </div>
+ </div>
+
+<script type="module">
+  import { db, ref, get, onValue, signOutAndRedirect, query, orderByChild, equalTo } from "./js/authentication.js";
+  import { requireAdmin, attachAdminBadge } from "./js/admin_auth.js";
+  import { createDispatch, listDispatches, adminSetStatus } from "./js/scheduling.js";
+
+  const $ = (sel) => document.querySelector(sel);
+  // Sanitize any mojibake or bad bytes to ASCII
+  function cleanText(s) {
+    if (s == null) return "";
+    return String(s)
+      .replace(/â€”/g, ' - ')
+      .replace(/[�\uFFFD]+/g, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+  }
+  function showAlert(html, type="warning") {
+    $("#alerts").innerHTML =
+      `<div class="alert alert-${type} alert-dismissible fade show" role="alert">
+        ${html}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>`;
+  }
+
+  attachAdminBadge("#adminInfo");
+  $("#btnLogout").addEventListener("click", async ()=>{ await signOutAndRedirect("login.html"); });
+  await requireAdmin("login.html");
+  // Theme: apply saved preference
+  try {
+    const saved = localStorage.getItem('theme') || 'light';
+    if (saved === 'dark') document.body.classList.add('theme-dark');
+  } catch {}
+  const btnTheme = document.getElementById('btnTheme');
+  if (btnTheme) btnTheme.addEventListener('click', () => {
+    const dark = document.body.classList.toggle('theme-dark');
+    try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch {}
+    const ico = btnTheme.querySelector('i');
+    if (ico) ico.className = dark ? 'bi bi-brightness-high' : 'bi bi-moon-stars';
+  });
+  // Enable tooltips
+  try {
+    const els = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    els.forEach(el => new bootstrap.Tooltip(el));
+  } catch {}
+
+  // ===== Add Admin (super_admin only) =====
+  async function openAddAdminModal() {
+    try {
+      // Resolve current user's role via all_users
+      const uid = (window?.firebaseAuth?.currentUser?.uid) || (await (await import('./js/authentication.js')).auth.currentUser?.uid);
+    } catch {}
+    const modalEl = document.getElementById('modalAddAdmin');
+    const modal = new bootstrap.Modal(modalEl);
+    document.getElementById('addAdminError')?.classList.add('d-none');
+    document.getElementById('adminIdentifier').value = '';
+    document.getElementById('adminIdType').value = 'email';
+    modal.show();
+  }
+
+  async function promoteToAdmin() {
+    const errEl = document.getElementById('addAdminError');
+    const idType = document.getElementById('adminIdType').value;
+    const ident = (document.getElementById('adminIdentifier').value || '').trim();
+    errEl?.classList.add('d-none');
+    if (!ident) { errEl.textContent = 'Please enter an email or UID.'; errEl.classList.remove('d-none'); return; }
+
+    try {
+      // Ensure current user is super_admin
+      const { auth, getRole } = await import('./js/authentication.js');
+      const me = auth.currentUser;
+      if (!me) throw new Error('Not signed in');
+      const roleSnap = await get(ref(db, `all_users/${me.uid}/role`));
+      const myRole = roleSnap.exists() ? roleSnap.val() : 'norole';
+      if (myRole !== 'super_admin') throw new Error('Only super_admin can add admins.');
+
+      // Resolve target UID
+      let targetUid = null;
+      if (idType === 'uid') {
+        targetUid = ident;
+      } else {
+        const allSnap = await get(ref(db, 'all_users'));
+        if (!allSnap.exists()) throw new Error('all_users is empty.');
+        const all = allSnap.val();
+        const lower = ident.toLowerCase();
+        for (const uid in all) {
+          const email = (all[uid]?.email || '').toLowerCase();
+          if (email === lower) { targetUid = uid; break; }
+        }
+        if (!targetUid) throw new Error('No user with that email found in all_users.');
+      }
+
+      // Update role to admin
+      await (await import('./js/authentication.js')).update(ref(db, `all_users/${targetUid}`), { role: 'admin' });
+
+      showAlert('User promoted to admin successfully.', 'success');
+      bootstrap.Modal.getInstance(document.getElementById('modalAddAdmin'))?.hide();
+    } catch (e) {
+      console.error('promoteToAdmin failed', e);
+      if (errEl) { errEl.textContent = e.message || 'Failed'; errEl.classList.remove('d-none'); }
+    }
+  }
+
+  const btnAddAdmin = document.getElementById('btnAddAdmin');
+  if (btnAddAdmin) btnAddAdmin.addEventListener('click', openAddAdminModal);
+  const btnConfirmAddAdmin = document.getElementById('btnConfirmAddAdmin');
+  if (btnConfirmAddAdmin) btnConfirmAddAdmin.addEventListener('click', promoteToAdmin);
+
+  // Normalize any mojibake placeholders to plain ASCII right away
+  const setLoading = (sel, cols) => {
+    const el = document.querySelector(sel);
+    if (el) el.innerHTML = `<tr><td colspan="${cols}" class="text-center text-muted py-3">
+      <div class="d-flex align-items-center justify-content-center gap-2">
+        <div class="spinner-border spinner-border-sm text-info" role="status"></div>
+        Loading...
+      </div>
+    </td></tr>`;
+  };
+  setLoading('#schRows', 6);
+  setLoading('#rowsDrivers', 4);
+  setLoading('#rowsPassengers', 4);
+  setLoading('#predictionRows', 6);
+
+  // Define sanitizeDocument to avoid mojibake artifacts and errors
+  function sanitizeDocument() {
+    const nodes = document.querySelectorAll('option, td, th, span, button, label, h1, h2, h3, h4, h5, h6');
+    nodes.forEach(el => {
+      const t = el.textContent || '';
+      if (t.indexOf('â€”') !== -1) el.textContent = t.replace(/â€”/g, ' - ');
+    });
+  }
+
+  const ONLINE_WINDOW_MS = 150000; // 2.5 minutes recency window
+
+  // Presence helpers
+  function computeOnline(rec) {
+    if (!rec) return false;
+    const last = typeof rec.last_update === 'number' ? rec.last_update : (rec.last_update?._serverTimestamp || 0);
+    return !!rec.online && (Date.now() - last) < ONLINE_WINDOW_MS;
+  }
+
+  // Counters
+  async function count(path) {
+    const snap = await get(ref(db, path));
+    return snap.exists() ? Object.keys(snap.val()).length : 0;
+  }
+
+  async function loadCounters() {
+    $("#countDrivers").textContent = await count("drivers");
+    $("#countPassengers").textContent = await count("passengers");
+
+    // Count only actual online drivers from drivers_location that exist in drivers collection
+    const [driversSnap, locSnap] = await Promise.all([
+      get(ref(db, "drivers")),
+      get(ref(db, "drivers_location"))
+    ]);
+    
+    const drivers = driversSnap.exists() ? driversSnap.val() : {};
+    const locs = locSnap.exists() ? locSnap.val() : {};
+    
+    let online = 0;
+    for (const uid in locs) {
+      if (drivers[uid] && computeOnline(locs[uid])) online++;
+    }
+    $("#countOnline").textContent = online;
+  }
+
+  function fmtTs(ts) {
+    if (!ts) return "";
+    const d = new Date(typeof ts === "number" ? ts : ts._serverTimestamp || 0);
+    return d.toLocaleString();
+  }
+
+  // Load ONLY real drivers with proper name resolution
+  async function loadDriversTable() {
+    const tbody = $("#rowsDrivers");
+  tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4"><div class="d-flex align-items-center justify-content-center gap-2"><div class="spinner-border spinner-border-sm text-info" role="status"></div> Loading drivers...</div></td></tr>`;
+
+    try {
+      const [driversSnap, locSnap] = await Promise.all([
+        get(ref(db, "drivers")),
+        get(ref(db, "drivers_location"))
+      ]);
+
+      const drivers = driversSnap.exists() ? driversSnap.val() : {};
+      const locs = locSnap.exists() ? locSnap.val() : {};
+
+      // Only process UIDs that exist in the drivers collection
+      const validDrivers = Object.keys(drivers).map(uid => {
+        const driverData = drivers[uid];
+        const locationData = locs[uid] || {};
+        
+        return {
+          uid: uid,
+          name: driverData.name || driverData.email || `Driver ${uid.slice(0, 8)}`,
+          route: locationData.route || driverData.route || "No route",
+          online: computeOnline(locationData),
+          lastUpdate: locationData.last_update || null
+        };
+      });
+
+      if (validDrivers.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">No drivers found.</td></tr>`;
+        return;
+      }
+
+      // Sort: online first, then by name
+      validDrivers.sort((a, b) => {
+        if (a.online !== b.online) return b.online - a.online;
+        return a.name.localeCompare(b.name);
+      });
+
+      tbody.innerHTML = validDrivers.map(driver => `
+        <tr>
+          <td>
+            <strong>${driver.name}</strong>
+            <br><small class="text-muted">UID: ${driver.uid.slice(0, 8)}...</small>
+          </td>
+          <td><span class="badge bg-info">${driver.route}</span></td>
+          <td>
+            <span class="badge ${driver.online ? "bg-success" : "bg-secondary"}">
+              ${driver.online ? "Online" : "Offline"}
+            </span>
+          </td>
+          <td>${fmtTs(driver.lastUpdate)}</td>
+        </tr>
+      `).join("");
+
+    } catch (error) {
+      console.error("Error loading drivers:", error);
+      tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger py-4">Error: ${error.message}</td></tr>`;
+    }
+  }
+
+  // Load passengers table
+  async function loadPassengersTable() {
+    const tbody = $("#rowsPassengers");
+  tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4"><div class="d-flex align-items-center justify-content-center gap-2"><div class="spinner-border spinner-border-sm text-info" role="status"></div> Loading passengers...</div></td></tr>`;
+
+    try {
+      const snap = await get(ref(db, "passengers"));
+      
+      if (!snap.exists()) {
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">No passengers found.</td></tr>`;
+        return;
+      }
+
+      const passengers = snap.val();
+      const passengerList = Object.keys(passengers).map(uid => ({
+        uid: uid,
+        ...passengers[uid]
+      }));
+
+      // Sort by name
+      passengerList.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+
+      tbody.innerHTML = passengerList.map(passenger => `
+        <tr>
+          <td>
+            <strong>${passenger.name || 'No name'}</strong>
+            <br><small class="text-muted">UID: ${passenger.uid.slice(0, 8)}...</small>
+          </td>
+          <td>${passenger.email || 'No email'}</td>
+          <td>${passenger.phone || 'No phone'}</td>
+          <td>${passenger.created_at ? new Date(passenger.created_at).toLocaleDateString() : 'Unknown'}</td>
+        </tr>
+      `).join("");
+
+    } catch (error) {
+      console.error("Error loading passengers:", error);
+      tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger py-4">Error: ${error.message}</td></tr>`;
+    }
+  }
+
+  // Export functions
+  async function exportDrivers() {
+    try {
+      const snap = await get(ref(db, "drivers"));
+      if (!snap.exists()) {
+        showAlert("No drivers to export.", "info");
+        return;
+      }
+
+      const drivers = snap.val();
+      const headers = ["Name", "Email", "Route", "Plate", "Phone", "Created Date", "UID"];
+      const csvRows = [headers.join(",")];
+
+      Object.keys(drivers).forEach(uid => {
+        const driver = drivers[uid];
+        const row = [
+          driver.name || "",
+          driver.email || "",
+          driver.route || "",
+          driver.plate || "",
+          driver.phone || "",
+          driver.created_at || "",
+          uid
+        ].map(field => {
+          const s = String(field ?? "");
+          const guard = (/^[=+\-@]/.test(s)) ? "'" : "";
+          return `"${(guard + s).replace(/"/g, '""')}"`;
+        });
+        csvRows.push(row.join(","));
+      });
+
+      downloadCSV(csvRows.join("\n"), "drivers_export.csv");
+    } catch (error) {
+      showAlert("Export failed: " + error.message, "danger");
+    }
+  }
+
+  async function exportPassengers() {
+    try {
+      const snap = await get(ref(db, "passengers"));
+      if (!snap.exists()) {
+        showAlert("No passengers to export.", "info");
+        return;
+      }
+
+      const passengers = snap.val();
+      const headers = ["Name", "Email", "Phone", "Created Date", "UID"];
+      const csvRows = [headers.join(",")];
+
+      Object.keys(passengers).forEach(uid => {
+        const passenger = passengers[uid];
+        const row = [
+          passenger.name || "",
+          passenger.email || "",
+          passenger.phone || "",
+          passenger.created_at || "",
+          uid
+        ].map(field => {
+          const s = String(field ?? "");
+          const guard = (/^[=+\-@]/.test(s)) ? "'" : "";
+          return `"${(guard + s).replace(/"/g, '""')}"`;
+        });
+        csvRows.push(row.join(","));
+      });
+
+      downloadCSV(csvRows.join("\n"), "passengers_export.csv");
+    } catch (error) {
+      showAlert("Export failed: " + error.message, "danger");
+    }
+  }
+
+  function downloadCSV(csvContent, filename) {
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ===== Trip Monitoring (Admin) =====
+  async function loadTripDrivers() {
+    const sel = document.querySelector('#tripDriver');
+    if (!sel) return;
+    sel.innerHTML = `<option value="">Select a driver...</option>`;
+    try {
+      const snap = await get(ref(db, 'drivers'));
+      if (!snap.exists()) return;
+      const drivers = snap.val() || {};
+      Object.keys(drivers).forEach(uid => {
+        const d = drivers[uid] || {};
+        const opt = document.createElement('option');
+        opt.value = uid;
+        opt.textContent = `${d.name || d.email || uid.slice(0,8)} - ${d.route || 'No route'}`;
+        sel.appendChild(opt);
+      });
+    } catch (e) { console.warn('loadTripDrivers failed', e); }
+  }
+
+  function tsToDate(ts) {
+    if (!ts) return null;
+    const ms = typeof ts === 'number' ? ts : (ts && ts._serverTimestamp ? ts._serverTimestamp : null);
+    return ms ? new Date(ms) : null;
+  }
+
+  function fmt(dt) { try { return dt ? dt.toLocaleString() : ''; } catch { return ''; } }
+  function dur(a,b) { return (a && b) ? `${Math.round((b-a)/60000)} min` : ''; }
+
+  async function loadTrips() {
+    const date = (document.querySelector('#tripDate')?.value) || new Date().toISOString().slice(0,10);
+    const uid = document.querySelector('#tripDriver')?.value || '';
+    const tbody = document.querySelector('#tripRows');
+    const btnCSV = document.querySelector('#btnExportTripCSV');
+    if (!uid) {
+      if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3">Please select a driver.</td></tr>`;
+      if (btnCSV) btnCSV.disabled = true;
+      return;
+    }
+    if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3">Loading...</td></tr>`;
+    if (btnCSV) btnCSV.disabled = true;
+    try {
+      let rows = [];
+      try {
+        const daySnap = await get(ref(db, `user_trips/${uid}/${date}`));
+        if (daySnap.exists()) {
+          const trips = daySnap.val() || {};
+          const ids = Object.keys(trips);
+          rows = await Promise.all(ids.map(async id => {
+            let v = trips[id];
+            try {
+              const snap = await get(ref(db, `trip_logs/${id}`));
+              if (snap.exists()) v = snap.val();
+            } catch {}
+            const s = tsToDate(v?.start?.ts);
+            const e = tsToDate(v?.end?.ts);
+            const samples = v?.locations ? Object.keys(v.locations).length : (v?.samples || 0);
+            return { id, start: s, end: e, duration: dur(s,e), samples };
+          }));
+        }
+      } catch (inner) {
+        console.warn('user_trips read failed, falling back to trip_logs query:', inner?.message);
+      }
+
+      if (!rows.length) {
+        // Fallback: query by driver_uid. Some RTDB rules may forbid this for non-admins.
+        try {
+          const qref = query(ref(db, 'trip_logs'), orderByChild('driver_uid'), equalTo(uid));
+          const allSnap = await get(qref);
+          if (allSnap.exists()) {
+            const all = allSnap.val() || {};
+            rows = Object.keys(all).map(id => ({ id, ...all[id] }))
+              .filter(v => {
+                if (v.date) return v.date === date;
+                const s = tsToDate(v?.start?.ts);
+                if (!s) return false;
+                const y = s.getFullYear();
+                const m = String(s.getMonth()+1).padStart(2,'0');
+                const d = String(s.getDate()).padStart(2,'0');
+                return `${y}-${m}-${d}` === date;
+              })
+              .map(v => {
+                const s = tsToDate(v?.start?.ts);
+                const e = tsToDate(v?.end?.ts);
+                const samples = v?.locations ? Object.keys(v.locations).length : (v?.samples || 0);
+                return { id: v.id, start: s, end: e, duration: dur(s,e), samples };
+              });
+          }
+        } catch (perm) {
+          // Gracefully handle permission-denied by showing 'No trips' instead of crashing
+          console.warn('trip_logs fallback denied or failed:', perm?.message || perm);
+          rows = [];
+        }
+      }
+      if (tbody) tbody.innerHTML = rows.length ? rows.map(r => `
+        <tr>
+          <td>${r.id}</td>
+          <td>${fmt(r.start)}</td>
+          <td>${fmt(r.end)}</td>
+          <td>${r.duration}</td>
+          <td>${r.samples}</td>
+        </tr>
+      `).join('') : `<tr><td colspan="5" class="text-center text-muted py-3">No trips loaded.</td></tr>`;
+      if (btnCSV) {
+        btnCSV.disabled = rows.length === 0;
+        btnCSV.onclick = () => exportTripCSV(rows, date, uid);
+      }
+    } catch (err) {
+      console.error('loadTrips failed', err);
+      const msg = /Permission denied/i.test(err?.message||'') ? 'No permission to read trips for this date.' : ('Failed: ' + (err?.message||'Unknown error'));
+      if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-3">${msg}</td></tr>`;
+    }
+  }
+
+  function exportTripCSV(rows, date, uid) {
+    const headers = ['Trip ID','Start','End','Duration','Samples','Driver UID','Date'];
+    const csv = [headers.join(',')];
+    rows.forEach(r => {
+      const cells = [r.id, fmt(r.start), fmt(r.end), r.duration, r.samples, uid, date].map(v => {
+        const s = String(v ?? '');
+        const guard = (/^[=+\-@]/.test(s)) ? "'" : "";
+        return `"${(guard + s).replace(/"/g,'""')}"`;
+      });
+      csv.push(cells.join(','));
+    });
+    downloadCSV(csv.join('\n'), `trips_${uid}_${date}.csv`);
+  }
+
+  async function exportAllTripsForDriver() {
+    const uid = document.querySelector('#tripDriver')?.value || '';
+    if (!uid) { showAlert('Please select a driver first.', 'warning'); return; }
+    const btn = document.querySelector('#btnExportTripAll');
+    if (btn) { btn.disabled = true; btn.textContent = 'Exporting...'; }
+    try {
+      const qref = query(ref(db, 'trip_logs'), orderByChild('driver_uid'), equalTo(uid));
+      const snap = await get(qref);
+      if (!snap.exists()) { showAlert('No trips found for this driver.', 'info'); return; }
+      const all = snap.val() || {};
+      const rows = Object.keys(all).map(id => ({ id, ...all[id] }))
+        .map(v => {
+          const s = tsToDate(v?.start?.ts);
+          const e = tsToDate(v?.end?.ts);
+          const date = v.date || (s ? `${s.getFullYear()}-${String(s.getMonth()+1).padStart(2,'0')}-${String(s.getDate()).padStart(2,'0')}` : '');
+          const samples = v?.locations ? Object.keys(v.locations).length : (v?.samples || 0);
+          return { id: v.id, date, start: s, end: e, duration: dur(s,e), samples };
+        });
+      const headers = ['Trip ID','Date','Start','End','Duration','Samples','Driver UID'];
+      const csv = [headers.join(',')];
+      rows.forEach(r => {
+        const cells = [r.id, r.date, fmt(r.start), fmt(r.end), r.duration, r.samples, uid].map(v => {
+          const s = String(v ?? '');
+          const guard = (/^[=+\-@]/.test(s)) ? "'" : "";
+          return `"${(guard + s).replace(/"/g,'""')}"`;
+        });
+        csv.push(cells.join(','));
+      });
+      downloadCSV(csv.join('\n'), `trips_${uid}_ALL.csv`);
+      showAlert(`Exported ${rows.length} trips for driver.`, 'success');
+    } catch (e) {
+      console.error('exportAllTripsForDriver failed:', e);
+      showAlert('Export failed: ' + e.message, 'danger');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = 'Export All'; }
+    }
+  }
+
+  // Event listeners
+  $("#btnReloadDrivers").addEventListener("click", loadDriversTable);
+  $("#btnReloadPassengers").addEventListener("click", loadPassengersTable);
+  $("#btnExportDrivers").addEventListener("click", exportDrivers);
+  $("#btnExportPassengers").addEventListener("click", exportPassengers);
+  const btnLoadTripsEl = document.querySelector('#btnLoadTrips');
+  if (btnLoadTripsEl) btnLoadTripsEl.addEventListener('click', loadTrips);
+  const btnExportAll = document.querySelector('#btnExportTripAll');
+  if (btnExportAll) btnExportAll.addEventListener('click', exportAllTripsForDriver);
+  const tripDriverSel = document.querySelector('#tripDriver');
+  if (tripDriverSel) tripDriverSel.addEventListener('change', () => {
+    const btnAll = document.querySelector('#btnExportTripAll');
+    if (btnAll) btnAll.disabled = !(tripDriverSel.value);
+  });
+
+  // Load drivers for dispatch select
+  async function loadDriversForSelect() {
+    const sel = $("#schDriver");
+    sel.innerHTML = `<option value="">(Unassigned)</option>`;
+    
+    try {
+      const snap = await get(ref(db, "drivers"));
+      if (!snap.exists()) return;
+      
+      const drivers = snap.val();
+      Object.keys(drivers).forEach(uid => {
+        const d = drivers[uid] || {};
+        const opt = document.createElement("option");
+        opt.value = uid;
+        opt.textContent = `${d.name || d.email || uid.slice(0, 8)} - ${d.route || "No route"}`;
+        sel.appendChild(opt);
+        // Override any mojibake with a clean ASCII label
+        try {
+          const name = d.name || d.email || uid.slice(0, 8);
+          const route = d.route || "No route";
+          opt.textContent = cleanText(`${name} - ${route}`);
+        } catch (_) {}
+      });
+    } catch (error) {
+      console.error("Error loading drivers for select:", error);
+    }
+  }
+
+  // Initialize
+  const todayISO = new Date().toISOString().slice(0, 10);
+  const schDateEl = $("#schDate");
+  const listDateEl = $("#listDate");
+  if (schDateEl && !schDateEl.value) schDateEl.value = todayISO;
+  if (listDateEl && !listDateEl.value) listDateEl.value = todayISO;
+
+  // Kick off initial loads without blocking other listeners/UI
+  // This prevents the module from stalling and speeds up perceived load
+  loadDriversForSelect().catch(console.warn);
+  loadTripDrivers().catch(console.warn);
+  Promise.all([loadCounters(), loadDriversTable(), loadPassengersTable()]).catch(console.warn);
+  // Auto-load when trips tab becomes active
+  const tripsTabBtn = document.querySelector('#trips-tab');
+  if (tripsTabBtn) tripsTabBtn.addEventListener('shown.bs.tab', loadTrips);
+
+  // Live updates: refresh drivers presence and counters when locations change
+  let refreshTimer = null;
+  onValue(ref(db, 'drivers_location'), () => {
+    if (refreshTimer) return; // throttle rapid updates
+    refreshTimer = setTimeout(async () => {
+      refreshTimer = null;
+      await Promise.all([loadCounters(), loadDriversTable()]);
+    }, 500);
+  });
+  sanitizeDocument();
+
+  // Dispatch form handling
+  $("#formDispatch").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const date = $("#schDate").value;
+    const dep = $("#schTime").value;
+    const route = $("#schRoute").value;
+    const jeep = $("#schJeep").value;
+    const driver = $("#schDriver").value;
+    const notes = $("#schNotes").value;
+
+    try {
+      await createDispatch({ 
+        date, 
+        dep_time: dep, 
+        route, 
+        jeep_id: jeep, 
+        driver_uid: driver || "", 
+        notes 
+      });
+      showAlert("Dispatch created.", "success");
+      e.target.reset(); 
+      $("#schDate").value = date;
+      await renderSchedule();
+    } catch (err) {
+      showAlert("Create failed: " + err.message, "danger");
+    }
+  });
+
+  // Schedule rendering
+  async function renderSchedule() {
+    const date = listDateEl.value || todayISO;
+    const tbody = $("#schRows");
+  tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3"><div class="d-flex align-items-center justify-content-center gap-2"><div class="spinner-border spinner-border-sm text-info" role="status"></div> Loading schedule...</div></td></tr>`;
+    
+    try {
+      const [schedules, driversSnap] = await Promise.all([
+        listDispatches(date),
+        get(ref(db, "drivers"))
+      ]);
+      
+      const drivers = driversSnap.exists() ? driversSnap.val() : {};
+      
+      if (!schedules || !schedules.length) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3">No dispatches.</td></tr>`;
+        return;
+      }
+      
+      schedules.sort((a, b) => (a.dep_time || "").localeCompare(b.dep_time || ""));
+      
+      tbody.innerHTML = schedules.map(r => {
+        const driverName = r.driver_uid && drivers[r.driver_uid] 
+          ? (drivers[r.driver_uid].name || drivers[r.driver_uid].email || r.driver_uid.slice(0, 8))
+          : "(Unassigned)";
+        
+        return `<tr data-id="${r.id}">
+          <td>${r.dep_time || "00:00"}</td>
+          <td>${r.route || ""}</td>
+          <td>${r.jeep_id || ""}</td>
+          <td>${driverName}</td>
+          <td>
+            <select class="form-select form-select-sm sch-status" data-id="${r.id}" data-date="${date}" style="min-width:120px">
+              ${statusOptions(r.status || "assigned")}
+            </select>
+          </td>
+          <td>
+            <button class="btn btn-sm btn-outline-danger sch-cancel" data-id="${r.id}" data-date="${date}">Cancel</button>
+          </td>
+        </tr>`;
+      }).join("");
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-3">Failed: ${err.message}</td></tr>`;
+    }
+  }
+
+  // Prediction functions
+async function loadPredictions() {
+  const date = $('#predictionDate').value || new Date().toISOString().split('T')[0];
+  const statusBadge = $('#predictionStatus');
+  const cards = document.getElementById('predictionsCards');
+  const dateBadge = document.getElementById('ph_date_badge');
+  if (dateBadge) dateBadge.textContent = date;
+  
+  statusBadge.className = 'badge bg-warning';
+  statusBadge.textContent = 'Loading...';
+  
+  try {
+    const API_BASE = window.API_BASE ?? ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') && location.port !== '5000' ? 'http://localhost:5000' : '');
+    const response = await fetch(`${API_BASE}/api/predictions/${date}`);    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const predictions = await response.json();
+    // Update registered users count if container exists
+    try {
+      const usersSnap = await get(ref(db, 'passengers'));
+      const phUsersEl = document.getElementById('ph_users');
+      if (phUsersEl) phUsersEl.textContent = usersSnap.exists() ? Object.keys(usersSnap.val()).length : 0;
+    } catch {}
+    
+    // Counters
+    const sentCount = Array.isArray(predictions) ? predictions.filter(p => p.is_sent || p.sent).length : 0;
+    const totalStops = Array.isArray(predictions) ? new Set(predictions.map(p => p.stop_name || p.stop?.name || '')).size : 0;
+    const phCountEl = document.getElementById('ph_count'); if (phCountEl) phCountEl.textContent = Array.isArray(predictions) ? predictions.length : 0;
+    const phSentEl = document.getElementById('ph_sent'); if (phSentEl) phSentEl.textContent = sentCount;
+    const phStopsEl = document.getElementById('ph_stops'); if (phStopsEl) phStopsEl.textContent = totalStops || '-';
+
+    if (!predictions || predictions.length === 0) {
+      if (cards) cards.innerHTML = '<div class="text-center text-muted py-3">No predictions found for this date</div>';
+      statusBadge.className = 'badge bg-secondary';
+      statusBadge.textContent = 'No predictions';
+      updatePredictionKPIs({});
+      return;
+    }
+    
+    // Render cards
+    if (cards) {
+      const html = predictions.map(p => {
+        const stop = p.stop?.name || p.stop_name || 'Unknown stop';
+        const message = p.message || '';
+        const peak = p.peak_hour ?? p.peak ?? '-';
+        const sent = !!(p.is_sent || p.sent);
+        const border = sent ? 'sent border-success' : 'pending border-primary';
+        const badge = sent ? '<span class="badge bg-success"><i class="bi bi-check-lg me-1"></i>Sent</span>' : '<span class="badge bg-primary"><i class="bi bi-clock me-1"></i>Pending</span>';
+        return `
+          <div class="col-md-6 col-lg-4">
+            <div class="card h-100 prediction-card ${border}">
+              <div class="card-body">
+                <h6 class="card-title"><i class="bi bi-geo-alt me-1"></i>${stop}</h6>
+                <p class="card-text">${message}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                  <small class="text-muted"><i class="bi bi-clock me-1"></i>Peak: ${peak}:00</small>
+                  ${badge}
+                </div>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+      cards.innerHTML = html;
+    }
+    
+    // Update KPIs
+    updatePredictionKPIs(predictions);
+    
+    statusBadge.className = 'badge bg-success';
+    statusBadge.textContent = `Loaded ${predictions.length} predictions`;
+    
+  } catch (error) {
+    console.error('Error loading predictions:', error);
+    if (cards) {
+      cards.innerHTML = `<div class="text-center text-danger py-3">Error: ${error.message}</div>`;
+    }
+    statusBadge.className = 'badge bg-danger';
+    statusBadge.textContent = 'Load failed';
+  }
+}
+
+function updatePredictionKPIs(predictions) {
+  const setText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+  if (!predictions || predictions.length === 0) {
+    setText('kpiTotal', '0');
+    setText('kpiBusiest', '-');
+    setText('kpiPeak', '-');
+    return;
+  }
+  
+  // Calculate total predicted passengers
+  const total = predictions.reduce((sum, pred) => sum + (pred.predicted_passengers || 0), 0);
+  setText('kpiTotal', total);
+  
+  // Find busiest stop
+  const busiest = predictions.reduce((max, pred) => 
+    pred.predicted_passengers > max.predicted_passengers ? pred : max, predictions[0]);
+  setText('kpiBusiest', busiest.stop_name || busiest?.stop?.name || '-');
+  
+  // Find most common peak hour
+  const hourCounts = {};
+  predictions.forEach(pred => {
+    hourCounts[pred.peak_hour] = (hourCounts[pred.peak_hour] || 0) + 1;
+  });
+  const peakHour = Object.keys(hourCounts).reduce((a, b) => 
+    (hourCounts[a] > hourCounts[b] ? a : b));
+  setText('kpiPeak', `${peakHour}:00`);
+}
+
+async function generatePredictions() {
+  const date = $('#predictionDate').value || new Date().toISOString().split('T')[0];
+  const statusBadge = $('#predictionStatus');
+  
+  statusBadge.className = 'badge bg-warning';
+  statusBadge.textContent = 'Generating...';
+  
+  try {
+    // Try multiple payload styles to match backend expectations
+    const API_BASE = window.API_BASE ?? ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') && location.port !== '5000' ? 'http://localhost:5000' : '');
+    const attempts = [
+      { url: `${API_BASE}/api/predictions/generate`, opts: { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date }) } },
+      { url: `${API_BASE}/api/predictions/generate`, opts: { method: 'POST' } },
+      { url: `${API_BASE}/api/predictions/generate?date=${encodeURIComponent(date)}`, opts: { method: 'POST' } }
+    ];
+    let lastErr = null;
+    for (const a of attempts) {
+      try {
+        const resp = await fetch(a.url, a.opts);
+        const text = await resp.text();
+        let data = {};
+        try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
+        if (!resp.ok) throw new Error(data.error || `HTTP ${resp.status}`);
+        if (data && data.success === false) throw new Error(data.error || 'Generation failed');
+        // Success
+        const count = (data && (data.count ?? data.generated ?? 0)) || 0;
+        showAlert(`Generated ${count} predictions successfully!`, 'success');
+        statusBadge.className = 'badge bg-success';
+        statusBadge.textContent = 'Generated';
+        await loadPredictions();
+        return;
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    if (lastErr) throw lastErr;
+    
+  } catch (error) {
+    console.error('Error generating predictions:', error);
+    showAlert('Failed to generate predictions: ' + error.message, 'danger');
+    statusBadge.className = 'badge bg-danger';
+    statusBadge.textContent = 'Generation failed';
+  }
+}
+
+async function sendPredictionsToDrivers() {
+  const date = $('#predictionDate').value || new Date().toISOString().split('T')[0];
+  const statusBadge = $('#predictionStatus');
+  
+  statusBadge.className = 'badge bg-warning';
+  statusBadge.textContent = 'Sending...';
+  
+  try {
+    const API_BASE = window.API_BASE ?? ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') && location.port !== '5000' ? 'http://localhost:5000' : '');
+    const resp = await fetch(`${API_BASE}/api/predictions/send`, { method: 'POST' });
+    const text = await resp.text();
+    let result = {};
+    try { result = text ? JSON.parse(text) : {}; } catch { result = { raw: text }; }
+    if (!resp.ok || result.success === false) throw new Error(result.error || `HTTP ${resp.status}`);
+    showAlert(`Predictions sent to drivers${result.sent ? `: ${result.sent}` : ''}.`, 'success');
+    statusBadge.className = 'badge bg-success';
+    statusBadge.textContent = 'Sent to drivers';
+    
+  } catch (error) {
+    console.error('Error sending predictions:', error);
+    showAlert('Failed to send predictions: ' + error.message, 'danger');
+    statusBadge.className = 'badge bg-danger';
+    statusBadge.textContent = 'Send failed';
+  }
+}
+// Add these to your existing event listeners section
+$('#btnReloadPredictions').addEventListener('click', loadPredictions);
+$('#btnGeneratePredictions').addEventListener('click', generatePredictions);
+$('#btnSendPredictions').addEventListener('click', sendPredictionsToDrivers);
+$('#predictionDate').addEventListener('change', loadPredictions);
+const btnSendAllPH = document.getElementById('btnSendAllPH');
+if (btnSendAllPH) btnSendAllPH.addEventListener('click', sendPredictionsToDrivers);
+
+// Initialize prediction date
+$('#predictionDate').value = new Date().toISOString().split('T')[0];
+// Helper function to get predictions
+async function getPredictions(date) {
+  try {
+    const API_BASE = window.API_BASE ?? ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') && location.port !== '5000' ? 'http://localhost:5000' : '');
+    const response = await fetch(`${API_BASE}/api/predictions/${date}`);    if (!response.ok) return null;
+    return await response.json();
+  } catch (error) {
+    return null;
+  }
+}
+
+  function statusOptions(current) {
+    const opts = ["assigned", "accepted", "enroute", "completed", "canceled"];
+    return opts.map(s => `<option value="${s}" ${s === current ? "selected" : ""}>${s}</option>`).join("");
+  }
+
+  // Do not block: render schedule in background for faster ready state
+  renderSchedule().catch(console.warn);
+  $("#btnReloadSch").addEventListener("click", renderSchedule);
+  $("#listDate").addEventListener("change", renderSchedule);
+
+  // Event delegation for status changes
+  $("#schRows").addEventListener("change", async (e) => {
+    const sel = e.target.closest(".sch-status");
+    if (!sel) return;
+    const { id: dispatchId } = sel.dataset;
+    const date = sel.dataset.date;
+    try {
+      await adminSetStatus({ date, dispatchId, status: sel.value });
+      showAlert("Status updated.", "success");
+    } catch (err) {
+      showAlert("Failed to update: " + err.message, "danger");
+      await renderSchedule();
+    }
+  });
+
+  $("#schRows").addEventListener("click", async (e) => {
+    const btn = e.target.closest(".sch-cancel");
+    if (!btn) return;
+    const dispatchId = btn.dataset.id;
+    const date = btn.dataset.date;
+    try {
+      await adminSetStatus({ date, dispatchId, status: "canceled" });
+      await renderSchedule();
+      showAlert("Dispatch canceled.", "success");
+    } catch (err) {
+      showAlert("Cancel failed: " + err.message, "danger");
+    }
+  });
+
+  // ===== Dispatch History =====
+  let lastHistoryRows = [];
+  // Local date helpers to avoid UTC drift and infinite loops
+  function dateKeyLocal(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+  function addDaysLocal(dateStr, days) {
+    const [y,m,day] = dateStr.split('-').map(Number);
+    const d = new Date(y, (m||1)-1, (day||1) + days);
+    return dateKeyLocal(d);
+  }
+  function eachDateLocal(startStr, endStr) {
+    const res = [];
+    const [sy,sm,sd] = startStr.split('-').map(Number);
+    const [ey,em,ed] = endStr.split('-').map(Number);
+    const s = new Date(sy, (sm||1)-1, (sd||1));
+    const e = new Date(ey, (em||1)-1, (ed||1));
+    for (let d = new Date(s); d <= e; d.setDate(d.getDate()+1)) {
+      res.push(dateKeyLocal(d));
+    }
+    return res;
+  }
+  let isLoadingHistory = false;
+
+  async function loadDispatchHistory() {
+    if (isLoadingHistory) return;
+    isLoadingHistory = true;
+    const start = document.querySelector('#histStart').value;
+    const end = document.querySelector('#histEnd').value;
+    const sort = document.querySelector('#histSort').value || 'desc';
+    const tbody = document.querySelector('#historyRows');
+
+    if (!start || !end) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">Please select start and end dates.</td></tr>';
+      return;
+    }
+
+    if (start > end) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-3">Start date must be before End date.</td></tr>';
+      return;
+    }
+
+    // Limit range to avoid excessive reads (max 60 days)
+    const allDates = eachDateLocal(start, end);
+    if (allDates.length > 60) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-3">Range too large. Please select up to 60 days.</td></tr>';
+      isLoadingHistory = false;
+      return;
+    }
+
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">Loading...</td></tr>';
+    const exportBtn = document.querySelector('#btnExportHistory');
+    const summary = document.querySelector('#histSummary');
+    if (exportBtn) exportBtn.disabled = true;
+    if (summary) summary.textContent = '';
+
+    try {
+      // Preload drivers for name resolution
+      const driversSnap = await get(ref(db, 'drivers'));
+      const drivers = driversSnap.exists() ? driversSnap.val() : {};
+
+      const rows = [];
+      for (const d of allDates) {
+        const day = await listDispatches(d);
+        day.forEach(rec => {
+          const driverName = rec.driver_uid && drivers[rec.driver_uid]
+            ? (drivers[rec.driver_uid].name || drivers[rec.driver_uid].email || rec.driver_uid.slice(0,8))
+            : '(Unassigned)';
+          rows.push({
+            date: d,
+            time: rec.dep_time || '00:00',
+            route: rec.route || '',
+            jeep: rec.jeep_id || '',
+            driver: driverName,
+            status: rec.status || 'assigned'
+          });
+        });
+      }
+
+      // Sort by date then time
+      rows.sort((a,b) => {
+        const ak = `${a.date} ${a.time}`;
+        const bk = `${b.date} ${b.time}`;
+        return sort === 'asc' ? ak.localeCompare(bk) : bk.localeCompare(ak);
+      });
+
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No dispatches in this range.</td></tr>';
+        return;
+      }
+
+      lastHistoryRows = rows;
+      tbody.innerHTML = rows.map(r => `
+        <tr>
+          <td>${r.date}</td>
+          <td>${r.time}</td>
+          <td>${r.route}</td>
+          <td>${r.jeep}</td>
+          <td>${r.driver}</td>
+          <td><span class="badge ${r.status === 'canceled' ? 'bg-secondary' : (r.status === 'completed' ? 'bg-success' : 'bg-info')}">${r.status}</span></td>
+        </tr>
+      `).join('');
+      if (exportBtn) exportBtn.disabled = false;
+      if (summary) summary.textContent = `${rows.length} dispatch(es) loaded.`;
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-3">Failed: ${err.message}</td></tr>`;
+    } finally { isLoadingHistory = false; }
+  }
+
+  // Initialize history dates (default: last 7 days)
+  const today = dateKeyLocal(new Date());
+  const sevenAgo = (()=>{ const d=new Date(); d.setDate(d.getDate()-7); return dateKeyLocal(d); })();
+  const histStartEl = document.querySelector('#histStart');
+  const histEndEl = document.querySelector('#histEnd');
+  if (histStartEl && !histStartEl.value) histStartEl.value = sevenAgo;
+  if (histEndEl && !histEndEl.value) histEndEl.value = today;
+
+  // History listeners
+  const btnLoadHistory = document.querySelector('#btnLoadHistory');
+  if (btnLoadHistory) btnLoadHistory.addEventListener('click', loadDispatchHistory);
+  const histSort = document.querySelector('#histSort');
+  if (histSort) histSort.addEventListener('change', loadDispatchHistory);
+  if (histStartEl) histStartEl.addEventListener('change', () => { /* optional auto */ });
+  if (histEndEl) histEndEl.addEventListener('change', () => { /* optional auto */ });
+
+  // Export CSV for history
+  function exportHistoryCSV() {
+    if (!lastHistoryRows || !lastHistoryRows.length) { showAlert('Nothing to export.', 'info'); return; }
+    const headers = ['Date','Time','Route','Jeep','Driver','Status'];
+    const csv = [headers.join(',')];
+    lastHistoryRows.forEach(r => {
+      const row = [r.date, r.time, r.route, r.jeep, r.driver, r.status]
+        .map(v => {
+          const s = String(v ?? '');
+          const guard = (/^[=+\-@]/.test(s)) ? "'" : "";
+          return `"${(guard + s).replace(/"/g,'""')}"`;
+        })
+        .join(',');
+      csv.push(row);
+    });
+    const start = document.querySelector('#histStart')?.value || '';
+    const end = document.querySelector('#histEnd')?.value || '';
+    downloadCSV(csv.join('\n'), `dispatch_history_${start}_to_${end}.csv`);
+  }
+  const btnExportHistory = document.querySelector('#btnExportHistory');
+  if (btnExportHistory) btnExportHistory.addEventListener('click', exportHistoryCSV);
+
+  // Auto-load when tab is shown
+  const historyTabBtn = document.querySelector('#history-tab');
+  if (historyTabBtn) {
+    // Load when the tab is shown via Bootstrap
+    historyTabBtn.addEventListener('shown.bs.tab', () => loadDispatchHistory());
+    // Fallback: also trigger on click in case the event doesn't fire
+    historyTabBtn.addEventListener('click', () => setTimeout(loadDispatchHistory, 0));
+  }
+
+  // Quick filter wiring for Drivers/Passengers tables
+  function setupTableFilter(inputSel, tbodySel) {
+    const input = document.querySelector(inputSel);
+    const tbody = document.querySelector(tbodySel);
+    if (!input || !tbody) return;
+    const apply = () => {
+      const q = (input.value || '').toLowerCase().trim();
+      const rows = tbody.querySelectorAll('tr');
+      rows.forEach(r => {
+        const text = r.textContent.toLowerCase();
+        r.style.display = q && !text.includes(q) ? 'none' : '';
+      });
+    };
+    input.addEventListener('input', apply);
+    return () => apply();
+  }
+  const refreshDriversFilter = setupTableFilter('#searchDrivers', '#rowsDrivers') || (()=>{});
+  const refreshPassengersFilter = setupTableFilter('#searchPassengers', '#rowsPassengers') || (()=>{});
+  // Re-apply filters after each load
+  const _origLoadDriversTable = loadDriversTable;
+  loadDriversTable = async function(){ await _origLoadDriversTable(); refreshDriversFilter(); };
+  const _origLoadPassengersTable = loadPassengersTable;
+  loadPassengersTable = async function(){ await _origLoadPassengersTable(); refreshPassengersFilter(); };
+
+  // Quick range buttons for History
+  document.querySelectorAll('[data-range]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const type = btn.getAttribute('data-range');
+      const today = new Date();
+      const fmt = (d)=> dateKeyLocal(d);
+      let start, end;
+      if (type === 'today') {
+        start = end = fmt(today);
+      } else if (type === '7') {
+        const s = new Date(today); s.setDate(s.getDate()-6); start = fmt(s); end = fmt(today);
+      } else if (type === '30') {
+        const s = new Date(today); s.setDate(s.getDate()-29); start = fmt(s); end = fmt(today);
+      } else if (type === 'month') {
+        const s = new Date(today.getFullYear(), today.getMonth(), 1);
+        start = fmt(s); end = fmt(today);
+      }
+      const a = document.getElementById('histStart');
+      const b = document.getElementById('histEnd');
+      if (a && b) { a.value = start; b.value = end; }
+      loadDispatchHistory();
+    });
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script type="module">
+  // Ensure plain ASCII in title
+  document.title = 'JeepNi - Admin Dashboard';
+
+  // Lazy-load the live map only when Monitoring tab is shown
+  let mapLoaded = false;
+  const monTab = document.getElementById('tab-monitoring-tab');
+  if (monTab) {
+    monTab.addEventListener('shown.bs.tab', async () => {
+      try {
+        if (!mapLoaded) {
+          await import('./js/admin-map-viewer.js');
+          mapLoaded = true;
+        }
+        // Nudge Leaflet to recompute sizes if needed
+        setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
+      } catch (e) {
+        console.warn('Failed to load live map viewer', e);
+      }
+    });
+  }
+</script>
+</body>
+</html>

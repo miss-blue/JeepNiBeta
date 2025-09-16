@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>JeepNi � Passenger Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"><style>body{background:#f6f7fb}.card{border-radius:16px}</style>
+  <style>
+    html,body{height:100%}
+    body{margin:0; background:#eef5fb; color:#1f2d3d; overflow:hidden}
+    #map{position:fixed; inset:0 0 84px 0; z-index:1}
+    .navbar{display:none!important}
+    main.container{display:none}
+    main .card{border-radius:20px; box-shadow:0 12px 28px rgba(0,0,0,.18)}
+    .top-ui{position:fixed; top:8px; left:0; right:0; z-index:3; display:flex; align-items:center; justify-content:space-between; padding:0 14px}
+    .chip{background:linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.85)); backdrop-filter: blur(6px); border-radius:14px; padding:8px 12px; box-shadow:0 8px 24px rgba(0,0,0,.12); display:flex; align-items:center; gap:8px; font-weight:600; color:#113a7a}
+    .avatar-btn,.icon-btn{width:40px; height:40px; border-radius:50%; border:0; background:rgba(255,255,255,.95); display:grid; place-items:center; box-shadow:0 6px 16px rgba(0,0,0,.15)}
+    .notif-dot{position:absolute; top:-2px; right:-2px; width:16px; height:16px; border-radius:50%; background:#ff2b2b; color:#fff; font-size:10px; display:grid; place-items:center}
+    .app-nav{position:fixed; left:0; right:0; bottom:0; height:84px; z-index:4; background:linear-gradient(180deg, rgba(255,255,255,.6), rgba(255,255,255,.95)); backdrop-filter:blur(8px); border-top:1px solid rgba(0,0,0,.06); display:grid; grid-template-columns:1fr 1fr 72px 1fr 1fr; align-items:center}
+    .app-nav a{text-decoration:none; color:#6b7b8a; font-size:12px; display:flex; flex-direction:column; align-items:center; gap:6px; min-width:0}
+    .app-nav a .bi{font-size:20px}
+    .home-fab{position:absolute; left:50%; transform:translateX(-50%); bottom:22px; width:64px; height:64px; border-radius:50%; background:linear-gradient(180deg,#8be3ff,#35a8f0); color:#fff; display:grid; place-items:center; box-shadow:0 16px 32px rgba(0,0,0,.25); border:4px solid #fff}
+    .app-nav .center-slot{ width:72px; height:1px }
+  </style></head>
+<body><!-- Map background and top overlay header -->
+<div id="map"></div>
+<div class="top-ui">
+  <a href="my-profile.html" class="avatar-btn position-relative text-dark" aria-label="Profile">
+    <i class="bi bi-person fs-5"></i>
+  </a>
+  <div class="chip">
+    <i class="bi bi-geo-alt-fill text-primary"></i>
+    <div>
+      <div class="small fw-bold text-primary m-0" style="letter-spacing:.3px">Your Location</div>
+      <div id="whoami" class="small text-muted">Loading…</div>
+    </div>
+  </div>
+  <button class="icon-btn position-relative" aria-label="Notifications">
+    <i class="bi bi-bell"></i>
+    <span class="notif-dot">1</span>
+  </button>
+</div>
+<nav class="navbar bg-light border-bottom">
+  <div class="container">
+    <span class="navbar-brand fw-semibold">Passenger Dashboard</span>
+    <div class="ms-auto d-flex align-items-center gap-2">
+      <a href="my-profile.html" class="btn btn-outline-primary btn-sm">My Profile</a>
+      <button id="btnLogout" class="btn btn-outline-danger btn-sm">Logout</button>
+    </div>
+  </div>
+</nav>
+
+<main class="container my-4">
+  <div class="row g-3">
+    <div class="col-lg-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Welcome</h5>
+          <div id="whoami_legacy" class="text-muted">Loading…</div>
+          <hr>
+          <button id="btnExport" class="btn btn-sm btn-outline-secondary">Export My Trips</button>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title d-flex justify-content-between align-items-center mb-0">
+            My Trips
+            <button id="btnReload" class="btn btn-sm btn-outline-secondary">Reload</button>
+          </h5>
+          <div class="table-responsive mt-3">
+            <table class="table table-striped table-hover table-sm">
+              <thead><tr><th>Date</th><th>Route</th><th>Start</th><th>End</th><th>Duration</th></tr></thead>
+              <tbody id="rows"><tr><td colspan="5" class="text-center text-muted py-3">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div></div>
+</main>
+
+<script type="module">
+import { requireLogin, signOutAndRedirect, db, ref, get, query, orderByChild, equalTo } from "./js/authentication.js";
+  import { startTrip } from "./js/create-trip.js";
+  import "./js/map-tracker.js";
+  import { getActiveTrip } from "./js/get-active-trip.js";
+  
+const user=await requireLogin("login.html");
+// Show friendly name if allowed
+try{
+  const p = await get(ref(db, `all_users/${user.uid}/name`));
+  document.getElementById("whoami").textContent = (p.exists() && p.val()) ? p.val() : (user.displayName || user.email);
+}catch{ document.getElementById("whoami").textContent = user.displayName || user.email; }
+
+function fmt(ts){
+  if(!ts) return "";
+  const d = typeof ts === 'number' ? new Date(ts) : ts?.seconds ? new Date(ts.seconds*1000) : null;
+  return d ? d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+}
+async function loadTrips(){
+  const tbody=document.getElementById("rows");
+  tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Loading…</td></tr>`;
+
+  const trips=[];
+  // Prefer new structure written by trip-tracking.js
+  let s1 = null; 
+  try { s1 = await get(ref(db,`user_trips/${user.uid}`)); } 
+  catch(_){ /* ignore permission errors; we'll try legacy listing */ }
+  if(s1 && s1.exists()){
+    const byDate = s1.val()||{}; // {YYYY-MM-DD: {tripId: tripData}}
+    for(const date of Object.keys(byDate)){
+      const items = byDate[date]||{};
+      for(const id of Object.keys(items)){
+        const t = items[id]||{};
+        const start = t.start?.ts; const end = t.end?.ts;
+        const durMin = (start && end) ? Math.max(0, Math.round(((typeof end==='number'?end:end?.seconds*1000) - (typeof start==='number'?start:start?.seconds*1000))/60000)) : '';
+        trips.push({
+          date: t.date || date,
+          route: t.route || '',
+          start: fmt(start),
+          end: fmt(end),
+          duration: durMin!==''? `${durMin}m` : ''
+        });
+      }
+    }
+  } else {
+    // Fallback to legacy per-user path
+    // Legacy: query trips by driver_uid (rules allow only filtered reads)
+    try {
+      const q = query(ref(db,'trip_logs'), orderByChild('driver_uid'), equalTo(user.uid));
+      const s2 = await get(q);
+      if (s2.exists()) {
+        const byId = s2.val() || {}; // {tripId: tripData}
+        for (const id of Object.keys(byId)) {
+          const t = byId[id] || {};
+          const start = t.start?.ts; const end = t.end?.ts;
+          const d = start ? new Date(typeof start==='number'?start:start?.seconds*1000).toISOString().slice(0,10) : '';
+          const durMin = (start && end) ? Math.max(0, Math.round(((typeof end==='number'?end:end?.seconds*1000) - (typeof start==='number'?start:start?.seconds*1000))/60000)) : '';
+          trips.push({ date: t.date || d, route: t.route || '', start: fmt(start), end: fmt(end), duration: durMin!==''? `${durMin}m` : '' });
+        }
+      }
+    } catch(_) { /* ignore if forbidden */ }
+  }
+
+  if(!trips.length){ tbody.innerHTML=`<tr><td colspan="5" class="text-center text-muted">No trips yet</td></tr>`; return; }
+  trips.sort((a,b)=> a.date<b.date?1:-1);
+  tbody.innerHTML = trips.map(t=>`
+    <tr>
+      <td>${t.date||""}</td>
+      <td>${t.route||""}</td>
+      <td>${t.start||""}</td>
+      <td>${t.end||""}</td>
+      <td>${t.duration||""}</td>
+    </tr>`).join("");
+}
+document.getElementById("btnReload").addEventListener("click",loadTrips);
+document.getElementById("btnExport").addEventListener("click", async ()=>{
+  const rows=[["Date","Route","Start","End","Duration"]];
+  let s1=null; try{ s1=await get(ref(db,`user_trips/${user.uid}`)); }catch(_){ }
+  if(s1 && s1.exists()){
+    const byDate=s1.val()||{};
+    for(const date of Object.keys(byDate)){
+      for(const id of Object.keys(byDate[date]||{})){
+        const t = byDate[date][id]||{};
+        rows.push([t.date||date, t.route||"", fmt(t.start?.ts), fmt(t.end?.ts), ""]);
+      }
+    }
+  }else{
+    try {
+      const q = query(ref(db,'trip_logs'), orderByChild('driver_uid'), equalTo(user.uid));
+      const s2 = await get(q);
+      if(!s2.exists()) return;
+      const byId = s2.val()||{};
+      for(const id of Object.keys(byId)){
+        const t = byId[id]||{}; const start=t.start?.ts; const end=t.end?.ts;
+        const d = start ? new Date(typeof start==='number'?start:start?.seconds*1000).toISOString().slice(0,10) : '';
+        rows.push([t.date||d, t.route||"", fmt(start), fmt(end), ""]);
+      }
+    } catch(_) { return; }
+  }
+  const csv=rows.map(r=>r.join(",")).join("\n");
+  const blob=new Blob([csv],{type:"text/csv"}); const url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download="my_trips.csv"; a.click(); URL.revokeObjectURL(url);
+});
+document.getElementById("btnLogout").addEventListener("click",()=>signOutAndRedirect("login.html"));
+
+await loadTrips();
+
+// ---- In-app notifications (prediction notifications) ----
+try{
+  const toastHost = document.createElement('div');
+  toastHost.className = 'position-fixed';
+  toastHost.style.right = '12px';
+  toastHost.style.bottom = '96px';
+  toastHost.style.zIndex = '1060';
+  document.body.appendChild(toastHost);
+
+  const lastSeenKey = 'notif_last_seen';
+  const getTs = v => typeof v === 'number' ? v : v?.seconds ? v.seconds*1000 : Date.now();
+  let lastSeen = Number(localStorage.getItem(lastSeenKey) || '0');
+
+  const bell = document.querySelector('.icon-btn .notif-dot');
+  const bump = ()=>{ if(bell){ const n = Number(bell.textContent||'0')+1; bell.textContent=String(n); bell.style.display='grid'; } };
+
+  const showToast = (html)=>{
+    const el = document.createElement('div');
+    el.className = 'toast align-items-center text-bg-primary border-0 show';
+    el.role='status'; el.ariaLive='polite'; el.ariaAtomic='true';
+    el.style.minWidth='260px'; el.style.boxShadow='0 12px 28px rgba(0,0,0,.18)'; el.style.marginTop='8px';
+    el.innerHTML = `<div class="d-flex"><div class="toast-body">${html}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>`;
+    toastHost.appendChild(el);
+    setTimeout(()=> el.remove(), 6000);
+  };
+
+  const notifRef = ref(db, 'prediction_notifications');
+  // Poll occasionally (rules may restrict onValue for some users), fallback to GET once
+  const check = async ()=>{
+    try{
+      const s = await get(notifRef);
+      if(!s.exists()) return;
+      const items = s.val()||{};
+      let newest = lastSeen;
+      Object.values(items).forEach(batch=>{
+        const sentAt = getTs(batch.sent_at);
+        if(sentAt <= lastSeen) return;
+        const arr = batch.notifications||[];
+        arr.forEach(n=>{
+          if(n.driver_uid === user.uid){
+            newest = Math.max(newest, sentAt);
+            bump();
+            const hour = n.peak_hour ? `Peak hour: <strong>${n.peak_hour}</strong>` : '';
+            showToast(`Demand alert for <strong>${n.route||'your route'}</strong>. ${hour}`);
+          }
+        });
+      });
+      if(newest>lastSeen){ lastSeen=newest; localStorage.setItem(lastSeenKey, String(lastSeen)); }
+    }catch{ /* ignore */ }
+  };
+  setInterval(check, 10000);
+  check();
+}catch{}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Bottom navigation bar -->
+<nav class="app-nav">
+    <a href="destination.html" aria-label="Destination" style="grid-column:1"><i class="bi bi-geo-alt"></i><span>Destination</span></a>
+    <a href="watch-ads.html" aria-label="Watch Ads" style="grid-column:2"><i class="bi bi-camera-reels"></i><span>Watch Ads</span></a>
+    <span class="center-slot" aria-hidden="true" style="grid-column:3"></span>
+    <a href="wallet.html" aria-label="Wallet" style="grid-column:4"><i class="bi bi-wallet2"></i><span>Wallet</span></a>
+    <a href="my-profile.html" aria-label="Profile" style="grid-column:5"><i class="bi bi-person"></i><span>Profile</span></a>
+    <a href="passenger-dashboard.html" class="home-fab" aria-label="Home"><i class="bi bi-house-door fs-3"></i></a>
+</nav></body>
+</html>

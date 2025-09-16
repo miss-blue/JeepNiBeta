@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>JeepNi � Edit Profile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root{ --blue:#35a8f0; --muted:#6b7b8a; }
+    html,body{height:100%}
+    body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+    header{ display:flex; align-items:center; justify-content:space-between; padding:14px; }
+    .back{ width:40px; height:40px; border-radius:10px; background:#eef6ff; border:none; display:grid; place-items:center }
+    .gear{ width:40px; height:40px; border-radius:10px; background:#eef6ff; border:none; display:grid; place-items:center }
+    .avatar{ width:120px; height:120px; border-radius:50%; background:#e9eef5; margin:6px auto 10px; display:grid; place-items:center; position:relative; box-shadow:0 6px 16px rgba(0,0,0,.12) }
+    .avatar .cam{ position:absolute; right:6px; bottom:6px; width:26px; height:26px; border-radius:8px; background:#000; color:#fff; display:grid; place-items:center }
+    .tabs{ display:flex; gap:10px; justify-content:center; margin:6px 0 12px }
+    .tab{  padding:8px 16px; border-radius:10px; font-weight:800; background:linear-gradient(180deg,#bfe9ff,#8bdcff); border:none; color:#163a64 ; cursor:pointer }
+    .tab.inactive{ background:#e6f3fd; color:#6b7b8a }
+    .containerx{ padding:0 16px 110px }
+    .field{ margin-bottom:12px }
+    .field input, .field select{ border-radius:10px; border:2px solid #cfe8ff; padding:10px 12px }
+    .btn-save{ display:block; margin:16px auto; padding:12px 18px; border:none; border-radius:12px; font-weight:800; color:#fff; background:linear-gradient(180deg,#8be3ff,#35a8f0) }
+    /* bottom nav */
+    .app-nav{ position:fixed; left:0; right:0; bottom:0; height:84px; z-index:10; background:linear-gradient(180deg, rgba(255,255,255,.6), rgba(255,255,255,.95)); backdrop-filter:blur(8px); border-top:1px solid rgba(0,0,0,.06); display:flex; align-items:center; justify-content:space-around }
+    .app-nav a{ text-decoration:none; color:#6b7b8a; font-size:12px; display:flex; flex-direction:column; align-items:center; gap:6px }
+    .app-nav a .bi{ font-size:20px }
+    .home-fab{ position:absolute; left:50%; transform:translateX(-50%); bottom:22px; width:64px; height:64px; border-radius:50%; background:linear-gradient(180deg,#8be3ff,#35a8f0); color:#fff; display:grid; place-items:center; box-shadow:0 16px 32px rgba(0,0,0,.25); border:4px solid #fff }
+    .active{ color:#2a476a !important; font-weight:800 }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="back" href="my-profile.html" aria-label="Back"><i class="bi bi-chevron-left"></i></a>
+    <div class="fs-4 fw-bold">Edit Profile</div>
+    <button class="gear" aria-label="Settings"><i class="bi bi-gear"></i></button>
+  </header>
+
+  <div class="avatar"><i class="bi bi-person fs-1"></i><div class="cam"><i class="bi bi-camera-fill"></i></div></div>
+  <div class="tabs">
+    <button id="tabProfile" class="tab">Profile</button>
+    <button id="tabPassword" class="tab inactive">Password</button>
+  </div>
+
+  <main id="panel" class="containerx"></main>
+
+  <nav class="app-nav">
+    <a href="destination.html" aria-label="Destination"><i class="bi bi-geo-alt"></i><span>Destination</span></a>
+    <a href="watch-ads.html" aria-label="Watch Ads"><i class="bi bi-camera-reels"></i><span>Watch Ads</span></a>
+    <a href="passenger-dashboard.html" class="home-fab" aria-label="Home"><i class="bi bi-house-door fs-3"></i></a>
+    <a href="wallet.html" aria-label="Wallet"><i class="bi bi-wallet2"></i><span>Wallet</span></a>
+    <a href="my-profile.html" aria-label="Profile" class="active"><i class="bi bi-person"></i><span>Profile</span></a>
+  </nav>
+
+  <script type="module">
+  import { requireLogin, db, ref, get, set } from "./js/authentication.js";
+  const user = await requireLogin('login.html');
+  const panel = document.getElementById('panel');
+  const tabProfile = document.getElementById('tabProfile');
+  const tabPassword = document.getElementById('tabPassword');
+  let current = 'profile';
+
+  function setActive(which){
+    if (which === current) return;
+    current = which;
+    if(which==='profile'){
+      tabProfile.classList.remove('inactive');
+      tabPassword.classList.add('inactive');
+      showProfile();
+    } else {
+      tabPassword.classList.remove('inactive');
+      tabProfile.classList.add('inactive');
+      showPassword();
+    }
+  }
+
+  async function showProfile(){
+    let u = {}; try{ const s = await get(ref(db, `all_users/${user.uid}`)); u = s.exists()?s.val():{}; }catch{}
+    const name = u.name || user.displayName || '';
+    const phone = u.phone || '';
+    const parts = String(name).split(' ');
+    const first = parts[0] || '';
+    const last = parts.slice(1).join(' ');
+    panel.innerHTML = `
+      <div class="fw-bold">Personal Information</div>
+      <div class="field"><input id="first" class="form-control" placeholder="First Name" value="${first}"></div>
+      <div class="field"><input id="last" class="form-control" placeholder="Last Name" value="${last}"></div>
+      <div class="field"><input id="email" class="form-control" placeholder="Email (optional)" value="${user.email||''}" disabled></div>
+      <div class="field"><input id="phone" class="form-control" placeholder="Phone Number" value="${phone}"></div>
+      <button id="saveInfo" class="btn-save">Save Changes</button>
+    `;
+    document.getElementById('saveInfo').addEventListener('click', async ()=>{
+      const newName = `${document.getElementById('first').value} ${document.getElementById('last').value}`.trim();
+      const newPhone = document.getElementById('phone').value.trim();
+      try{
+        await set(ref(db,`all_users/${user.uid}`),{ uid:user.uid, email:user.email, name:newName, phone:newPhone, role:u.role||'' });
+        const ps = await get(ref(db,`passengers/${user.uid}`));
+        if(ps.exists()) await set(ref(db,`passengers/${user.uid}`),{ ...(ps.val()||{}), uid:user.uid, email:user.email, name:newName, phone:newPhone, role:'passenger' });
+        const dr = await get(ref(db,`drivers/${user.uid}`));
+        if(dr.exists()) await set(ref(db,`drivers/${user.uid}`),{ ...(dr.val()||{}), uid:user.uid, email:user.email, name:newName });
+        alert('Saved!');
+      }catch(e){ alert('Failed: '+e.message); }
+    });
+  }
+
+  function showPassword(){
+    panel.innerHTML = `
+      <div class="fw-bold">Change Password</div>
+      <div class="field"><input id="old" type="password" class="form-control" placeholder="Old Password"></div>
+      <div class="field"><input id="pw1" type="password" class="form-control" placeholder="New Password"></div>
+      <div class="field"><input id="pw2" type="password" class="form-control" placeholder="Confirm Password"></div>
+      <button class="btn-save" disabled>Save Changes</button>
+      <div class="text-muted small">UI only for now.</div>
+    `;
+  }
+
+  const toProfile = ()=> setActive('profile');
+  const toPassword = ()=> setActive('password');
+  tabProfile.addEventListener('click', toProfile);
+  tabPassword.addEventListener('click', toPassword);
+  tabProfile.addEventListener('touchend', (e)=>{ e.preventDefault(); toProfile(); }, {passive:false});
+  tabPassword.addEventListener('touchend', (e)=>{ e.preventDefault(); toPassword(); }, {passive:false});
+
+  // Render initial view
+  current = 'password';
+  setActive('profile');
+</script>
+</body>
+</html>

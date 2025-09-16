@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>JeepNi — Action</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body{background:#f6f7fb}
+    .card{max-width:540px;margin:10vh auto;border-radius:16px}
+  </style>
+  <style>
+    /* Background 2 overlay with low opacity */
+    body{ position: relative; }
+    body::before{ content:""; position: fixed; inset:0; background: url('icons/Background2.png') center bottom / cover no-repeat; opacity:.12; pointer-events:none; z-index:-1; }
+  </style>
+</head>
+<body>
+<div class="card shadow-sm">
+  <div class="card-body">
+    <h4 class="mb-3">Account action</h4>
+
+    <div id="alert"></div>
+
+    <div id="info" class="text-muted mb-3">Validating link…</div>
+
+    <!-- Reset password form; hidden unless mode=resetPassword and code is valid -->
+    <form id="resetForm" class="d-none" novalidate>
+      <div class="mb-2">
+        <label class="form-label">New password</label>
+        <input id="newPass" type="password" class="form-control" required />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Confirm new password</label>
+        <input id="confirmPass" type="password" class="form-control" required />
+      </div>
+      <div class="d-grid">
+        <button id="btnReset" type="submit" class="btn btn-primary">Update password</button>
+      </div>
+    </form>
+
+    <div class="mt-4">
+      <a href="login.html" class="small">Back to login</a>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+/**
+ * This page uses the shared Firebase init from authentication.js
+ * and the logic module code.js to process ?mode & ?oobCode links.
+ */
+import "./js/authentication.js";
+import { handleActionLink, doPasswordReset, q } from "./js/code.js";
+
+const alertBox = document.getElementById("alert");
+const info     = document.getElementById("info");
+const form     = document.getElementById("resetForm");
+const newPass  = document.getElementById("newPass");
+const confirmP = document.getElementById("confirmPass");
+const btnReset = document.getElementById("btnReset");
+
+function showAlert(msg, type="warning") {
+  alertBox.innerHTML =
+    `<div class="alert alert-${type} alert-dismissible fade show" role="alert">
+       ${msg}
+       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+     </div>`;
+}
+
+function setInfo(msg) { info.textContent = msg; }
+
+let currentOob = "";
+let currentMode = "";
+
+(async () => {
+  currentMode = q("mode");
+  const result = await handleActionLink((msg, type) => {
+    if (type === "info") setInfo(msg);
+    else showAlert(msg, type);
+  });
+
+  if (result && result.mode === "resetPassword") {
+    currentOob = result.oobCode;
+    // show reset form
+    form.classList.remove("d-none");
+  }
+})();
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const a = newPass.value;
+  const b = confirmP.value;
+
+  if (!a || !b) { showAlert("Please complete both password fields.", "danger"); return; }
+  if (a !== b) { showAlert("Passwords do not match.", "danger"); return; }
+  if (a.length < 8) { showAlert("Use at least 8 characters for the new password.", "danger"); return; }
+
+  btnReset.disabled = true; btnReset.textContent = "Updating…";
+  await doPasswordReset(currentOob, a, showAlert);
+  btnReset.disabled = false; btnReset.textContent = "Update password";
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

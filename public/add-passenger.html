@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>JeepNi — Add Passenger</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { background:#AFDDFF; font-family:'Nunito',sans-serif; }
+    .navbar { background:#4ED7F1!important; box-shadow:0 2px 10px rgba(0,0,0,.1); }
+    .navbar-brand { color:#fff!important; font-weight:700; }
+    .card { max-width:760px; margin:6vh auto; border-radius:16px; border:none; box-shadow:0 8px 20px rgba(0,0,0,.1); }
+    .btn-primary { background:#FFD63A; border-color:#FFD63A; color:#333; font-weight:600; }
+    .btn-primary:hover { background:#ffc800; border-color:#ffc800; color:#333; }
+    .form-control:focus,.form-select:focus { border-color:#4ED7F1; box-shadow:0 0 0 .25rem rgba(78,215,241,.25); }
+    h4 { color:#4ED7F1; font-weight:700; }
+  </style>
+  <link rel="icon" href="/icons/JEEPNi.png" type="image/png">
+</head>
+<body>
+<nav class="navbar border-bottom">
+  <div class="container">
+    <span class="navbar-brand fw-semibold">JeepNi — Admin</span>
+    <div class="ms-auto small text-white" id="adminInfo">Checking session...</div>
+  </div>
+</nav>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <h4 class="mb-3">Add Passenger</h4>
+    <div id="alert"></div>
+
+    <form id="formAdd" novalidate>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Full name</label>
+          <input id="name" class="form-control" required />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Email</label>
+          <input id="email" type="email" class="form-control" required />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Temporary password</label>
+          <input id="password" type="password" class="form-control" placeholder="e.g., Pass1234!" required />
+          <div class="form-text">At least 8 characters with letters and numbers. Ask the passenger to change it after first login.</div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Phone (optional)</label>
+          <input id="phone" class="form-control" />
+        </div>
+        <div class="col-12">
+          <label class="form-label">Notes (optional)</label>
+          <input id="notes" class="form-control" />
+        </div>
+      </div>
+
+      <div class="d-flex gap-2 mt-4">
+        <button class="btn btn-primary" id="btnCreate" type="submit">Create Passenger</button>
+        <a class="btn btn-outline-secondary" href="secure-admin-dashboard.html">Back to Dashboard</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import { getAuth as getAuth2, createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+  // Primary app wrappers
+  import { auth, db, ref, set, get, query, orderByChild, equalTo } from "./js/authentication.js";
+  import { requireAdmin, attachAdminBadge } from "./js/admin_auth.js";
+
+  await requireAdmin("login.html");
+  attachAdminBadge("#adminInfo");
+
+  // Secondary app for creation (avoid logging out admin)
+  let secondaryApp = null, auth2 = null;
+  const firebaseConfig = auth.app.options;
+  function initSecondary(){
+    if (secondaryApp) deleteApp(secondaryApp).catch(()=>{});
+    secondaryApp = initializeApp(firebaseConfig, "secondary_"+Date.now());
+    auth2 = getAuth2(secondaryApp);
+    return auth2;
+  }
+
+  // UI helpers
+  const alertBox = document.getElementById("alert");
+  function showAlert(html, type="warning"){
+    alertBox.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">${html}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
+  }
+
+  document.getElementById("formAdd").addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const pass  = document.getElementById("password").value;
+    const phone = document.getElementById("phone").value.trim();
+    const notes = document.getElementById("notes").value.trim();
+
+    if(!name || !email || !pass) { showAlert("Please complete name, email and password.", "danger"); return; }
+
+    const btn = document.getElementById("btnCreate");
+    btn.disabled = true; btn.textContent = "Creating...";
+
+    try{
+      // Prefer server-side creation for atomicity
+      const API_BASE = window.API_BASE ?? ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'http://localhost:5000' : '');
+      const serverResp = await fetch(`${API_BASE}/api/admin/create_account`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password: pass, role: 'passenger', phone, notes })
+      }).catch(()=>null);
+      if (serverResp && serverResp.ok) {
+        const j = await serverResp.json();
+        if (j.success !== false) {
+          const uid = j.uid;
+          showAlert(`Passenger created. UID: <code>${String(uid).slice(0,6)}…</code>`, 'success');
+          document.getElementById('formAdd').reset();
+          return;
+        }
+      }
+
+      // Fallback: client-side secondary auth + DB write
+      const secAuth = initSecondary();
+      const cred = await createUserWithEmailAndPassword(secAuth, email, pass);
+      await updateProfile(cred.user, { displayName: name });
+      try { await sendEmailVerification(cred.user); } catch (_) {}
+
+      const uid = cred.user.uid;
+      const profile = {
+        uid, name, email, phone, role: "passenger",
+        created_at: (new Date()).toISOString(),
+        created_ts: Date.now(),
+        notes: notes || ""
+      };
+
+      await Promise.all([
+        set(ref(db, `all_users/${uid}`), profile),
+        set(ref(db, `passengers/${uid}`), profile)
+      ]);
+
+      showAlert(`Passenger created. UID: <code>${uid.slice(0,6)}…</code>`, "success");
+      document.getElementById("formAdd").reset();
+    }catch(err){
+      // If auth user already exists, try to attach DB profile instead of failing hard
+      if (err?.code === 'auth/email-already-in-use') {
+        try {
+          const qref = query(ref(db, 'all_users'), orderByChild('email'), equalTo(email));
+          const snap = await get(qref);
+          let existingUid = null;
+          if (snap.exists()) {
+            const obj = snap.val();
+            existingUid = Object.keys(obj)[0];
+          }
+          if (existingUid) {
+            const profile = {
+              uid: existingUid, name, email, phone, role: 'passenger',
+              created_at: (new Date()).toISOString(), created_ts: Date.now(),
+              notes: notes || ''
+            };
+            try {
+              await Promise.all([
+                set(ref(db, `all_users/${existingUid}`), profile),
+                set(ref(db, `passengers/${existingUid}`), profile)
+              ]);
+              showAlert(`Passenger linked to existing account. UID: <code>${existingUid.slice(0,6)}…</code>`, 'success');
+              document.getElementById('formAdd').reset();
+              return;
+            } catch (perm) {
+              const API_BASE = window.API_BASE ?? ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'http://localhost:5000' : '');
+              const resp = await fetch(`${API_BASE}/api/admin/create_profile`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid: existingUid, role: 'passenger', profile })
+              });
+              const j = await resp.json().catch(()=>({}));
+              if (resp.ok && j.success !== false) {
+                showAlert(`Passenger linked to existing account. UID: <code>${existingUid.slice(0,6)}…</code>`, 'success');
+                document.getElementById('formAdd').reset();
+                return;
+              }
+            }
+          }
+        } catch (e) {
+          // fall through to generic error
+        }
+      }
+      showAlert("Failed to create passenger: " + (err?.message || err), "danger");
+    }finally{
+      btn.disabled = false; btn.textContent = "Create Passenger";
+      if (secondaryApp) { try { await deleteApp(secondaryApp); } catch {} secondaryApp = null; auth2 = null; }
+    }
+  });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

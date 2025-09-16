@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>JeepNi - Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#4ED7F1" />
+  <!-- Preconnects for faster first paint -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+  <link rel="dns-prefetch" href="https://www.gstatic.com">
+  <!-- Fonts / Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    :root{
+      --bg: linear-gradient(135deg, #c2f3ff 0%, #f6f7fb 60%);
+      --card-bg: rgba(255,255,255,0.9);
+      --text:#1f2937; --muted:#6b7280; --brand:#4ED7F1; --accent:#FFD63A; --danger:#dc3545; --radius:18px; --shadow:0 16px 40px rgba(0,0,0,.12);
+    }
+    .theme-dark{
+      --bg: radial-gradient(1200px 600px at 10% 10%, #0ea5b2 0%, #0f172a 40%, #050816 100%);
+      --card-bg: rgba(17,24,39,0.9); --text:#e5e7eb; --muted:#94a3b8; --brand:#22d3ee; --accent:#fbbf24; --shadow:0 28px 60px rgba(0,0,0,.5);
+    }
+    html,body{height:100%}
+    body{background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;}
+    .login-wrap{min-height:100%; display:grid; place-items:center; padding:6vh 16px}
+    .brand{display:flex; align-items:center; gap:.6rem; color:var(--text); text-decoration:none;}
+    .brand img{width:28px; height:28px}
+    .brand span{font-weight:800; font-family:'Nunito', sans-serif; letter-spacing:.3px}
+    .card-login{max-width:460px; width:100%; background:var(--card-bg); backdrop-filter: blur(10px); border:1px solid rgba(0,0,0,.06); border-radius:var(--radius); box-shadow:var(--shadow)}
+    .card-login .header{display:flex; align-items:center; justify-content:space-between}
+    .title{font-weight:800; color:var(--brand)}
+    .btn-brand{background:var(--accent); border-color:var(--accent); color:#111; font-weight:700}
+    .btn-brand:hover{background:#ffc107; border-color:#ffc107; color:#111}
+    .form-control:focus{border-color:var(--brand); box-shadow:0 0 0 .20rem rgba(78,215,241,.25)}
+    .input-icon{position:relative}
+    .input-icon .bi{position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--muted)}
+    .input-icon input{padding-left:2rem}
+    .muted{color:var(--muted)}
+    .link{color:var(--brand); text-decoration:none}
+    .link:hover{text-decoration:underline}
+    .toggle-theme{border-color:var(--brand); color:var(--brand)}
+    /* Banner placement + styling */
+    .jeep-hero{max-width:520px; width:100%; margin:2vh auto 0; position:relative}
+    .jeep-hero img{user-select:none; -webkit-user-drag:none}
+    .jeep-hero .bg-blur{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:blur(6px); opacity:.25; border-radius:18px}
+    .jeep-hero .jeep{position:relative; width:100%; height:auto; display:block; filter: drop-shadow(0 10px 22px rgba(0,0,0,.25)); margin-inline:auto}
+    .jeep-hero .person{position:absolute; display:block;}
+    /* People inside windshield */
+    .person.left{left:23%; top:24%; width:21.5%;}
+    .person.right{left:61.5%; top:24%; width:21.5%;}
+    .banner{position:absolute; display:block; filter: drop-shadow(0 8px 14px rgba(0,0,0,.18));}
+    .banner img{width:100%; height:auto; display:block}
+    /* Base positions tuned to match design (3.png) */
+    .banner.passenger{left:20%; top:18%; width:52%; transform:rotate(-10deg)}
+    .banner.driver{left:56%; top:30%; width:46%; transform:rotate(8deg)}
+    /* Slight tweaks for small phones */
+    @media (max-width: 380px){
+      .banner.passenger{left:17%; top:20%; width:54%}
+      .banner.driver{left:53%; top:33%; width:48%}
+      .person.left{left:21.5%; top:25%; width:23%}
+      .person.right{left:61%; top:25%; width:23%}
+    }
+    /* Wider than design: pull banners inward a bit */
+    @media (min-width: 520px){
+      .banner.passenger{left:20%; top:21%; width:44%}
+      .banner.driver{left:54%; top:34%; width:42%}
+    }
+
+    .banner img {
+     transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .banner.active img {
+        transform: scale(1.3);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        z-index: 2;
+      }
+  </style>
+  <style>
+    /* Soft Background 2 overlay; keeps content legible */
+    body{ position: relative; }
+    body::before{
+      content:""; position: fixed; inset:0;
+      background: url('icons/Background2.png') center bottom / cover no-repeat;
+      opacity:.12; pointer-events:none; z-index:-1;
+    }
+  </style>
+  <link rel="icon" href="/icons/JEEPNi.png" type="image/png">
+  </head>
+  <body>
+  <div class="login-wrap">
+    <div class="mb-3 jeep-hero">
+      <img class="bg-blur" src="icons/Background1.png" alt="">
+      <img class="jeep" src="icons/21 Jeepney Face.png" alt="Jeepney">
+
+      <!-- People in the windshield -->
+      <img class="person left" src="icons/19 Student.png" alt="Passenger">
+      <img class="person right" src="icons/20 Manong Driver.png" alt="Driver">
+
+      <!-- Banners -->
+      <a id="banPassenger" class="banner passenger" href="#" aria-label="Passenger" role="button" tabindex="0" aria-pressed="false">
+        <img src="icons/17 Passenger Button.png" alt="Pasahero Para Po!">
+      </a>
+      <a id="banDriver" class="banner driver" href="#" aria-label="Driver" role="button" tabindex="0" aria-pressed="false">
+        <img src="icons/18 Driver Button.png" alt="Manong Driver">
+      </a>
+    </div>
+    <div class="card-login p-4 p-md-5 auth-card">
+      <div class="header mb-3">
+        <a class="brand" href="index.html"><img src="/icons/JEEPNi.png" alt="JeepNi"><span>JeepNi</span></a>
+        <button id="btnTheme" class="btn btn-sm toggle-theme" title="Toggle theme"><i class="bi bi-moon-stars"></i></button>
+      </div>
+      <h4 id="loginTitle" class="title mb-1">Welcome back</h4>
+      <div id="loginSub" class="muted mb-3">Sign in to continue</div>
+      <div data-role-chip class="small mb-2" style="display:inline-block; background:rgba(78,215,241,.15); color:#0f172a; padding:4px 8px; border-radius:999px; font-weight:600"></div>
+      <div id="alert" class="mb-2"></div>
+      <form id="loginForm" novalidate>
+        <div class="mb-3 input-icon">
+          <i class="bi bi-at"></i>
+          <label class="form-label">Email</label>
+          <input id="email" type="email" class="form-control" placeholder="you@example.com" autocomplete="email" required />
+          <div class="form-text">Use your registered email address</div>
+        </div>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <label class="form-label mb-0">Password</label>
+            <a href="#" id="linkForgot" class="small link">Forgot password?</a>
+          </div>
+          <div class="input-group">
+            <span class="input-group-text bg-transparent"><i class="bi bi-lock"></i></span>
+            <input id="password" type="password" class="form-control" placeholder="••••••••" autocomplete="current-password" required />
+            <button class="btn btn-outline-secondary" type="button" id="togglePass" title="Show/Hide"><i class="bi bi-eye"></i></button>
+          </div>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="remember">
+            <label class="form-check-label" for="remember">Remember email</label>
+          </div>
+          <a href="register.html" class="small link">Create account</a>
+        </div>
+        <div class="d-grid">
+          <button class="btn btn-brand py-2" type="submit" id="btnLogin">
+            <span class="btn-text">Sign in</span>
+            <span class="spinner-border spinner-border-sm ms-2 d-none" id="spinner" role="status" aria-hidden="true"></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth, getRole } from "./js/authentication.js";
+    import { onAuthStateChanged, signInWithEmailAndPassword, sendPasswordResetEmail, fetchSignInMethodsForEmail } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+    const form = document.getElementById("loginForm");
+    const emailEl = document.getElementById("email");
+    const passEl  = document.getElementById("password");
+    const alertBox = document.getElementById("alert");
+    const btnTheme = document.getElementById('btnTheme');
+    const btnLogin = document.getElementById('btnLogin');
+    const spinner = document.getElementById('spinner');
+    const banPassenger = document.getElementById('banPassenger');
+    const banDriver = document.getElementById('banDriver');
+    // Role preference from querystring (passenger|driver|admin)
+    // Role chip + banner highlight
+    (function(){
+      const params = new URLSearchParams(location.search);
+      const stored = localStorage.getItem('selectedRole');
+      let rolePref = (params.get('role')||stored||'passenger').toLowerCase();
+      const chip = document.querySelector('[data-role-chip]');
+      if (chip) chip.textContent = `Signing in as: ${rolePref==='driver'?'Driver':'Passenger'}`;
+      function setText(){
+        if(rolePref==='passenger'){
+          document.getElementById('loginTitle').textContent = 'Passenger Login';
+          document.getElementById('loginSub').textContent = 'Sign in to continue as passenger';
+          const link = document.querySelector('a.small.link[href="register.html"]');
+          if(link){ link.href = 'register.html?role=passenger'; }
+        } else if(rolePref==='driver'){
+          document.getElementById('loginTitle').textContent = 'Driver Login';
+          document.getElementById('loginSub').textContent = 'Sign in to continue as driver';
+          const link = document.querySelector('a.small.link[href="register.html"]');
+          if(link){ link.href = 'register.html?role=driver'; }
+        }
+      }
+      setText();
+      const banPassenger = document.getElementById('banPassenger');
+      const banDriver = document.getElementById('banDriver');
+      function highlight(role){
+        [banPassenger, banDriver].forEach(b=> b && b.classList.remove('active'));
+        const el = role==='driver'?banDriver:banPassenger;
+        if(el){ el.classList.add('active'); el.setAttribute('aria-pressed','true'); }
+      }
+      highlight(rolePref);
+      function activate(el, role){
+        highlight(role);
+        localStorage.setItem('selectedRole', role);
+        setText();
+      }
+      [banPassenger, banDriver].forEach((el)=>{
+        if(!el) return;
+        el.addEventListener('click', (e)=>{ e.preventDefault(); activate(el, el.id==='banPassenger'?'passenger':'driver'); });
+        el.addEventListener('keydown', (e)=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); activate(el, el.id==='banPassenger'?'passenger':'driver'); }});
+      });
+    })();
+
+    function showAlert(msg, type="danger") {
+      alertBox.innerHTML =
+        `<div class="alert alert-${type} alert-dismissible fade show" role="alert">
+           ${msg}
+           <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+         </div>`;
+    }
+    function clearAlert(){ alertBox.innerHTML = ""; }
+
+    function goByRole(role) {
+      if (role === "admin" || role === "super_admin") {
+        location.href = "secure-admin-dashboard.html";
+      } else if (role === "driver") {
+        location.href = "driver-dashboard.html";
+      } else {
+        location.href = "passenger-dashboard.html"; 
+      }
+    }
+
+    // Role preference from querystring (passenger|driver|admin) or banner clicks
+    const params = new URLSearchParams(location.search);
+    let rolePref = (params.get('role')||'').toLowerCase();
+    function applyRolePref(){
+      if(rolePref==='passenger'){
+        document.getElementById('loginTitle').textContent = 'Passenger Login';
+        document.getElementById('loginSub').textContent = 'Sign in to continue as passenger';
+        const link = document.querySelector('a.small.link[href="register.html"]');
+        if(link){ link.href = 'register.html?role=passenger'; }
+      } else if(rolePref==='driver'){
+        document.getElementById('loginTitle').textContent = 'Driver Login';
+        document.getElementById('loginSub').textContent = 'Sign in to continue as driver';
+        const link = document.querySelector('a.small.link[href="register.html"]');
+        if(link){ link.href = 'register.html?role=driver'; }
+      } else if(rolePref==='admin'){
+        document.getElementById('loginTitle').textContent = 'Admin Login';
+        document.getElementById('loginSub').textContent = 'Sign in to manage JeepNi';
+      }
+    }
+    applyRolePref();
+    banPassenger?.addEventListener('click', (e)=>{ e.preventDefault(); rolePref='passenger'; applyRolePref(); });
+    banDriver?.addEventListener('click', (e)=>{ e.preventDefault(); rolePref='driver'; applyRolePref(); });
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) return;
+      try {
+        const role = await getRole(user.uid);
+        goByRole(role);
+      } catch (e) {
+        showAlert("Could not fetch role. " + e.message);
+      }
+    });
+
+    // Theme toggle + persist
+    try {
+      const saved = localStorage.getItem('theme') || 'light';
+      if (saved === 'dark') document.body.classList.add('theme-dark');
+    } catch {}
+    if (btnTheme) btnTheme.addEventListener('click', () => {
+      const dark = document.body.classList.toggle('theme-dark');
+      try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch {}
+      const ico = btnTheme.querySelector('i');
+      if (ico) ico.className = dark ? 'bi bi-brightness-high' : 'bi bi-moon-stars';
+    });
+
+    // Show/Hide password
+    document.getElementById('togglePass').addEventListener('click', () => {
+      const type = passEl.getAttribute('type') === 'password' ? 'text' : 'password';
+      passEl.setAttribute('type', type);
+      const icon = document.querySelector('#togglePass i');
+      if (icon) icon.className = type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
+    });
+
+    // Remember email
+    try {
+      const storedEmail = localStorage.getItem('remember_email');
+      if (storedEmail) { emailEl.value = storedEmail; document.getElementById('remember').checked = true; }
+    } catch {}
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = emailEl.value.trim();
+      const pass  = passEl.value;
+
+      if (!email || !pass) {
+        showAlert("Please enter email and password.", 'warning');
+        return;
+      }
+
+      // Clear any previous hint/alert before attempting sign-in
+      clearAlert();
+
+      btnLogin.disabled = true; spinner.classList.remove('d-none');
+
+      try {
+        // 1) Optional pre-check: capture hints, but don't show UI until needed
+        let precheckHint = '';
+        let methods = null;
+        try { methods = await fetchSignInMethodsForEmail(auth, email); }
+        catch (err) { console.debug('fetchSignInMethodsForEmail failed:', err?.code || err?.message || err); }
+        if (Array.isArray(methods)) {
+          if (methods.length === 0) {
+            precheckHint = 'No account found for this email in the current project.';
+          } else if (!methods.includes('password')) {
+            precheckHint = 'This account may use a different sign-in method (e.g., Google).';
+          }
+        }
+
+        const cred = await signInWithEmailAndPassword(auth, email, pass);
+        const role = await getRole(cred.user.uid);
+
+        localStorage.setItem("uid", cred.user.uid);
+        localStorage.setItem("email", cred.user.email ?? "");
+        localStorage.setItem("role", role);
+
+        // Remember email preference
+        try { const remember = document.getElementById('remember').checked; if (remember) localStorage.setItem('remember_email', email); else localStorage.removeItem('remember_email'); } catch {}
+        onLoginSuccess();
+      } catch (err) {
+        let msg = err.message;
+        if (err.code === "auth/user-not-found") msg = "No account found for this email.";
+        if (err.code === "auth/wrong-password") msg = "Incorrect password.";
+        if (err.code === "auth/invalid-email")  msg = "Invalid email format.";
+        if (err.code === "auth/invalid-credential") msg = "Email or password is incorrect, or the account does not exist.";
+        if (err.code === "auth/too-many-requests") msg = "Too many attempts. Please try again later.";
+        if (precheckHint) msg = `${precheckHint} ${msg}`;
+        showAlert(msg, 'danger');
+      } finally {
+        btnLogin.disabled = false; spinner.classList.add('d-none');
+      }
+    });
+
+    // Forgot password flow
+    document.getElementById('linkForgot').addEventListener('click', async (e) => {
+      e.preventDefault();
+      const email = emailEl.value.trim();
+      if (!email) { showAlert('Enter your email above, then click Forgot password.', 'warning'); return; }
+      try {
+        await sendPasswordResetEmail(auth, email);
+        showAlert('Password reset email sent. Check your inbox.', 'success');
+      } catch (err) {
+        let msg = err.message;
+        if (err.code === 'auth/user-not-found') msg = 'No account found for this email.';
+        if (err.code === 'auth/invalid-email') msg = 'Invalid email format.';
+        showAlert(msg, 'danger');
+      }
+    });
+
+    const banPassenger = document.getElementById('banPassenger');
+    const banDriver = document.getElementById('banDriver');
+
+    // Handle selection
+    function selectBanner(selected, other) {
+      selected.classList.add('active');
+      other.classList.remove('active');
+    }
+
+    banPassenger.addEventListener('click', (e) => {
+      e.preventDefault();
+      selectBanner(banPassenger, banDriver);
+      console.log("Passenger login selected");
+    });
+
+    banDriver.addEventListener('click', (e) => {
+      e.preventDefault();
+      selectBanner(banDriver, banPassenger);
+      console.log("Driver login selected");
+    });
+    function onLoginSuccess(){ window.location.replace('/dashboards/passenger.html'); }
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,89 +1,170 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Welcome to Firebase Hosting</title>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>JeepNi</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#22d3ee" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --brand:#22d3ee; --accent:#ffd64a; --text:#0f172a; --muted:#6b7280;
+    }
+    html,body{height:100%}
+    body{
+      margin:0; font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+      color:var(--text);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0) 40%, rgba(15,23,42,.10) 100%),
+        linear-gradient(135deg, #c2f3ff 0%, #f4fbff 60%);
+      /* Hero artwork with scrim for legible text */
+      background-image:
+        radial-gradient(800px 420px at 50% 18%, rgba(0,0,0,.28) 0%, rgba(0,0,0,0) 65%),
+        linear-gradient(180deg, rgba(255,255,255,0) 40%, rgba(15,23,42,.12) 100%),
+        url('icons/Background1.png'),
+        linear-gradient(135deg, #c2f3ff 0%, #f4fbff 60%);
+      background-size: auto, auto, cover, auto;
+      background-position: center top, center bottom, center bottom, center;
+      background-repeat:no-repeat;
+    }
+    .landing{min-height:100%; display:grid; grid-template-rows: 1fr auto auto 1fr; place-items:center; padding:28px 16px}
+    .logo{display:flex; align-items:center; gap:.6rem; margin-top:8px}
+    .logo img{height:88px; width:auto; filter: drop-shadow(0 8px 20px rgba(0,0,0,.15));}
+    .tagline{font-family:'Nunito', sans-serif; font-size:28px; font-weight:800; letter-spacing:1px; color:var(--accent); text-shadow:0 2px 0 rgba(0,0,0,.25), 0 6px 16px rgba(0,0,0,.45)}
+    .sub{margin-top:4px; color:#eef2ff; font-weight:700; text-shadow:0 2px 10px rgba(0,0,0,.45)}
 
-    <!-- update the version number as needed -->
-    <script defer src="/__/firebase/11.6.0/firebase-app-compat.js"></script>
-    <!-- include only the Firebase features as you need -->
-    <script defer src="/__/firebase/11.6.0/firebase-auth-compat.js"></script>
-    <script defer src="/__/firebase/11.6.0/firebase-database-compat.js"></script>
-    <script defer src="/__/firebase/11.6.0/firebase-firestore-compat.js"></script>
-    <script defer src="/__/firebase/11.6.0/firebase-functions-compat.js"></script>
-    <script defer src="/__/firebase/11.6.0/firebase-messaging-compat.js"></script>
-    <script defer src="/__/firebase/11.6.0/firebase-storage-compat.js"></script>
-    <script defer src="/__/firebase/11.6.0/firebase-analytics-compat.js"></script>
-    <script defer src="/__/firebase/11.6.0/firebase-remote-config-compat.js"></script>
-    <script defer src="/__/firebase/11.6.0/firebase-performance-compat.js"></script>
-    <!-- 
-      initialize the SDK after all desired features are loaded, set useEmulator to false
-      to avoid connecting the SDK to running emulators.
-    -->
-    <script defer src="/__/firebase/init.js?useEmulator=true"></script>
+    .cta{margin-top:18px}
+    .btn-cta{
+      display:inline-flex; align-items:center; gap:.6rem;
+      padding:14px 22px; border:none; border-radius:999px; cursor:pointer;
+      background: linear-gradient(180deg, #79e8f6, #37c6e1);
+      color:#083344; font-weight:800; font-size:20px; letter-spacing:.5px; text-decoration:none;
+      box-shadow:0 10px 24px rgba(0,0,0,.18);
+    }
+    .btn-cta:hover{transform:translateY(-1px); filter:saturate(1.05)}
 
-    <style media="screen">
-      body { background: #ECEFF1; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
-      #message { background: white; max-width: 360px; margin: 100px auto 16px; padding: 32px 24px; border-radius: 3px; }
-      #message h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
-      #message h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
-      #message p { line-height: 140%; margin: 16px 0 24px; font-size: 14px; }
-      #message a { display: block; text-align: center; background: #039be5; text-transform: uppercase; text-decoration: none; color: white; padding: 16px; border-radius: 4px; }
-      #message, #message a { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
-      #load { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; }
-      @media (max-width: 600px) {
-        body, #message { margin-top: 0; background: white; box-shadow: none; }
-        body { border-top: 16px solid #ffa100; }
-      }
-    </style>
-  </head>
-  <body>
-    <div id="message">
-      <h2>Welcome</h2>
-      <h1>Firebase Hosting Setup Complete</h1>
-      <p>You're seeing this because you've successfully setup Firebase Hosting. Now it's time to go build something extraordinary!</p>
-      <a target="_blank" href="https://firebase.google.com/docs/hosting/">Open Hosting Documentation</a>
+    /* Loader shown when user is already signed-in */
+    .loader{width:min(460px, 92vw); margin:24px auto 8px; display:none}
+    .bar{height:18px; border-radius:999px; background:#585c63; position:relative; padding:3px; box-shadow:inset 0 2px 6px rgba(0,0,0,.25)}
+    .fill{height:100%; width:0%; border-radius:999px; background:linear-gradient(90deg, #22d3ee, #0ea5b2)}
+    .label{margin-top:6px; text-align:center; color:#2d3748; font-weight:600}
+
+    .foot{height:24vh}
+    @media (min-width:420px){ .logo img{height:110px} .tagline{font-size:32px} }
+    /* Ensure the jeep remains visible on narrow phones */
+    @media (max-width: 430px){
+      body{ background-size: auto, auto, auto 100%, auto; background-position: center top, center bottom, left bottom, center; }
+      .foot{ height:20vh }
+      .logo img{ height:84px }
+    }
+  </style>
+  <link rel="icon" href="/icons/JEEPNi.png" type="image/png">
+  <meta name="description" content="Know before you go – Connect to a smarter commuting experience.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="/icons/JEEPNi.png">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="color-scheme" content="light only">
+</head>
+<body>
+  <main class="landing">
+    <div></div>
+    <div class="logo">
+      <img src="icons/JEEPNi.png" alt="JeepNi logo">
     </div>
-    <p id="load">krethjw;rkgh;rkgFirebase SDK Loading&hellip;</p>
+    <div class="text-center" style="width:100%">
+      <div class="tagline">Know before you go</div>
+      <div class="sub">Connect to a smarter commuting experience</div>
 
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        const loadEl = document.querySelector('#load');
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
-        // // The Firebase SDK is initialized and available here!
-        //
-        // firebase.auth().onAuthStateChanged(user => { });
-        // firebase.database().ref('/path/to/ref').on('value', snapshot => { });
-        // firebase.firestore().doc('/foo/bar').get().then(() => { });
-        // firebase.functions().httpsCallable('yourFunction')().then(() => { });
-        // firebase.messaging().requestPermission().then(() => { });
-        // firebase.storage().ref('/path/to/ref').getDownloadURL().then(() => { });
-        // firebase.analytics(); // call to activate
-        // firebase.analytics().logEvent('tutorial_completed');
-        // firebase.performance(); // call to activate
-        //
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+      <!-- Loader shows first, then reveals hero + card after 3s -->
+      <div id="loader" class="loader" style="display:block">
+        <div class="bar"><div id="fill" class="fill"></div></div>
+        <div id="loadLabel" class="label">Loading…</div>
+      </div>
 
-        try {
-          let app = firebase.app();
-          let features = [
-            'auth', 
-            'database', 
-            'firestore',
-            'functions',
-            'messaging', 
-            'storage', 
-            'analytics', 
-            'remoteConfig',
-            'performance',
-          ].filter(feature => typeof app[feature] === 'function');
-          loadEl.textContent = `Firebase SDK loaded with ${features.join(', ')}`;
-        } catch (e) {
-          console.error(e);
-          loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
+      <!-- Hero + banners (initially hidden until loader completes) -->
+      <section id="heroShell" style="display:none">
+        <div class="mb-3 jeep-hero" style="max-width:520px; margin:16px auto 10px; position:relative">
+          <img class="bg-blur" src="icons/Background1.png" alt="" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:blur(6px); opacity:.25; border-radius:18px;">
+          <img class="jeep" src="icons/21 Jeepney Face.png" alt="Jeepney" style="position:relative; width:100%; height:auto; display:block; filter: drop-shadow(0 10px 22px rgba(0,0,0,.25))">
+          <img class="person left" src="icons/19 Student.png" alt="Passenger" style="position:absolute; left:23%; top:24%; width:21.5%">
+          <img class="person right" src="icons/20 Manong Driver.png" alt="Driver" style="position:absolute; left:61.5%; top:24%; width:21.5%">
+          <a id="banPassenger" class="banner passenger" href="#" aria-label="Passenger" role="button" tabindex="0" aria-pressed="false" style="position:absolute; left:20%; top:18%; width:52%; display:block; transform:rotate(-10deg)">
+            <img src="icons/17 Passenger Button.png" alt="Pasahero Para Po!" style="width:100%; height:auto; transition: transform .25s ease, box-shadow .25s ease;">
+          </a>
+          <a id="banDriver" class="banner driver" href="#" aria-label="Driver" role="button" tabindex="0" aria-pressed="false" style="position:absolute; left:56%; top:30%; width:46%; display:block; transform:rotate(8deg)">
+            <img src="icons/18 Driver Button.png" alt="Manong Driver" style="width:100%; height:auto; transition: transform .25s ease, box-shadow .25s ease;">
+          </a>
+        </div>
+        <!-- Glass auth card -->
+        <section class="auth-card" style="max-width:520px; margin:0 auto 48px; padding:24px; border-radius:16px; background:rgba(255,255,255,.65); backdrop-filter:blur(10px); box-shadow:0 12px 30px rgba(0,0,0,.15);">
+          <h2 style="font-family:'Nunito', system-ui; font-weight:800; margin:0 0 6px; color:#0f172a">Welcome</h2>
+          <p class="mb-2" style="color:#334155">Choose your role by tapping a banner above.</p>
+          <p class="small text-muted mb-0">You can change this on the next screen.</p>
+        </section>
+      </section>
+    </div>
+    <div class="foot"></div>
+  </main>
+
+  <script type="module">
+    import { onAuthReady, getRole, signOutAndRedirect } from "./js/authentication.js";
+
+    const loader = document.getElementById('loader');
+    const fill = document.getElementById('fill');
+    const heroShell = document.getElementById('heroShell');
+
+    function startLoader(durationMs = 3000){
+      if (loader) loader.style.display = 'block';
+      let p = 0;
+      const start = performance.now();
+      const step = (now)=>{
+        const elapsed = now - start;
+        p = Math.min(100, Math.floor((elapsed/durationMs)*100));
+        fill.style.width = p + '%';
+        if (elapsed < durationMs) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+      return new Promise(r=> setTimeout(r, durationMs));
+    }
+
+    function goByRole(role){
+      if(role==="admin"||role==="super_admin") location.href="secure-admin-dashboard.html";
+      else if(role==="driver") location.href="driver-dashboard.html";
+      else if(role==="passenger") location.href="dashboard.html";
+      else signOutAndRedirect("login.html");
+    }
+
+    onAuthReady(async (user)=>{
+      if(!user){
+        // Show loader for 3s then reveal hero and bind banners
+        await startLoader(3000);
+        loader.style.display = 'none';
+        heroShell.style.display = 'block';
+
+        const banPassenger = document.getElementById('banPassenger');
+        const banDriver = document.getElementById('banDriver');
+        function activate(el, role){
+          [banPassenger, banDriver].forEach(b=> b && b.classList.remove('active'));
+          el.classList.add('active');
+          el.querySelector('img').style.transform = 'scale(1.25)';
+          el.querySelector('img').style.boxShadow = '0 6px 18px rgba(0,0,0,.25)';
+          localStorage.setItem('selectedRole', role);
+          setTimeout(()=>{ window.location.href = `login.html?role=${role}`; }, 200);
         }
-      });
-    </script>
-  </body>
+        [banPassenger, banDriver].forEach((el)=>{
+          if(!el) return;
+          el.setAttribute('role','button');
+          el.setAttribute('tabindex','0');
+          el.setAttribute('aria-pressed','false');
+          el.addEventListener('click', (e)=>{ e.preventDefault(); activate(el, el.id==='banPassenger'?'passenger':'driver'); });
+          el.addEventListener('keydown', (e)=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); activate(el, el.id==='banPassenger'?'passenger':'driver'); }});
+        });
+        return;
+      }
+      // Signed-in: route immediately to passenger dashboard (per requirement)
+      window.location.replace('/dashboards/passenger.html');
+    });
+  </script>
+</body>
 </html>

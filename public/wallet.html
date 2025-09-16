@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>JeepNi – Wallet</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root{ --blue:#35a8f0; --blue2:#2fa2eb; --bg:#eef5fb; --text:#0d2742; --muted:#6b7b8a; }
+    html,body{height:100%}
+    body{ margin:0; background: url('icons/Background1.png') center bottom / cover no-repeat, linear-gradient(180deg,#cfefff,#f6fbff); font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+    .hero{ padding: 16px 16px 6px; color: #fff; background: linear-gradient(180deg, rgba(53,168,240,.9), rgba(53,168,240,.65)); position: relative; }
+    .hero .row1{ display:flex; justify-content:space-between; align-items:center }
+    .avatar{ width:54px; height:54px; border-radius:50%; background: rgba(255,255,255,.85); display:grid; place-items:center; color:#658; box-shadow:0 8px 24px rgba(0,0,0,.18) }
+    .hello{ font-weight:800; letter-spacing:.4px; text-transform:uppercase }
+    .bell{ width:40px; height:40px; border-radius:50%; background: rgba(255,255,255,.95); display:grid; place-items:center; color:#345; box-shadow:0 8px 24px rgba(0,0,0,.18) }
+    .bal{ display:flex; align-items:center; gap:10px; margin:10px 0 }
+    .bal .coin{ width:48px; height:48px; border-radius:50%; background: radial-gradient(circle at 30% 30%, #ffe082, #f3b300); display:grid; place-items:center; color:#7b4d0f; font-size:24px }
+    .bal .amount{ font-size:40px; font-weight:900; line-height:1 }
+    .addr{ display:inline-flex; align-items:center; gap:8px; background: rgba(255,255,255,.85); color:#173a66; padding:6px 10px; border-radius:10px; font-weight:700 }
+    .tiles{ display:flex; gap:14px; justify-content:center; padding:14px 12px }
+    .tile{ width:112px; height:102px; border-radius:16px; background:#e6f3fd; color:#203a55; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; font-weight:800; box-shadow:0 10px 24px rgba(0,0,0,.12) }
+    .tile i{ font-size:28px; margin-bottom:8px }
+    .sheet{ background: rgba(255,255,255,.88); backdrop-filter: blur(6px); border-radius:22px; box-shadow:0 20px 40px rgba(0,0,0,.18); padding:14px; margin: 8px 12px 100px }
+    .section-title{ color:#2a476a; font-weight:800; margin-bottom:8px }
+
+    /* Bottom nav */
+    .app-nav{ position:fixed; left:0; right:0; bottom:0; height:84px; z-index:10; background:linear-gradient(180deg, rgba(255,255,255,.6), rgba(255,255,255,.95)); backdrop-filter:blur(8px); border-top:1px solid rgba(0,0,0,.06); display:grid; grid-template-columns:1fr 1fr 72px 1fr 1fr; align-items:center; }
+    .app-nav a{ text-decoration:none; color:#6b7b8a; font-size:12px; display:flex; flex-direction:column; align-items:center; gap:6px; min-width:0 }
+    .app-nav a .bi{ font-size:20px }
+    .home-fab{ position:absolute; left:50%; transform:translateX(-50%); bottom:22px; width:64px; height:64px; border-radius:50%; background:linear-gradient(180deg,#8be3ff,#35a8f0); color:#fff; display:grid; place-items:center; box-shadow:0 16px 32px rgba(0,0,0,.25); border:4px solid #fff }
+    .app-nav .center-slot{ width:72px; height:1px }
+    .active{ color:#2a476a !important; font-weight:800 }
+
+    .form-pill{ border-radius:12px; border:2px solid #cae4fb; padding:10px 12px; display:flex; align-items:center; gap:10px; background:#fff }
+    .btn-primary{ background:linear-gradient(180deg,#8be3ff,#35a8f0); border:none; font-weight:800 }
+    .result-card{ background:#fff; border-radius:12px; padding:10px; box-shadow:0 10px 24px rgba(0,0,0,.06); }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="row1">
+      <div class="d-flex align-items-center gap-2">
+        <div class="avatar"><i class="bi bi-person"></i></div>
+        <div>
+          <div class="hello">Hello,</div>
+          <div id="helloName" class="fw-bold">User</div>
+        </div>
+      </div>
+      <div class="bell"><i class="bi bi-bell"></i></div>
+    </div>
+    <div class="bal">
+      <div class="coin"><i class="bi bi-coin"></i></div>
+      <div class="amount" id="amount">0</div>
+    </div>
+    <div class="addr"><span id="walletAddr">0x1234...abcd</span> <button id="copyAddr" class="btn btn-sm btn-outline-secondary py-0">Copy</button></div>
+  </header>
+
+  <section class="tiles">
+    <a href="#" id="btnTxn" class="tile"><i class="bi bi-clock-history"></i><div>Transaction<br>History</div></a>
+    <a href="#" id="btnFare" class="tile"><i class="bi bi-cash-coin"></i><div>Fare<br>Information</div></a>
+    <a href="#" id="btnChange" class="tile"><i class="bi bi-wallet2"></i><div>Change<br>Wallets</div></a>
+  </section>
+
+  <main id="panel" class="sheet">
+    <div class="section-title">Recent Transaction History <a href="#" class="float-end small">See all</a></div>
+    <div id="historyEmpty" class="text-muted">No transactions yet. Earn by <a href="watch-ads.html">watching ads</a>.</div>
+  </main>
+
+  <!-- Bottom navigation bar -->
+  <nav class="app-nav">
+    <a href="destination.html" aria-label="Destination" style="grid-column:1"><i class="bi bi-geo-alt"></i><span>Destination</span></a>
+    <a href="watch-ads.html" aria-label="Watch Ads" style="grid-column:2"><i class="bi bi-camera-reels"></i><span>Watch Ads</span></a>
+    <span class="center-slot" aria-hidden="true" style="grid-column:3"></span>
+    <a href="wallet.html" aria-label="Wallet" class="active" style="grid-column:4"><i class="bi bi-wallet2"></i><span>Wallet</span></a>
+    <a href="my-profile.html" aria-label="Profile" style="grid-column:5"><i class="bi bi-person"></i><span>Profile</span></a>
+    <a href="passenger-dashboard.html" class="home-fab" aria-label="Home"><i class="bi bi-house-door fs-3"></i></a>
+  </nav>
+
+  <script type="module">
+    import { auth, db, ref, get, set, runTransaction, onValue, requireLogin } from './js/authentication.js';
+    // Require login; passengers share same auth
+    const user = await requireLogin('login.html');
+    const uid = user.uid;
+
+    const amountEl = document.getElementById('amount');
+    const nameEl = document.getElementById('helloName');
+    const addrEl = document.getElementById('walletAddr');
+
+    // Ensure wallet node exists per user
+    // Wallet stored under all_users to match RTDB rules for per-user writes
+    const balRef = ref(db, `all_users/${uid}/wallet`);
+    await runTransaction(balRef, (curr)=> (typeof curr === 'number' ? curr : 0));
+    onValue(balRef, (snap)=> { amountEl.textContent = String(snap.exists()? snap.val(): 0); });
+
+    // Load name and an address-like id
+    try {
+      const u = await get(ref(db, `all_users/${uid}`));
+      const v = u.exists()? u.val() : {};
+      if (v?.name) nameEl.textContent = v.name;
+    } catch {}
+    // Address placeholder deterministic per uid
+    addrEl.textContent = `JEEP-${uid.slice(0,8)}-${uid.slice(-4)}`;
+
+    // Copy wallet address
+    document.getElementById('copyAddr')?.addEventListener('click', ()=>{
+      const a = addrEl.textContent || '';
+      navigator.clipboard?.writeText(a);
+    });
+
+    // Simple panel router between History / Fare / Change Wallets
+    const panel = document.getElementById('panel');
+    const bind = (id, fn) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('click', (e)=>{ e.preventDefault(); try { fn(); } catch(err){ console.error(err); } });
+    };
+    bind('btnTxn', showHistory);
+    bind('btnFare', showFare);
+    bind('btnChange', showChangeWallet);
+
+    function showHistory(){
+      panel.innerHTML = `
+        <div class="section-title">Recent Transaction History <a href="#" class="float-end small">See all</a></div>
+        <div class="text-muted">History coming soon.</div>
+      `;
+    }
+
+    function showFare(){
+      panel.innerHTML = `
+        <div class="section-title">Fare Information</div>
+        <div class="d-grid gap-2">
+          <div class="form-pill"><i class="bi bi-geo-alt text-primary"></i><input id="from" class="form-control border-0 p-0" placeholder="From"/></div>
+          <div class="form-pill"><i class="bi bi-geo-alt-fill text-primary"></i><input id="to" class="form-control border-0 p-0" placeholder="To"/></div>
+          <div class="form-pill"><i class="bi bi-person-badge text-primary"></i>
+            <select id="type" class="form-select border-0 p-0">
+              <option value="regular">Regular</option>
+              <option value="student">Student</option>
+              <option value="senior">Senior</option>
+            </select>
+          </div>
+          <button id="compute" class="btn btn-primary">Compute</button>
+        </div>
+        <hr class="my-3"/>
+        <div id="result"></div>
+      `;
+      document.getElementById('compute')?.addEventListener('click', ()=>{
+        const from = document.getElementById('from').value || 'Origin';
+        const to = document.getElementById('to').value || 'Destination';
+        const type = document.getElementById('type').value;
+        // Simple illustrative fare: base 12 + 3 per km; student 20% off
+        const km = (Math.random()*3 + 1).toFixed(2);
+        let fare = 12 + 3*Number(km);
+        if (type==='student') fare *= 0.8; if (type==='senior') fare *= 0.7;
+        const coins = Math.ceil(fare*10);
+        document.getElementById('result').innerHTML = `
+          <div class="result-card">
+            <div class="fw-bold">${from} - ${to}</div>
+            <div class="small text-muted mb-1">${km} km</div>
+            <div class="fw-bold">${coins} coins</div>
+          </div>
+        `;
+      });
+    }
+
+    function showChangeWallet(){
+      panel.innerHTML = `
+        <div class="section-title">Manage Wallet</div>
+        <div class="d-grid gap-2">
+          <div class="form-pill"><i class="bi bi-wallet2 text-primary"></i>
+            <input id="alias" class="form-control border-0 p-0" placeholder="Wallet nickname (optional)"/>
+          </div>
+          <button id="btnReset" class="btn btn-primary">Reset Balance (demo)</button>
+        </div>
+      `;
+      document.getElementById('btnReset')?.addEventListener('click', async ()=>{
+        await set(ref(db, `all_users/${uid}/wallet`), 0);
+        alert('Balance reset to 0 for your account.');
+      });
+    }
+
+    // Default view and ARIA focus improvement
+    showHistory();
+    try { document.getElementById('btnTxn')?.setAttribute('role','button'); } catch{}
+  </script>
+</body>
+</html>
