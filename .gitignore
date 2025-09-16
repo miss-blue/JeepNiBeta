@@ -67,3 +67,13 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+
+# secrets
+*.env
+*.pem
+*.p12
+*.key
+*.keystore
+*firebase-adminsdk*.json
+serviceAccount*.json
+**/credentials/*.json
