@@ -54,8 +54,8 @@
   </nav>
 
   <script type="module">
-  import { requireLogin, db, ref, get, set } from "./js/authentication.js";
-  const user = await requireLogin('login.html');
+  import { requireRole, db, ref, get, set } from "./js/authentication.js";
+  const { user } = await requireRole(['passenger']);
   const panel = document.getElementById('panel');
   const tabProfile = document.getElementById('tabProfile');
   const tabPassword = document.getElementById('tabPassword');

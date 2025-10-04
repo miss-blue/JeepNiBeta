@@ -129,9 +129,9 @@
     }
 
     function goByRole(role){
-      if(role==="admin"||role==="super_admin") location.href="secure-admin-dashboard.html";
-      else if(role==="driver") location.href="driver-dashboard.html";
-      else if(role==="passenger") location.href="dashboard.html";
+      if(role==="admin") location.replace("secure-admin-dashboard.html");
+      else if(role==="driver") location.replace("driver-dashboard.html?role=driver");
+      else if(role==="passenger") location.replace("passenger-dashboard.html");
       else signOutAndRedirect("login.html");
     }
 
@@ -162,9 +162,37 @@
         });
         return;
       }
-      // Signed-in: route immediately to passenger dashboard (per requirement)
-      window.location.replace('/dashboards/passenger.html');
+      try {
+        const role = await getRole(user.uid);
+        const normalizedRole = role ? String(role).toLowerCase() : null;
+        if (!normalizedRole) {
+          if (typeof window !== 'undefined' && typeof window.alert === 'function') {
+            window.alert('Your account is not fully set up. Please contact support.');
+          }
+          signOutAndRedirect('login.html');
+          return;
+        }
+        goByRole(normalizedRole);
+      } catch (error) {
+        console.error('Failed to resolve role on landing', error);
+        signOutAndRedirect('login.html');
+      }
+    });
+
+    document.getElementById('driverBanner')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      // Redirect to login with driver role hint
+      location.href = 'login.html?role=driver';
+    });
+
+    document.getElementById('passengerBanner')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      // Redirect to login with passenger role hint
+      location.href = 'login.html?role=passenger';
     });
   </script>
 </body>
 </html>
+
+
+

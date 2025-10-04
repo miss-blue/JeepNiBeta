@@ -33,10 +33,12 @@ export async function createDispatch({
     route: route || "",
     jeep_id: jeep_id || "",
     driver_uid: driver_uid || null,
-    status: "assigned",                  // assigned | accepted | enroute | completed | canceled
+    status: "pending",                   // pending | accepted | enroute | completed | canceled
     notes: notes || "",
     created_by: auth.currentUser.uid,
     created_at: serverTimestamp(),
+    status_by: auth.currentUser.uid,
+    status_ts: serverTimestamp(),
     updated_at: serverTimestamp()
   };
 
@@ -63,7 +65,7 @@ export async function setDriver({ date, dispatchId, driverUid }) {
 
 /** Admin set status function */
 export async function adminSetStatus({ date, dispatchId, status }) {
-  const allowed = ["assigned", "accepted", "enroute", "completed", "canceled"];
+  const allowed = ["pending", "accepted", "enroute", "completed", "canceled"];
   if (!allowed.includes(status)) throw new Error("Invalid status");
   if (!auth.currentUser) throw new Error("Not signed in");
 

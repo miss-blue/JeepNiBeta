@@ -1,131 +1,701 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Manage Driver Codes</title>
+  <title>Manage Driver Invite Codes | JeepNi Admin</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+  <link rel="dns-prefetch" href="https://unpkg.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="icon" href="/icons/JEEPNi.png" type="image/png">
   <style>
-    body { background:#f6f7fb; }
-    .container { max-width: 960px; }
+    :root {
+      --bg: #f6f7fb;
+      --card-bg: rgba(255, 255, 255, 0.96);
+      --text: #111827;
+      --muted: #6b7280;
+      --brand: #4ed7f1;
+      --accent: #ffd63a;
+      --danger: #dc3545;
+      --radius: 18px;
+      --shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: url('icons/Background2.png') center bottom / cover no-repeat;
+      opacity: 0.15;
+      pointer-events: none;
+      z-index: -1;
+    }
+    .navbar {
+      background: linear-gradient(90deg, var(--brand), #7ee9ff) !important;
+      box-shadow: var(--shadow);
+    }
+    .navbar-brand {
+      color: #fff !important;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+    }
+    main {
+      flex: 1;
+      width: 100%;
+      padding: 3rem 0;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      border: 1px solid rgba(15, 23, 42, 0.06);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .card-header,
+    .card-footer {
+      background: rgba(255, 255, 255, 0.72);
+      border-color: rgba(15, 23, 42, 0.06);
+    }
+    .card h4,
+    .card h5 {
+      font-weight: 700;
+      color: var(--text);
+    }
+    #alert .alert {
+      margin-bottom: 1.25rem;
+    }
+    .btn-primary {
+      background-color: var(--accent);
+      border-color: var(--accent);
+      color: #111;
+      font-weight: 600;
+    }
+    .btn-primary:hover,
+    .btn-primary:focus {
+      background-color: #ffc107;
+      border-color: #ffc107;
+      color: #111;
+    }
+    .btn-outline-secondary {
+      color: var(--muted);
+      border-color: rgba(15, 23, 42, 0.18);
+    }
+    .btn-outline-secondary:hover,
+    .btn-outline-secondary:focus {
+      color: #111;
+      border-color: var(--brand);
+      background-color: rgba(78, 215, 241, 0.08);
+    }
+    .btn-outline-primary {
+      color: var(--brand);
+      border-color: var(--brand);
+    }
+    .btn-outline-primary:hover,
+    .btn-outline-primary:focus {
+      color: #0f172a;
+      border-color: var(--brand);
+      background-color: rgba(78, 215, 241, 0.12);
+    }
+    .btn-outline-danger:hover,
+    .btn-outline-danger:focus {
+      color: #fff;
+    }
+    .form-control:focus,
+    .form-select:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 0.25rem rgba(78, 215, 241, 0.25);
+    }
+    .form-control[readonly] {
+      background-color: rgba(15, 23, 42, 0.04);
+      cursor: not-allowed;
+      opacity: 0.85;
+    }
+    .code-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.4rem 0.85rem;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #1f2937, #111827);
+      color: #fff;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.35rem 0.85rem;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .status-pill.bg-success-subtle {
+      color: #0f5132;
+    }
+    .status-pill.bg-warning-subtle {
+      color: #664d03;
+    }
+    .status-pill.bg-secondary-subtle {
+      color: #495057;
+    }
+    table thead th {
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      border-bottom-width: 1px;
+      color: var(--muted);
+    }
+    table tbody tr {
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+    }
+    table tbody tr:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+    }
+    table tbody tr.table-active {
+      box-shadow: 0 18px 36px rgba(78, 215, 241, 0.3);
+    }
+    .table-responsive {
+      border-radius: 0 0 var(--radius) var(--radius);
+    }
+    .stat-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.3rem 0.9rem;
+      border-radius: 999px;
+      background-color: rgba(78, 215, 241, 0.12);
+      color: #0f172a;
+      font-weight: 600;
+      font-size: 0.8rem;
+    }
+    .stat-chip span {
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+    }
+    .stat-chip.stat-disabled { background-color: rgba(148, 163, 184, 0.16); color: #475569; }
+    .stat-chip.stat-claimed { background-color: rgba(226, 232, 240, 0.4); color: #1f2937; }
+    .stat-chip.stat-expired { background-color: rgba(255, 214, 58, 0.2); color: #7c5800; }
+    .stat-chip.stat-total { background-color: rgba(99, 102, 241, 0.16); color: #312e81; }
+    @media (max-width: 991.98px) {
+      main { padding: 2rem 0 3rem; }
+      .card { border-radius: 16px; }
+      .stat-chip { width: calc(50% - 0.35rem); justify-content: center; }
+    }
+    @media (max-width: 575.98px) {
+      .navbar-brand { font-size: 1rem; }
+      .stat-chip { width: 100%; }
+      .table-responsive { margin-bottom: 1.5rem; }
+    }
   </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg bg-light shadow-sm">
-  <div class="container">
-    <a class="navbar-brand fw-bold" href="secure-admin-dashboard.html">JeepNi — Admin</a>
-    <div class="ms-auto small text-muted" id="adminInfo">Checking session…</div>
+<nav class="navbar navbar-expand-lg border-0 py-3">
+  <div class="container d-flex flex-wrap align-items-center justify-content-between gap-3">
+    <a class="btn btn-outline-light btn-sm d-flex align-items-center gap-2" href="secure-admin-dashboard.html">
+      <i class="bi bi-arrow-left"></i>
+      <span>Back to Dashboard</span>
+    </a>
+    <span class="navbar-brand m-0">JeepNi - Admin</span>
+    <div class="small text-white" id="adminInfo">Checking session...</div>
   </div>
 </nav>
 
-<main class="container py-4">
-  <h3 class="mb-3">Driver Invite Codes</h3>
-  <div id="alert"></div>
-
-  <form id="formCode" class="row g-2 mb-4">
-    <div class="col-md-4">
-      <input id="code" class="form-control" placeholder="Code (e.g. BOQUIG2025)" required>
+<main>
+  <div class="container">
+    <div class="row g-4 align-items-stretch">
+      <div class="col-lg-4">
+        <div class="card h-100 border-0">
+          <div class="card-body p-4">
+            <div class="d-flex align-items-start gap-3 mb-3">
+              <div class="rounded-circle bg-warning-subtle text-warning p-3">
+                <i class="bi bi-key-fill fs-4"></i>
+              </div>
+              <div>
+                <h4 class="mb-1">Driver Invite Codes</h4>
+                <p class="text-muted small mb-0">Create new invite codes or update existing ones in real-time.</p>
+              </div>
+            </div>
+            <div id="alert"></div>
+            <form id="formCode" class="vstack gap-3">
+              <div>
+                <label for="code" class="form-label fw-semibold text-uppercase small mb-1">Code</label>
+                <input id="code" class="form-control form-control-lg" placeholder="e.g. BOQUIG2025" autocomplete="off" required maxlength="24">
+              </div>
+              <div>
+                <label for="expires" class="form-label fw-semibold text-uppercase small mb-1">Expires On</label>
+                <input id="expires" type="date" class="form-control">
+                <div class="form-text">Leave blank to keep the code active indefinitely.</div>
+              </div>
+              <div class="d-flex flex-wrap gap-2 pt-1">
+                <button id="btnSubmit" class="btn btn-primary flex-fill" type="submit">
+                  <i class="bi bi-arrow-repeat me-1"></i>
+                  <span class="btn-label">Create Code</span>
+                </button>
+                <button id="btnReset" class="btn btn-outline-secondary flex-fill" type="button">
+                  <i class="bi bi-x-circle"></i>
+                  <span>Reset</span>
+                </button>
+              </div>
+              <p class="text-muted small mb-0" id="formHint">Codes are saved in uppercase. Click any row to edit its settings.</p>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-8">
+        <div class="card h-100 border-0">
+          <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div>
+              <h5 class="mb-1">Codes Overview</h5>
+              <span class="text-muted small">Live status of all driver invite codes.</span>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+              <div class="stat-chip"><i class="bi bi-check-circle-fill"></i><span id="statActive">0</span> Active</div>
+              <div class="stat-chip stat-disabled"><i class="bi bi-slash-circle"></i><span id="statDisabled">0</span> Disabled</div>
+              <div class="stat-chip stat-expired"><i class="bi bi-hourglass-split"></i><span id="statExpired">0</span> Expired</div>
+              <div class="stat-chip stat-claimed"><i class="bi bi-person-check-fill"></i><span id="statClaimed">0</span> Claimed</div>
+              <div class="stat-chip stat-total"><i class="bi bi-collection-fill"></i><span id="statTotal">0</span> Total</div>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th scope="col">Code</th>
+                    <th scope="col">Expires</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="codeTable">
+                  <tr>
+                    <td colspan="4" class="text-center py-5 text-muted">
+                      <div class="d-inline-flex align-items-center gap-2">
+                        <div class="spinner-border text-info spinner-border-sm" role="status" aria-hidden="true"></div>
+                        <span>Loading invite codes...</span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card-footer text-muted small">
+            Tip: Toggle, edit, or revoke codes instantly. Claimed codes are locked for security.
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="col-md-2">
-      <input id="uses" type="number" class="form-control" placeholder="Uses Left" value="10" min="0">
-    </div>
-    <div class="col-md-3">
-      <input id="expires" type="date" class="form-control">
-    </div>
-    <div class="col-md-3 d-grid">
-      <button class="btn btn-primary" type="submit">Create / Update</button>
-    </div>
-  </form>
-
-  <div class="table-responsive">
-    <table class="table table-striped table-hover align-middle">
-      <thead>
-        <tr><th>Code</th><th>Uses Left</th><th>Expires</th><th>Status</th><th style="width:180px">Actions</th></tr>
-      </thead>
-      <tbody id="codeTable">
-        <tr><td colspan="5" class="text-center text-muted">Loading…</td></tr>
-      </tbody>
-    </table>
   </div>
 </main>
 
 <script type="module">
-import { db, ref, set, onValue, update } from "./js/authentication.js";
+import { db, ref, set, onValue, update, get } from "./js/authentication.js";
 import { requireAdmin, attachAdminBadge } from "./js/admin_auth.js";
 
 await requireAdmin("login.html");
 attachAdminBadge("#adminInfo");
+document.title = "Manage Driver Invite Codes | JeepNi Admin";
 
-const form = document.getElementById("formCode");
-const table = document.getElementById("codeTable");
 const alertBox = document.getElementById("alert");
+const form = document.getElementById("formCode");
+const codeInput = document.getElementById("code");
+const expiresInput = document.getElementById("expires");
+const submitBtn = document.getElementById("btnSubmit");
+const submitLabel = submitBtn.querySelector(".btn-label");
+const resetBtn = document.getElementById("btnReset");
+const hintEl = document.getElementById("formHint");
+const defaultHint = hintEl ? hintEl.textContent : "";
+const tableBody = document.getElementById("codeTable");
+const statNodes = {
+  active: document.getElementById("statActive"),
+  disabled: document.getElementById("statDisabled"),
+  expired: document.getElementById("statExpired"),
+  claimed: document.getElementById("statClaimed"),
+  total: document.getElementById("statTotal")
+};
 
-function show(msg,type="success"){
-  alertBox.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">
-    ${msg}<button class="btn-close" data-bs-dismiss="alert"></button>
-  </div>`;
+const recordCache = new Map();
+let selectedCode = null;
+let selectedRow = null;
+
+const dateFormatter = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" });
+const relativeFormatter = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
-form.addEventListener("submit", async (e)=>{
-  e.preventDefault();
-  const code = document.getElementById("code").value.trim().toUpperCase();
-  const uses = parseInt(document.getElementById("uses").value||"0",10);
-  const exp  = document.getElementById("expires").value;
+function formatRelative(timestamp) {
+  if (!timestamp) return "";
+  const diffMs = timestamp - Date.now();
+  const diffDays = Math.round(diffMs / 86400000);
+  if (Math.abs(diffDays) >= 1) {
+    return relativeFormatter.format(diffDays, "day");
+  }
+  const diffHours = Math.round(diffMs / 3600000);
+  if (Math.abs(diffHours) >= 1) {
+    return relativeFormatter.format(diffHours, "hour");
+  }
+  const diffMinutes = Math.round(diffMs / 60000);
+  return relativeFormatter.format(diffMinutes || 0, "minute");
+}
 
-  if(!code){ show("Enter a code","danger"); return; }
+function formatExpires(timestamp) {
+  if (!timestamp) {
+    return '<span class="text-muted">No expiry</span>';
+  }
+  const date = new Date(timestamp);
+  return `<div>${dateFormatter.format(date)}</div><div class="small text-muted">${formatRelative(timestamp)}</div>`;
+}
 
-  const data = { is_active: true };
-  if (!Number.isNaN(uses) && uses >= 0) data.uses_left = uses;
-  if (exp) data.expires_at = new Date(exp).getTime();
+function updateStats(stats) {
+  statNodes.active.textContent = stats.active;
+  statNodes.disabled.textContent = stats.disabled;
+  statNodes.expired.textContent = stats.expired;
+  statNodes.claimed.textContent = stats.claimed;
+  statNodes.total.textContent = stats.total;
+}
 
-  await set(ref(db, "driver_invite_codes/"+code), data);
-  show(`Code <strong>${code}</strong> created/updated.`, "success");
+function showAlert(message, type = "success") {
+  alertBox.innerHTML = `
+    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>`;
+}
+
+function clearSelection({ focus } = { focus: false }) {
   form.reset();
+  selectedCode = null;
+  submitBtn.disabled = false;
+  submitLabel.textContent = "Create Code";
+  codeInput.removeAttribute("readonly");
+  codeInput.classList.remove("bg-body-secondary");
+  if (hintEl) {
+    hintEl.textContent = defaultHint;
+    hintEl.classList.remove("text-warning", "text-danger");
+  }
+  if (selectedRow) {
+    selectedRow.classList.remove("table-active");
+    selectedRow = null;
+  }
+  if (focus) {
+    codeInput.focus();
+  }
+}
+
+resetBtn.addEventListener("click", () => clearSelection({ focus: true }));
+
+codeInput.addEventListener("input", () => {
+  const cleaned = codeInput.value.replace(/[^A-Za-z0-9-]/g, "").toUpperCase();
+  if (codeInput.value !== cleaned) {
+    codeInput.value = cleaned;
+  }
 });
 
-function renderRow(code, c) {
-  const uses = (c.uses_left ?? "∞");
-  const expires = c.expires_at ? new Date(c.expires_at).toLocaleDateString() : "—";
-  const status = c.is_active ? "Active" : "Disabled";
-  return `<tr data-code="${code}">
-    <td><code>${code}</code></td>
-    <td>${uses}</td>
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const rawCode = codeInput.value.trim().toUpperCase();
+  if (!rawCode) {
+    showAlert("Please provide a code before saving.", "danger");
+    return;
+  }
+
+  const isEditing = Boolean(selectedCode);
+  const targetCode = selectedCode ?? rawCode;
+  submitBtn.disabled = true;
+  submitLabel.textContent = isEditing ? "Updating..." : "Creating...";
+
+  try {
+    const codeRef = ref(db, `driver_invite_codes/${targetCode}`);
+    const existingSnap = await get(codeRef);
+    const existing = existingSnap.exists() ? existingSnap.val() : null;
+
+    if (existing?.claimed_by) {
+      const info = existing.claimed_by_email || existing.claimed_by;
+      showAlert(`Code <strong>${escapeHtml(targetCode)}</strong> has already been claimed${info ? ` by ${escapeHtml(info)}` : ""}.`, "danger");
+      clearSelection();
+      return;
+    }
+
+    const now = Date.now();
+    let expiresAt = existing?.expires_at ?? null;
+    if (expiresInput.value) {
+      const [year, month, day] = expiresInput.value.split("-").map(Number);
+      const localDate = new Date(year, month - 1, day, 23, 59, 59, 999);
+      expiresAt = localDate.getTime();
+    } else if (!existing || isEditing) {
+      expiresAt = null;
+    }
+
+    const payload = {
+      is_active: existing?.is_active ?? true,
+      claimed_by: existing?.claimed_by ?? null,
+      claimed_by_email: existing?.claimed_by_email ?? null,
+      created_at: existing?.created_at ?? now,
+      expires_at: expiresAt
+    };
+
+    await set(codeRef, payload);
+    showAlert(`Code <strong>${escapeHtml(targetCode)}</strong> saved successfully.`, "success");
+    clearSelection();
+  } catch (error) {
+    console.error("[manage-driver-codes] failed to save", error);
+    showAlert("Failed to save the code. Please try again.", "danger");
+  } finally {
+    submitBtn.disabled = false;
+    submitLabel.textContent = selectedCode ? "Update Code" : "Create Code";
+  }
+});
+
+function handleEdit(code) {
+  const record = recordCache.get(code);
+  if (!record) {
+    return;
+  }
+
+  codeInput.value = code;
+  codeInput.setAttribute("readonly", "readonly");
+  codeInput.classList.add("bg-body-secondary");
+  selectedCode = code;
+  submitLabel.textContent = "Update Code";
+
+  if (record.expires_at) {
+    const date = new Date(record.expires_at);
+    date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+    expiresInput.value = date.toISOString().slice(0, 10);
+  } else {
+    expiresInput.value = "";
+  }
+
+  if (selectedRow) {
+    selectedRow.classList.remove("table-active");
+  }
+  selectedRow = Array.from(tableBody.querySelectorAll("tr[data-code]")).find((row) => row.dataset.code === code) || null;
+  if (selectedRow) {
+    selectedRow.classList.add("table-active");
+  }
+
+  if (record.is_claimed) {
+    submitBtn.disabled = true;
+    if (hintEl) {
+      hintEl.textContent = `Code ${code} was claimed and can no longer be edited.`;
+      hintEl.classList.remove("text-warning");
+      hintEl.classList.add("text-danger");
+    }
+  } else {
+    submitBtn.disabled = false;
+    if (hintEl) {
+      hintEl.textContent = `Editing ${code}. Submit to update, or clear the date to remove expiration.`;
+      hintEl.classList.remove("text-danger");
+      hintEl.classList.add("text-warning");
+    }
+  }
+}
+
+function renderRow(record) {
+  const code = escapeHtml(record.code);
+  const expires = formatExpires(record.expires_at);
+  let statusLabel = "Active";
+  let statusClass = "status-pill bg-success-subtle";
+  if (record.is_claimed) {
+    statusLabel = "Claimed";
+    statusClass = "status-pill bg-secondary text-white";
+  } else if (!record.is_active) {
+    statusLabel = "Disabled";
+    statusClass = "status-pill bg-secondary-subtle";
+  } else if (record.is_expired) {
+    statusLabel = "Expired";
+    statusClass = "status-pill bg-warning-subtle";
+  }
+
+  const claimedNote = record.claimed_by_email || record.claimed_by
+    ? `<div class="small text-danger mt-1"><i class="bi bi-person-check-fill me-1"></i>${escapeHtml(record.claimed_by_email || record.claimed_by)}</div>`
+    : record.created_at
+      ? `<div class="small text-muted mt-1">Created ${formatRelative(record.created_at)}</div>`
+      : "";
+
+  const disableEdit = record.is_claimed ? "disabled" : "";
+  const disableToggle = record.is_claimed ? "disabled" : "";
+
+  return `<tr data-code="${code}" data-active="${record.is_active ? "1" : "0"}" data-claimed="${record.is_claimed ? "1" : "0"}">
+    <td>
+      <span class="code-chip">${code}</span>
+      ${claimedNote}
+    </td>
     <td>${expires}</td>
-    <td><span class="badge ${c.is_active?'bg-success':'bg-secondary'}">${status}</span></td>
-    <td class="d-flex gap-2">
-      <button class="btn btn-sm btn-outline-secondary toggleBtn">${c.is_active?'Disable':'Enable'}</button>
-      <button class="btn btn-sm btn-outline-danger zeroBtn">Zero Uses</button>
+    <td><span class="${statusClass}">${statusLabel}</span></td>
+    <td>
+      <div class="d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-sm btn-outline-primary editBtn" ${disableEdit}>Edit</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary toggleBtn" ${disableToggle}>${record.is_active ? "Disable" : "Enable"}</button>
+        <button type="button" class="btn btn-sm btn-outline-danger revokeBtn">Remove</button>
+      </div>
     </td>
   </tr>`;
 }
 
-// Live table
-onValue(ref(db,"driver_invite_codes"), snap=>{
-  if(!snap.exists()){ table.innerHTML="<tr><td colspan='5' class='text-center text-muted'>No codes yet</td></tr>"; return; }
-  const obj=snap.val();
-  table.innerHTML = Object.keys(obj).sort().map(code => renderRow(code, obj[code] || {})).join("");
+function wireTableActions() {
+  tableBody.querySelectorAll(".editBtn").forEach((btn) => {
+    btn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const row = event.currentTarget.closest("tr");
+      if (!row) return;
+      handleEdit(row.dataset.code);
+    });
+  });
 
-  // Wire actions
-  table.querySelectorAll(".toggleBtn").forEach(btn=>{
-    btn.addEventListener("click", async ()=>{
-      const tr   = btn.closest("tr");
-      const code = tr.getAttribute("data-code");
-      const badge= tr.querySelector(".badge");
-      const active = badge?.textContent === "Active";
-      await update(ref(db, "driver_invite_codes/"+code), { is_active: !active });
-      show(`Code ${code} is now ${!active ? 'Active' : 'Disabled'}.`, "success");
+  tableBody.querySelectorAll(".toggleBtn").forEach((btn) => {
+    btn.addEventListener("click", async (event) => {
+      event.stopPropagation();
+      const row = event.currentTarget.closest("tr");
+      if (!row) return;
+      const code = row.dataset.code;
+      const isActive = row.dataset.active === "1";
+      btn.disabled = true;
+      try {
+        await update(ref(db, `driver_invite_codes/${code}`), { is_active: !isActive });
+        showAlert(`Code <strong>${escapeHtml(code)}</strong> is now ${!isActive ? "active" : "disabled"}.`, "success");
+      } catch (error) {
+        console.error("[manage-driver-codes] toggle failed", error);
+        showAlert("Could not update the code status. Please retry.", "danger");
+      } finally {
+        btn.disabled = false;
+      }
     });
   });
-  table.querySelectorAll(".zeroBtn").forEach(btn=>{
-    btn.addEventListener("click", async ()=>{
-      const tr   = btn.closest("tr");
-      const code = tr.getAttribute("data-code");
-      await update(ref(db, "driver_invite_codes/"+code), { uses_left: 0 });
-      show(`Code ${code} uses set to 0.`, "success");
+
+  tableBody.querySelectorAll(".revokeBtn").forEach((btn) => {
+    btn.addEventListener("click", async (event) => {
+      event.stopPropagation();
+      const row = event.currentTarget.closest("tr");
+      if (!row) return;
+      const code = row.dataset.code;
+      const confirmed = window.confirm(`Remove invite code ${code}? This action cannot be undone.`);
+      if (!confirmed) return;
+      btn.disabled = true;
+      try {
+        await set(ref(db, `driver_invite_codes/${code}`), null);
+        showAlert(`Code <strong>${escapeHtml(code)}</strong> has been removed.`, "success");
+        if (selectedCode === code) {
+          clearSelection();
+        }
+      } catch (error) {
+        console.error("[manage-driver-codes] remove failed", error);
+        showAlert("Failed to remove the code. Please try again.", "danger");
+      } finally {
+        btn.disabled = false;
+      }
     });
   });
+
+  tableBody.querySelectorAll("tr[data-code]").forEach((row) => {
+    row.addEventListener("click", (event) => {
+      if (event.target.closest("button")) return;
+      handleEdit(row.dataset.code);
+    });
+  });
+}
+
+onValue(ref(db, "driver_invite_codes"), (snapshot) => {
+  if (!snapshot.exists()) {
+    recordCache.clear();
+    updateStats({ active: 0, disabled: 0, expired: 0, claimed: 0, total: 0 });
+    tableBody.innerHTML = `<tr>
+      <td colspan="4" class="text-center py-5 text-muted">
+        <i class="bi bi-inboxes me-2"></i>No invite codes yet.
+      </td>
+    </tr>`;
+    return;
+  }
+
+  const now = Date.now();
+  const stats = { active: 0, disabled: 0, expired: 0, claimed: 0, total: 0 };
+  const rows = [];
+
+  recordCache.clear();
+  const entries = Object.entries(snapshot.val() || {});
+  entries.sort((a, b) => {
+    const aCreated = typeof a[1]?.created_at === "number" ? a[1].created_at : 0;
+    const bCreated = typeof b[1]?.created_at === "number" ? b[1].created_at : 0;
+    if (bCreated === aCreated) {
+      return a[0].localeCompare(b[0]);
+    }
+    return bCreated - aCreated;
+  });
+
+  for (const [code, raw] of entries) {
+    const record = {
+      code,
+      is_active: raw?.is_active !== false,
+      claimed_by: raw?.claimed_by ?? null,
+      claimed_by_email: raw?.claimed_by_email ?? null,
+      created_at: typeof raw?.created_at === "number" ? raw.created_at : null,
+      expires_at: typeof raw?.expires_at === "number" ? raw.expires_at : null
+    };
+    record.is_claimed = Boolean(record.claimed_by);
+    record.is_expired = !record.is_claimed && record.is_active && record.expires_at ? record.expires_at < now : false;
+    recordCache.set(code, record);
+
+    stats.total += 1;
+    if (record.is_claimed) {
+      stats.claimed += 1;
+    } else if (!record.is_active) {
+      stats.disabled += 1;
+    } else if (record.is_expired) {
+      stats.expired += 1;
+    } else {
+      stats.active += 1;
+    }
+
+    rows.push(renderRow(record));
+  }
+
+  updateStats(stats);
+  tableBody.innerHTML = rows.join("") || `<tr>
+      <td colspan="4" class="text-center py-5 text-muted">
+        <i class="bi bi-inboxes me-2"></i>No invite codes yet.
+      </td>
+    </tr>`;
+
+  if (selectedCode && !recordCache.has(selectedCode)) {
+    clearSelection();
+  } else if (selectedCode) {
+    handleEdit(selectedCode);
+  }
+
+  wireTableActions();
 });
+
+clearSelection();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
+

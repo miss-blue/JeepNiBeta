@@ -1,0 +1,117 @@
+    :root{
+      --bg: #f6f7fb;
+      --card-bg: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --brand: #4ED7F1;
+      --accent: #FFD63A;
+      --danger: #dc3545;
+      --radius: 16px;
+      --shadow: 0 8px 24px rgba(0,0,0,.08);
+    }
+    .theme-dark{
+      --bg: #0f172a;
+      --card-bg: #111827;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --brand: #22d3ee;
+      --accent: #fbbf24;
+      --shadow: 0 12px 30px rgba(0,0,0,.5);
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    .navbar {
+      background: linear-gradient(90deg, var(--brand), #7ee9ff) !important;
+      box-shadow: var(--shadow);
+    }
+    .navbar-brand {
+      color: #fff !important;
+      font-weight: 700;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      border: 1px solid rgba(0,0,0,.04);
+      box-shadow: var(--shadow);
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .card:hover{ transform: translateY(-2px); box-shadow: 0 12px 28px rgba(0,0,0,.12); }
+    .btn-primary {
+      background-color: var(--accent);
+      border-color: var(--accent);
+      color: #111;
+      font-weight: 600;
+    }
+    .btn-primary:hover {
+      background-color: #ffc107;
+      border-color: #ffc107;
+      color: #111;
+    }
+    .btn-outline-primary {
+      color: var(--brand);
+      border-color: var(--brand);
+    }
+    .btn-outline-primary:hover {
+      background-color: var(--brand);
+      border-color: var(--brand);
+      color: #0b1220;
+    }
+    .btn-outline-secondary {
+      color: #6c757d;
+      border-color: #6c757d;
+    }
+    .btn-outline-secondary:hover {
+      background-color: #6c757d;
+      border-color: #6c757d;
+      color: white;
+    }
+    .btn-outline-danger {
+      color: #dc3545;
+      border-color: #dc3545;
+    }
+    .btn-outline-danger:hover {
+      background-color: #dc3545;
+      border-color: #dc3545;
+      color: white;
+    }
+    .card-title { color: var(--brand); font-weight: 700; }
+    #map, #dashboardMap {
+      height: 520px;
+      width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .table thead th { position: sticky; top: 0; z-index: 5; background: var(--card-bg); }
+    .table-hover tbody tr:hover{ background-color: rgba(78,215,241,.08); }
+    .badge.bg-success {
+      background-color: var(--accent) !important;
+      color: #111;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 0.25rem rgba(78, 215, 241, 0.25);
+    }
+    /* Subtle scenic background to avoid overpowering content */
+    body{ position: relative; }
+    body::before{
+      content:""; position: fixed; inset:0;
+      background: url('icons/Background2.png') center bottom / cover no-repeat;
+      opacity:.15; pointer-events:none; z-index:-1;
+    }
+    /* Skeleton shimmer */
+    .skeleton{ position: relative; overflow: hidden; background: linear-gradient(90deg, rgba(0,0,0,.05), rgba(0,0,0,.08), rgba(0,0,0,.05)); min-height: 12px; border-radius: 8px; }
+    .skeleton::after{ content:""; position:absolute; inset:0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent); animation: shimmer 1.15s infinite; }
+    @keyframes shimmer { 100% { transform: translateX(100%);} }
+    .kpi h3, .kpi h4{ margin: 0; }
+    .nav-tabs .nav-link { display:flex; align-items:center; gap:.5rem; }
+    .nav-tabs .nav-link .bi { opacity:.8; }
+    /* Tighten spacing below feature tabs and inside Data & Reports */
+    #adminFeatureTabs{ margin-bottom: .5rem !important; }
+    #tab-data .card{ margin-top: 0 !important; }
+    #tab-data .card-body{ padding-top: .75rem; }
+    #map,#dashboardMap{height:520px;width:100%;border-radius:12px}

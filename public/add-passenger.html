@@ -1,81 +1,305 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>JeepNi — Add Passenger</title>
+  <title>JeepNi Admin • Add Passenger</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+  <link rel="dns-prefetch" href="https://unpkg.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    body { background:#AFDDFF; font-family:'Nunito',sans-serif; }
-    .navbar { background:#4ED7F1!important; box-shadow:0 2px 10px rgba(0,0,0,.1); }
-    .navbar-brand { color:#fff!important; font-weight:700; }
-    .card { max-width:760px; margin:6vh auto; border-radius:16px; border:none; box-shadow:0 8px 20px rgba(0,0,0,.1); }
-    .btn-primary { background:#FFD63A; border-color:#FFD63A; color:#333; font-weight:600; }
-    .btn-primary:hover { background:#ffc800; border-color:#ffc800; color:#333; }
-    .form-control:focus,.form-select:focus { border-color:#4ED7F1; box-shadow:0 0 0 .25rem rgba(78,215,241,.25); }
-    h4 { color:#4ED7F1; font-weight:700; }
-  </style>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="icon" href="/icons/JEEPNi.png" type="image/png">
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --text: #111827;
+      --muted: #6b7280;
+      --brand: #4ed7f1;
+      --accent: #ffd63a;
+      --radius: 20px;
+      --shadow: 0 24px 48px rgba(15, 23, 42, 0.14);
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: url('icons/Background2.png') center bottom / cover no-repeat;
+      opacity: 0.15;
+      pointer-events: none;
+      z-index: -1;
+    }
+    .navbar {
+      background: linear-gradient(90deg, var(--brand), #7ee9ff) !important;
+      box-shadow: var(--shadow);
+    }
+    .navbar-brand {
+      color: #fff !important;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+    }
+    .navbar .btn-outline-light {
+      border-color: rgba(255, 255, 255, 0.6);
+      color: #fff;
+    }
+    .navbar .btn-outline-light:hover,
+    .navbar .btn-outline-light:focus {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: transparent;
+    }
+    main {
+      flex: 1;
+      width: 100%;
+      padding: 3.5rem 0 4rem;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      border: 1px solid rgba(15, 23, 42, 0.05);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .card h4,
+    .card h5 {
+      font-weight: 700;
+    }
+    .card p {
+      color: var(--muted);
+    }
+    .badge-soft {
+      border-radius: 999px;
+      padding: 0.35rem 0.9rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(99, 102, 241, 0.16);
+      color: #312e81;
+    }
+    .icon-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(78, 215, 241, 0.22);
+      color: #036672;
+    }
+    .info-list {
+      list-style: none;
+      padding: 0;
+      margin: 1.5rem 0 0;
+      font-size: 0.95rem;
+    }
+    .info-list li {
+      display: flex;
+      gap: 0.7rem;
+      align-items: flex-start;
+      padding: 0.55rem 0;
+      color: var(--muted);
+    }
+    .info-list i {
+      color: var(--brand);
+      margin-top: 0.2rem;
+    }
+    .fieldset-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
+    }
+    .form-control {
+      border-radius: 14px;
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      padding: 0.65rem 1rem;
+      font-size: 1rem;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .form-control:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 0.25rem rgba(78, 215, 241, 0.25);
+    }
+    .form-text {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .btn-primary {
+      background-color: var(--accent);
+      border-color: var(--accent);
+      color: #111;
+      font-weight: 600;
+      border-radius: 12px;
+      padding: 0.75rem 1.4rem;
+      box-shadow: 0 12px 24px rgba(255, 214, 58, 0.35);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .btn-primary:hover,
+    .btn-primary:focus {
+      background-color: #ffc107;
+      border-color: #ffc107;
+      transform: translateY(-1px);
+      box-shadow: 0 16px 28px rgba(255, 214, 58, 0.4);
+    }
+    .btn-outline-secondary {
+      border-radius: 12px;
+      padding: 0.75rem 1.4rem;
+      border-color: rgba(15, 23, 42, 0.22);
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .btn-outline-secondary:hover,
+    .btn-outline-secondary:focus {
+      background: rgba(78, 215, 241, 0.12);
+      border-color: var(--brand);
+      color: #0f172a;
+    }
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, rgba(15, 23, 42, 0), rgba(15, 23, 42, 0.12), rgba(15, 23, 42, 0));
+      margin: 1.75rem -1.5rem;
+    }
+    .helper-banner {
+      background: linear-gradient(135deg, rgba(78, 215, 241, 0.16), rgba(255, 214, 58, 0.18));
+      border-radius: 16px;
+      padding: 1.2rem 1.5rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.9rem;
+      font-size: 0.9rem;
+      color: #0f172a;
+    }
+    .helper-banner i {
+      color: var(--brand);
+      margin-top: 0.15rem;
+    }
+    @media (max-width: 991.98px) {
+      main { padding: 2.5rem 0 3rem; }
+      .card { border-radius: 18px; }
+    }
+    @media (max-width: 575.98px) {
+      .navbar-brand { font-size: 1rem; }
+      main { padding: 2rem 0 2.5rem; }
+      .btn-primary,
+      .btn-outline-secondary { flex: 1 1 100%; }
+    }
+  </style>
 </head>
 <body>
-<nav class="navbar border-bottom">
-  <div class="container">
-    <span class="navbar-brand fw-semibold">JeepNi — Admin</span>
-    <div class="ms-auto small text-white" id="adminInfo">Checking session...</div>
+<nav class="navbar navbar-expand-lg border-0 py-3">
+  <div class="container d-flex flex-wrap align-items-center justify-content-between gap-3">
+    <a class="btn btn-outline-light btn-sm d-flex align-items-center gap-2" href="secure-admin-dashboard.html">
+      <i class="bi bi-arrow-left"></i>
+      <span>Back to Dashboard</span>
+    </a>
+    <span class="navbar-brand m-0">JeepNi - Admin</span>
+    <div class="small text-white" id="adminInfo">Checking session...</div>
   </div>
 </nav>
 
-<div class="card shadow-sm">
-  <div class="card-body">
-    <h4 class="mb-3">Add Passenger</h4>
-    <div id="alert"></div>
-
-    <form id="formAdd" novalidate>
-      <div class="row g-3">
-        <div class="col-md-6">
-          <label class="form-label">Full name</label>
-          <input id="name" class="form-control" required />
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">Email</label>
-          <input id="email" type="email" class="form-control" required />
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">Temporary password</label>
-          <input id="password" type="password" class="form-control" placeholder="e.g., Pass1234!" required />
-          <div class="form-text">At least 8 characters with letters and numbers. Ask the passenger to change it after first login.</div>
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">Phone (optional)</label>
-          <input id="phone" class="form-control" />
-        </div>
-        <div class="col-12">
-          <label class="form-label">Notes (optional)</label>
-          <input id="notes" class="form-control" />
+<main>
+  <div class="container">
+    <div class="row g-4 align-items-stretch">
+      <div class="col-lg-4">
+        <div class="card h-100 border-0">
+          <div class="card-body p-4">
+            <div class="icon-circle mb-3">
+              <i class="bi bi-people-fill fs-4"></i>
+            </div>
+            <h4 class="mb-2">Add Passenger Profile</h4>
+            <p class="mb-3">Register passengers manually when they need immediate access to JeepNi services.</p>
+            <span class="badge-soft"><i class="bi bi-rocket-takeoff-fill"></i> Quick enrollment</span>
+            <ul class="info-list">
+              <li><i class="bi bi-envelope-paper"></i><span>Hand off the temporary password securely and remind them to update it.</span></li>
+              <li><i class="bi bi-cash-coin"></i><span>New passengers see wallet and booking onboarding tips right away.</span></li>
+              <li><i class="bi bi-search"></i><span>Use the admin dashboard search to manage existing accounts without duplicating them.</span></li>
+            </ul>
+            <div class="divider"></div>
+            <div class="helper-banner">
+              <i class="bi bi-info-circle-fill"></i>
+              <div>
+                <strong>Already have their email?</strong><br>
+                You can link to an existing account through the automatic lookup when an email is already in use.
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="d-flex gap-2 mt-4">
-        <button class="btn btn-primary" id="btnCreate" type="submit">Create Passenger</button>
-        <a class="btn btn-outline-secondary" href="secure-admin-dashboard.html">Back to Dashboard</a>
+      <div class="col-lg-8">
+        <div class="card h-100 border-0">
+          <div class="card-body p-4 p-lg-5">
+            <h5 class="text-uppercase text-muted fw-semibold mb-1" style="letter-spacing:0.15em;">Passenger Details</h5>
+            <h3 class="fw-bold mb-4">Create New Passenger</h3>
+            <div id="alert"></div>
+
+            <form id="formAdd" class="vstack gap-4" novalidate>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="fieldset-label" for="name">Full Name</label>
+                  <input id="name" class="form-control" placeholder="e.g. Maria Reyes" required />
+                </div>
+                <div class="col-md-6">
+                  <label class="fieldset-label" for="email">Email Address</label>
+                  <input id="email" type="email" class="form-control" placeholder="passenger@email.com" required />
+                </div>
+                <div class="col-md-6">
+                  <label class="fieldset-label" for="password">Temporary Password</label>
+                  <input id="password" type="password" class="form-control" placeholder="Pass1234!" required />
+                  <div class="form-text">At least 8 characters with letters and numbers.</div>
+                </div>
+                <div class="col-md-6">
+                  <label class="fieldset-label" for="phone">Phone (optional)</label>
+                  <input id="phone" class="form-control" placeholder="09xx xxx xxxx" />
+                </div>
+              </div>
+
+              <div class="d-flex flex-wrap gap-2 pt-2">
+                <button class="btn btn-primary" id="btnCreate" type="submit">
+                  <i class="bi bi-person-plus-fill me-2"></i>Create Passenger
+                </button>
+                <a class="btn btn-outline-secondary" href="secure-admin-dashboard.html">
+                  <i class="bi bi-grid"></i> Back to Dashboard
+                </a>
+              </div>
+            </form>
+
+            <div class="divider"></div>
+            <p class="small text-muted mb-0"><i class="bi bi-life-preserver me-1"></i>Need to upgrade a rider to passenger+ perks? Update their role from the dashboard after linking.</p>
+          </div>
+        </div>
       </div>
-    </form>
+    </div>
   </div>
-</div>
+</main>
 
 <script type="module">
   import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import { getAuth as getAuth2, createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-  // Primary app wrappers
   import { auth, db, ref, set, get, query, orderByChild, equalTo } from "./js/authentication.js";
   import { requireAdmin, attachAdminBadge } from "./js/admin_auth.js";
 
+  document.title = "JeepNi Admin • Add Passenger";
   await requireAdmin("login.html");
   attachAdminBadge("#adminInfo");
 
-  // Secondary app for creation (avoid logging out admin)
   let secondaryApp = null, auth2 = null;
   const firebaseConfig = auth.app.options;
   function initSecondary(){
@@ -85,8 +309,9 @@
     return auth2;
   }
 
-  // UI helpers
   const alertBox = document.getElementById("alert");
+  const createButton = document.getElementById("btnCreate");
+  const defaultButtonHtml = createButton ? createButton.innerHTML : "Create Passenger";
   function showAlert(html, type="warning"){
     alertBox.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">${html}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
   }
@@ -97,31 +322,31 @@
     const email = document.getElementById("email").value.trim();
     const pass  = document.getElementById("password").value;
     const phone = document.getElementById("phone").value.trim();
-    const notes = document.getElementById("notes").value.trim();
 
     if(!name || !email || !pass) { showAlert("Please complete name, email and password.", "danger"); return; }
 
-    const btn = document.getElementById("btnCreate");
-    btn.disabled = true; btn.textContent = "Creating...";
+    const btn = createButton;
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Creating...`;
+    }
 
     try{
-      // Prefer server-side creation for atomicity
       const API_BASE = window.API_BASE ?? ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'http://localhost:5000' : '');
       const serverResp = await fetch(`${API_BASE}/api/admin/create_account`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password: pass, role: 'passenger', phone, notes })
+        body: JSON.stringify({ name, email, password: pass, role: 'passenger', phone })
       }).catch(()=>null);
       if (serverResp && serverResp.ok) {
         const j = await serverResp.json();
         if (j.success !== false) {
           const uid = j.uid;
-          showAlert(`Passenger created. UID: <code>${String(uid).slice(0,6)}…</code>`, 'success');
+          showAlert(`Passenger created. UID: <code>${String(uid).slice(0,6)}...</code>`, 'success');
           document.getElementById('formAdd').reset();
           return;
         }
       }
 
-      // Fallback: client-side secondary auth + DB write
       const secAuth = initSecondary();
       const cred = await createUserWithEmailAndPassword(secAuth, email, pass);
       await updateProfile(cred.user, { displayName: name });
@@ -131,8 +356,7 @@
       const profile = {
         uid, name, email, phone, role: "passenger",
         created_at: (new Date()).toISOString(),
-        created_ts: Date.now(),
-        notes: notes || ""
+        created_ts: Date.now()
       };
 
       await Promise.all([
@@ -140,10 +364,9 @@
         set(ref(db, `passengers/${uid}`), profile)
       ]);
 
-      showAlert(`Passenger created. UID: <code>${uid.slice(0,6)}…</code>`, "success");
+      showAlert(`Passenger created. UID: <code>${uid.slice(0,6)}...</code>`, "success");
       document.getElementById("formAdd").reset();
     }catch(err){
-      // If auth user already exists, try to attach DB profile instead of failing hard
       if (err?.code === 'auth/email-already-in-use') {
         try {
           const qref = query(ref(db, 'all_users'), orderByChild('email'), equalTo(email));
@@ -156,15 +379,14 @@
           if (existingUid) {
             const profile = {
               uid: existingUid, name, email, phone, role: 'passenger',
-              created_at: (new Date()).toISOString(), created_ts: Date.now(),
-              notes: notes || ''
+              created_at: (new Date()).toISOString(), created_ts: Date.now()
             };
             try {
               await Promise.all([
                 set(ref(db, `all_users/${existingUid}`), profile),
                 set(ref(db, `passengers/${existingUid}`), profile)
               ]);
-              showAlert(`Passenger linked to existing account. UID: <code>${existingUid.slice(0,6)}…</code>`, 'success');
+              showAlert(`Passenger linked to existing account. UID: <code>${existingUid.slice(0,6)}...</code>`, 'success');
               document.getElementById('formAdd').reset();
               return;
             } catch (perm) {
@@ -175,19 +397,21 @@
               });
               const j = await resp.json().catch(()=>({}));
               if (resp.ok && j.success !== false) {
-                showAlert(`Passenger linked to existing account. UID: <code>${existingUid.slice(0,6)}…</code>`, 'success');
+                showAlert(`Passenger linked to existing account. UID: <code>${existingUid.slice(0,6)}...</code>`, 'success');
                 document.getElementById('formAdd').reset();
                 return;
               }
             }
           }
         } catch (e) {
-          // fall through to generic error
         }
       }
       showAlert("Failed to create passenger: " + (err?.message || err), "danger");
     }finally{
-      btn.disabled = false; btn.textContent = "Create Passenger";
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = defaultButtonHtml;
+      }
       if (secondaryApp) { try { await deleteApp(secondaryApp); } catch {} secondaryApp = null; auth2 = null; }
     }
   });

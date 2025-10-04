@@ -1,0 +1,29 @@
+# Env & secrets
+.env
+.env.*
+*.pem
+*.p12
+*.key
+*.keystore
+serviceAccount*.json
+*firebase-adminsdk*.json
+**/credentials/*.json
+
+# Node / build
+node_modules/
+dist/
+build/
+.tmp/
+
+# IDE / OS
+.vscode/
+.DS_Store
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.yarn-integrity
+
+# dataconnect
+.dataconnect

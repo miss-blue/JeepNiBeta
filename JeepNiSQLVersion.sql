@@ -59,7 +59,7 @@ CREATE TABLE admin (
     photoUrl VARCHAR(512)
 );
 
--- Table: roles (for other roles like super_admin, norole, etc.)
+-- Table: roles (for other roles such as admin, driver, passenger, norole, etc.)
 CREATE TABLE roles (
     uid VARCHAR(128) PRIMARY KEY,
     full_name VARCHAR(255),

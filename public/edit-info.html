@@ -22,9 +22,9 @@
 </div>
 
 <script type="module">
-import { requireLogin, db, ref, get, set } from "./js/authentication.js";
+import { requireRole, db, ref, get, set } from "./js/authentication.js";
 
-const user=await requireLogin("login.html");
+const { user } = await requireRole(['passenger']);
 const alertBox=document.getElementById("alert");
 function showAlert(m,t="warning"){alertBox.innerHTML=`<div class="alert alert-${t} alert-dismissible fade show">${m}<button class="btn-close" data-bs-dismiss="alert"></button></div>`;}
 

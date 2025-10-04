@@ -2,94 +2,331 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>JeepNi – Watch Ads</title>
+  <title>JeepNi — Watch Ads</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <style>
-    :root{ --bg: rgba(255,255,255,.86); --blue:#39b5f6; --blue2:#2fa2eb; --muted:#7b8a9b; --shadow: 0 20px 40px rgba(0,0,0,.18); }
+    :root{
+      --bg: rgba(255,255,255,.86);
+      --blue:#39b5f6; --blue2:#2fa2eb;
+      --muted:#7b8a9b;
+      --shadow: 0 20px 40px rgba(0,0,0,.18);
+      --gold1:#FFD23F; --gold2:#F7931E; --teal1:#06FFA5; --teal2:#4ECDC4;
+    }
     html,body{height:100%}
-    body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; background: url('icons/Background1.png') center bottom / cover no-repeat, linear-gradient(180deg,#cfefff,#f6fbff); }
-    .safe{ padding: 16px; max-width: 480px; margin: 0 auto; }
+    body{
+      margin:0;
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      background: url('icons/Background1.png') top center / 100% auto no-repeat,
+                  url('icons/Background2.png') bottom center / 100% auto no-repeat,
+                  linear-gradient(180deg,#cfefff,#f6fbff);
+      background-attachment: fixed;
+      min-height: 100vh;
+    }
+
+    /* Layout containers */
+    .safe{ 
+      padding: 16px; 
+      max-width: 1200px; 
+      margin: 0 auto; 
+    }
+    
+    /* Two-column layout for larger screens */
+    @media (min-width: 992px) {
+      .main-container {
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+      }
+      
+      .ads-section {
+        flex: 1;
+        max-width: 400px;
+      }
+      
+      .games-section {
+        flex: 2;
+      }
+      
+      body {
+        background: url('icons/Background1.png') center center / cover no-repeat,
+                    linear-gradient(180deg,#cfefff,#f6fbff);
+      }
+    }
+
+    /* chrome */
     .back{ position: fixed; top: 14px; left: 14px; z-index: 2; width:42px; height:42px; border-radius:10px; border:none; background: var(--bg); box-shadow: var(--shadow); display:grid; place-items:center }
     .wallet{ position: fixed; top: 14px; right: 14px; z-index: 2; background: var(--bg); padding: 8px 12px; border-radius: 12px; box-shadow: var(--shadow); display:flex; align-items:center; gap:10px }
     .wallet .count{ font-weight: 800; font-size: 18px }
     .timer{ font-weight:700; color:#2b4c7e; background: var(--bg); padding:8px 10px; border-radius:10px; margin-left:6px; box-shadow: var(--shadow) }
     .panel{ margin-top:84px; padding-bottom:18px }
-    .cardx{ background: rgba(255,255,255,.96); border-radius: 16px; box-shadow: var(--shadow); padding: 14px; margin-bottom: 14px }
-    .cardx .title{ font-family: "Trebuchet MS", system-ui; font-weight: 900; font-size: 22px; letter-spacing: 1px; text-transform: uppercase; text-align:center; margin: 4px 0 8px }
+
+    /* cards */
+    .cardx{ background: rgba(255,255,255,.96); border-radius: 18px; box-shadow: var(--shadow); padding: 14px; margin-bottom: 14px }
+    .title{ font-family: "Trebuchet MS", system-ui; font-weight: 900; font-size: 22px; letter-spacing: .5px; text-transform: uppercase; text-align:center; margin: 4px 0 8px }
     .pill{ display:inline-flex; align-items:center; gap:8px; background: #eef6ff; border-radius:10px; padding:8px 10px; color:#234 }
-    .btn-watch{ background: linear-gradient(180deg,#8be3ff,#35a8f0); border:none; color:#fff; font-weight:800; border-radius: 10px; padding: 10px 14px }
-    .btn-buy{ background: linear-gradient(180deg,#7bdf9a,#22c55e); border:none; color:#fff; font-weight:800; border-radius: 10px; padding: 10px 14px; width: 160px }
-    .btn-locked{ background:#9aa4ad; color:#fff; border:none; border-radius:10px; padding:10px 14px; cursor:not-allowed }
+    .subtitle{ color: var(--muted); font-size: 12px; margin-top: 2px }
+
+    .btn-watch{
+      background: linear-gradient(180deg,#8be3ff,#35a8f0);
+      border:none; color:#fff; font-weight:800; border-radius: 12px; padding: 10px 16px
+    }
+    .btn-buy{
+      background: linear-gradient(180deg,#7bdf9a,#22c55e);
+      border:none; color:#fff; font-weight:800; border-radius: 12px; padding: 10px 16px; width: 180px
+    }
+    .btn-locked{ background:#9aa4ad; color:#fff; border:none; border-radius:12px; padding:10px 16px; cursor:not-allowed }
+
     .rowx{ display:flex; align-items:center; justify-content:space-between; gap:12px }
     .left{ display:flex; align-items:center; gap:12px }
     .coin{ width:42px; height:42px; border-radius:50%; background: radial-gradient(circle at 30% 30%, #ffe082, #f3b300); display:grid; place-items:center; color:#7b4d0f; font-weight:900 }
-    .subtitle{ color: var(--muted); font-size: 12px; margin-top: 2px }
-    /* bottom nav shared with wallet/dashboard */
+
+    /* ===== GAMES ===== */
+    .games-section{ margin-top: 20px }
+    .game-card{
+      position: relative;
+      background: rgba(255,255,255,.96);
+      border-radius: 20px; box-shadow: var(--shadow); padding: 16px; margin-bottom: 16px;
+      overflow: hidden;
+      min-height: 90px;
+      display: flex;
+      flex-direction: column;
+    }
+    .game-card::before{
+      content:""; position:absolute; inset:-40% -20% auto -20%;
+      height: 160px;
+      background: radial-gradient(closest-side, rgba(255,210,63,.35), transparent 65%);
+      transform: translateY(-20px);
+      pointer-events: none;
+    }
+    .game-head{
+      display:flex; align-items:center; justify-content:space-between; margin-bottom:8px
+    }
+    .game-head .name{ display:flex; align-items:center; gap:8px; font-weight:800; letter-spacing:.3px }
+    .game-head .name i{ font-size:20px }
+    .game-badge{
+      font-size:12px; font-weight:800; color:#fff; padding:4px 10px; border-radius:999px;
+      background: linear-gradient(135deg, var(--gold1), var(--gold2));
+      box-shadow: 0 6px 14px rgba(247,147,30,.35);
+    }
+    .game-stats{ font-size: 12px; color: var(--muted); margin-bottom: 12px; display:flex; align-items:center; gap:8px }
+    .game-grid{ display: grid; gap: 8px; justify-content: center; margin: 12px 0; flex-grow: 1; }
+
+    .btn-game-play{
+      background: linear-gradient(135deg, #FF6B35 0%, #F7931E 50%, #FFD23F 100%);
+      border: 2px solid #fff; color: #fff; font-weight: 900; border-radius: 999px;
+      padding: 12px 22px; font-size: 14px; letter-spacing: .6px; text-transform: uppercase;
+      box-shadow: 0 6px 20px rgba(255,107,53,.4); transition: transform .25s, box-shadow .25s;
+      margin-top: auto;
+    }
+    .btn-game-play:hover{ transform: translateY(-3px) scale(1.05); box-shadow: 0 10px 28px rgba(255,107,53,.55) }
+
+     /* Memory */
+    .memory-grid{ grid-template-columns: repeat(4, 50px) }
+    .card-tile{
+      width: 50px; height: 50px; border-radius: 14px; display:grid; place-items:center; cursor:pointer;
+      background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%); border: 2px solid #FFF; font-size: 20px;
+      box-shadow: 0 4px 12px rgba(255,107,53,.3); transition: transform .25s, box-shadow .25s, background .25s;
+    }
+    .card-tile:hover{ transform: translateY(-2px) scale(1.04); box-shadow: 0 8px 22px rgba(255,107,53,.45) }
+    .card-tile.flipped{ background: linear-gradient(135deg, var(--teal1) 0%, var(--teal2) 100%); border-color: var(--teal1) }
+    .card-tile.matched{ background: linear-gradient(135deg, var(--gold1) 0%, var(--gold2) 100%); animation: matchPulse .7s ease }
+
+    @keyframes matchPulse{ 0%,100%{ transform: scale(1)} 50%{ transform: scale(1.12)} }
+
+    /* Sudoku - 9x9 grid */
+    .sudoku-grid{ 
+      grid-template-columns: repeat(9, 28px);
+      margin: 0 auto;
+    }
+    .sudoku-cell {
+      position: relative;
+    }
+    .sudoku-cell input{
+      width: 28px; height: 28px; text-align:center; font-weight:800; border:1px solid #87CEEB; 
+      font-size: 12px; background: #E0F6FF; color:#2C3E50;
+      transition: transform .2s, box-shadow .2s, border-color .2s;
+    }
+    /* Add thicker borders for 3x3 boxes */
+    .sudoku-cell:nth-child(3n) input {
+      border-right: 2px solid #2C3E50;
+    }
+    .sudoku-cell:nth-child(n+19):nth-child(-n+27) input,
+    .sudoku-cell:nth-child(n+46):nth-child(-n+54) input {
+      border-bottom: 2px solid #2C3E50;
+    }
+    .sudoku-cell input:focus{ border-color: var(--gold1); transform: scale(1.08); box-shadow: 0 0 8px rgba(255,210,63,.45); z-index: 2; }
+    .sudoku-cell input:disabled{ background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%) }
+
+    /* Connect */
+    .connect-wrap{ display:flex; gap:10px; justify-content:center; align-items:center }
+    .connect-col{ display:flex; flex-direction:column; gap:8px }
+    .connect-item{
+      width: 42px; height: 42px; border-radius: 12px; display:grid; place-items:center; background: linear-gradient(135deg, #98FB98 0%, #F0FFF0 100%);
+      border: 2px solid #FFF; cursor:pointer; font-size: 18px; color:#2C3E50; transition: transform .2s, box-shadow .2s, border-color .2s;
+      box-shadow: 0 4px 12px rgba(152,251,152,.3);
+    }
+    .connect-item:hover{ border-color: var(--gold1); transform: translateY(-2px) scale(1.06); box-shadow: 0 8px 18px rgba(255,210,63,.45) }
+    .connect-item.btn-primary{ background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%); color:#fff }
+    .connect-item.btn-danger{ background: linear-gradient(135deg, #FF4757 0%, #FF3742 100%); color:#fff }
+    .connect-item:disabled{ opacity:.7; background: linear-gradient(135deg, #87CEEB 0%, #E0F6FF 100%) }
+    .connect-stage{ position:relative; width: 85px; height: 220px; border-radius: 15px }
+    .connect-stage svg{ position:absolute; inset:0 }
+
+    /* progress */
+    .progress-wrap{ display:flex; align-items:center; gap:8px; margin-top:6px; justify-content:center }
+    .progress{ height: 10px }
+
+
+    /* bottom nav */
     .app-nav{ position:fixed; left:0; right:0; bottom:0; height:84px; z-index:10; background:linear-gradient(180deg, rgba(255,255,255,.6), rgba(255,255,255,.95)); backdrop-filter:blur(8px); border-top:1px solid rgba(0,0,0,.06); display:grid; grid-template-columns:1fr 1fr 72px 1fr 1fr; align-items:center; }
     .app-nav a{ text-decoration:none; color:#6b7b8a; font-size:12px; display:flex; flex-direction:column; align-items:center; gap:6px; min-width:0 }
     .app-nav a .bi{ font-size:20px }
     .home-fab{ position:absolute; left:50%; transform:translateX(-50%); bottom:22px; width:64px; height:64px; border-radius:50%; background:linear-gradient(180deg,#8be3ff,#35a8f0); color:#fff; display:grid; place-items:center; box-shadow:0 16px 32px rgba(0,0,0,.25); border:4px solid #fff }
     .active{ color:#2a476a !important; font-weight:800 }
-    .app-nav .center-slot{ width:72px; height:1px }
+
+    /* responsive tweaks */
+    @media (max-width:576px){
+      .safe{ padding: 12px }
+      .memory-grid { grid-template-columns: repeat(4, 48px) }
+      .card-tile{ width:48px; height:48px; font-size:20px }
+      .sudoku-grid{ grid-template-columns: repeat(9, 28px) }
+      .sudoku-cell input{ width:28px; height:28px; font-size:12px; }
+      .connect-stage{ width: 85px; height: 220px }
+      .connect-item{ width:44px; height:44px; font-size:18px }
+    }
+    
+    @media (max-width: 420px) {
+      .sudoku-grid{ grid-template-columns: repeat(9, 24px) }
+      .sudoku-cell input{ width:24px; height:24px; font-size:10px; }
+    }
   </style>
 </head>
 <body>
   <a class="back" href="passenger-dashboard.html" aria-label="Back"><i class="bi bi-chevron-left fs-5"></i></a>
-  <div class="wallet">
+
+  <!-- SUI Wallet chip -->
+  <div class="wallet" title="Your SUI coins">
     <div class="coin"><i class="bi bi-coin"></i></div>
-    <div class="count" id="coinCount">0</div>
-    <div class="timer" id="cooldown">23:00:05</div>
+    <div class="count" id="coinCount">5</div>
+    <div class="timer" id="cooldown">00:00:00</div>
   </div>
 
   <main class="safe" style="padding-bottom:110px">
-    <section class="panel">
-      <div class="cardx">
-        <div class="title">Special Pack</div>
-        <div class="rowx mb-2">
-          <span class="pill"><i class="bi bi-coin"></i> +2000</span>
-          <span class="pill"><i class="bi bi-ticket-perforated"></i> 10</span>
-        </div>
-        <div class="text-center"><button class="btn-buy" id="btnBuy">Use</button></div>
-      </div>
+    <div class="main-container">
+      <section class="ads-section">
+        <div class="panel">
+          <!-- Pack -->
+          <div class="cardx">
+            <div class="title">Special Pack</div>
+            <div class="d-flex justify-content-center gap-2 mb-2">
+              <span class="pill"><i class="bi bi-coin"></i> +2000 SUI</span>
+              <span class="pill"><i class="bi bi-ticket-perforated"></i> 10 Tickets</span>
+            </div>
+            <div class="text-center"><button class="btn-buy" id="btnBuy">Use</button></div>
+          </div>
 
-      <!-- Repeated rows with Watch buttons -->
-      <div class="cardx">
-        <div class="rowx">
-          <div class="left"><div class="coin"><i class="bi bi-coin"></i></div><div><div class="fw-bold">+5</div><div class="subtitle">Watch an ad to earn</div></div></div>
-          <button class="btn-watch" data-watch>Watch</button>
+          <!-- Status + progress -->
+          <div class="cardx">
+            <div class="text-center">
+              <div class="small mb-1">
+                Levels cleared: <span id="lvlCount" class="fw-bold">0</span>
+                <span id="adsStatus" class="badge rounded-pill text-bg-secondary"></span>
+              </div>
+              <div class="small text-muted">Clear <b>5</b> game levels to unlock the next batch of ads.</div>
+              <div class="progress-wrap">
+                <span class="small text-muted">Next unlock</span>
+                <div class="progress w-50">
+                  <div id="lvlBar" class="progress-bar bg-warning" role="progressbar" style="width:0%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ad rows -->
+          <div class="cardx">
+            <div class="rowx">
+              <div class="left">
+                <div class="coin"><i class="bi bi-coin"></i></div>
+                <div><div class="fw-bold">+5 SUI</div><div class="subtitle">Watch an ad to earn</div></div>
+              </div>
+              <button class="btn-watch" data-watch>Watch</button>
+            </div>
+          </div>
+          <div class="cardx">
+            <div class="rowx">
+              <div class="left">
+                <div class="coin"><i class="bi bi-coin"></i></div>
+                <div><div class="fw-bold">+5 SUI</div><div class="subtitle">Watch an ad to earn</div></div>
+              </div>
+              <button class="btn-watch" data-watch>Watch</button>
+            </div>
+          </div>
+          <!-- Locked samples -->
+          <div class="cardx"><div class="rowx"><div class="left"><div class="coin"><i class="bi bi-coin"></i></div><div><div class="fw-bold">+10 SUI</div><div class="subtitle">Locked</div></div></div><button class="btn-locked" disabled><i class="bi bi-lock"></i></button></div></div>
+          <div class="cardx"><div class="rowx"><div class="left"><div class="coin"><i class="bi bi-coin"></i></div><div><div class="fw-bold">+10 SUI</div><div class="subtitle">Locked</div></div></div><button class="btn-locked" disabled><i class="bi bi-lock"></i></button></div></div>
+          <div class="cardx"><div class="rowx"><div class="left"><div class="coin"><i class="bi bi-coin"></i></div><div><div class="fw-bold">+50 SUI</div><div class="subtitle">Locked</div></div></div><button class="btn-locked" disabled><i class="bi bi-lock"></i></button></div></div>
         </div>
-      </div>
-      <div class="cardx">
-        <div class="rowx">
-          <div class="left"><div class="coin"><i class="bi bi-coin"></i></div><div><div class="fw-bold">+5</div><div class="subtitle">Watch an ad to earn</div></div></div>
-          <button class="btn-watch" data-watch>Watch</button>
+      </section>
+
+      <!-- Games -->
+      <section class="games-section">
+        <div class="cardx">
+          <div class="title" style="font-size: 18px">Play Games to Unlock Ads</div>
+          <div class="text-center small text-muted mb-1">Each cleared level counts toward unlocks.</div>
         </div>
-      </div>
-      <!-- Locked examples -->
-      <div class="cardx"><div class="rowx"><div class="left"><div class="coin"><i class="bi bi-coin"></i></div><div><div class="fw-bold">+10</div><div class="subtitle">Locked</div></div></div><button class="btn-locked" disabled><i class="bi bi-lock"></i></button></div></div>
-      <div class="cardx"><div class="rowx"><div class="left"><div class="coin"><i class="bi bi-coin"></i></div><div><div class="fw-bold">+10</div><div class="subtitle">Locked</div></div></div><button class="btn-locked" disabled><i class="bi bi-lock"></i></button></div></div>
-      <div class="cardx"><div class="rowx"><div class="left"><div class="coin"><i class="bi bi-coin"></i></div><div><div class="fw-bold">+50</div><div class="subtitle">Locked</div></div></div><button class="btn-locked" disabled><i class="bi bi-lock"></i></button></div></div>
-    </section>
+
+        <!-- Memory -->
+        <article class="game-card" data-game="memory">
+          <div class="game-head">
+            <span class="name"><i class="bi bi-grid-1x2"></i> Match Cards</span>
+            <span class="game-badge">CLEAR = +1 Level</span>
+          </div>
+          <div class="game-stats"><i class="bi bi-info-circle"></i> Flip cards and match icons</div>
+          <div class="text-center"><button class="btn-game-play" data-play="memory">Play</button></div>
+        </article>
+
+        <!-- Sudoku -->
+        <article class="game-card" data-game="sudoku">
+          <div class="game-head">
+            <span class="name"><i class="bi bi-calculator"></i> Mini Sudoku (9×9)</span>
+            <span class="game-badge">CLEAR = +1 Level</span>
+          </div>
+          <div class="game-stats"><i class="bi bi-info-circle"></i> Fill 1–9 (no repeats per row/column/box)</div>
+          <div class="text-center"><button class="btn-game-play" data-play="sudoku">Play</button></div>
+        </article>
+
+        <!-- Connect -->
+        <article class="game-card" data-game="connect">
+          <div class="game-head">
+            <span class="name"><i class="bi bi-bezier2"></i> Connect the Icons</span>
+            <span class="game-badge">CLEAR = +1 Level</span>
+          </div>
+          <div class="game-stats"><i class="bi bi-info-circle"></i> Select a left icon then its match on the right</div>
+          <div class="text-center"><button class="btn-game-play" data-play="connect">Play</button></div>
+        </article>
+      </section>
+    </div>
   </main>
-  <!-- Bottom navigation bar -->
-  <nav class="app-nav">
-    <a href="destination.html" aria-label="Destination" style="grid-column:1"><i class="bi bi-geo-alt"></i><span>Destination</span></a>
-    <a href="watch-ads.html" aria-label="Watch Ads" class="active" style="grid-column:2"><i class="bi bi-camera-reels"></i><span>Watch Ads</span></a>
-    <span class="center-slot" aria-hidden="true" style="grid-column:3"></span>
-    <a href="wallet.html" aria-label="Wallet" style="grid-column:4"><i class="bi bi-wallet2"></i><span>Wallet</span></a>
-    <a href="my-profile.html" aria-label="Profile" style="grid-column:5"><i class="bi bi-person"></i><span>Profile</span></a>
+
+  <!-- Bottom nav -->
+  <nav class="app-nav" aria-label="primary">
+    <a href="destination.html"><i class="bi bi-geo-alt"></i><span>Destination</span></a>
+    <a href="watch-ads.html" class="active"><i class="bi bi-camera-reels"></i><span>Watch Ads</span></a>
+    <span class="center-slot" aria-hidden="true"></span>
+    <a href="wallet.html"><i class="bi bi-wallet2"></i><span>Wallet</span></a>
+    <a href="my-profile.html"><i class="bi bi-person"></i><span>Profile</span></a>
     <a href="passenger-dashboard.html" class="home-fab" aria-label="Home"><i class="bi bi-house-door fs-3"></i></a>
   </nav>
 
-  <!-- Modal for no ads available -->
+  <!-- No Ads Modal -->
   <div class="modal fade" id="adsModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header"><h5 class="modal-title">No Ads Available</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
         <div class="modal-body">
-          <p>There are currently no ads to watch. Please check back later.</p>
+          <p>There are currently no ads to watch. Clear game levels to unlock more ads!</p>
         </div>
         <div class="modal-footer"><button class="btn btn-primary" data-bs-dismiss="modal">Okay</button></div>
       </div>
@@ -98,49 +335,265 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script type="module">
-    import { auth, db, ref, runTransaction, onValue, requireLogin } from './js/authentication.js';
-    const user = await requireLogin('login.html');
-    const uid = user.uid;
-    // Store wallet under the user's profile to satisfy RTDB rules
-    const balRef = ref(db, `all_users/${uid}/wallet`);
+    import { auth, db, ref, runTransaction, onValue, requireRole, get, set } from './js/authentication.js';
 
+    /* ---------- Auth / User ---------- */
+    const { user } = await requireRole(['passenger']);
+    const uid = user.uid;
+
+    /* ---------- Refs (per-user: SUI coins) ---------- */
+    const balRef = ref(db, `all_users/${uid}/wallet`);          // SUI coin balance
+    const engageRef = ref(db, `engagement/${uid}`);             // {levels_completed, ads_available}
+
+    /* ---------- DOM ---------- */
     const coinEl = document.getElementById('coinCount');
     const useBtn = document.getElementById('btnBuy');
-    const PACK_COINS = 2000; // Special Pack value
-    onValue(balRef, (snap)=>{ const v = snap.exists()? snap.val():0; coinEl.textContent = String(v); if (useBtn) useBtn.textContent = `Use ${v} coins`; });
+    const lvlCountEl = document.getElementById('lvlCount');
+    const adsStatusEl = document.getElementById('adsStatus');
+    const lvlBar = document.getElementById('lvlBar');
 
-    // Credit the pack amount to user wallet
+    /* ---------- Constants ---------- */
+    const PACK_COINS = 2000;              // “Special Pack”
+    const REWARD_PER_AD = 5;              // +5 SUI
+    const LEVELS_PER_UNLOCK = 5;
+
+    /* ---------- Init defaults ---------- */
+    async function ensureDefaults(){
+      const s = await get(engageRef);
+      if(!s.exists()){
+        await set(engageRef, { levels_completed: 0, ads_available: 1 });
+      }
+    }
+    await ensureDefaults();
+
+    /* ---------- Render helpers ---------- */
+    async function readState(){
+      const [c, e] = await Promise.all([get(balRef), get(engageRef)]);
+      const coins = c.exists()? c.val() : 0;
+      const levels = e.exists()? (e.val().levels_completed||0) : 0;
+      const adsAvail = e.exists()? (e.val().ads_available||0) : 0;
+
+      coinEl.textContent = String(coins);
+      lvlCountEl.textContent = levels;
+      adsStatusEl.textContent = adsAvail ? 'Available' : 'Not available';
+      adsStatusEl.className = `badge rounded-pill ${adsAvail ? 'text-bg-success' : 'text-bg-secondary'}`;
+
+      // progress to next unlock
+      const step = levels % LEVELS_PER_UNLOCK;
+      const pct = Math.round((step / LEVELS_PER_UNLOCK) * 100);
+      lvlBar.style.width = `${pct}%`;
+
+      // enable/disable watch buttons
+      document.querySelectorAll('[data-watch]').forEach(btn => {
+        btn.disabled = !adsAvail;
+        if (!adsAvail) { btn.textContent = 'Locked'; btn.className = 'btn-locked'; }
+        else           { btn.textContent = 'Watch';  btn.className = 'btn-watch'; }
+      });
+    }
+    await readState();
+
+    /* ---------- Engagement updates ---------- */
+    async function addLevelAndMaybeUnlock(){
+      await runTransaction(engageRef, (val)=>{
+        const cur = val || { levels_completed: 0, ads_available: 1 };
+        const nextLvl = Number(cur.levels_completed||0) + 1;
+        const unlocked = (nextLvl % LEVELS_PER_UNLOCK === 0) ? 1 : (cur.ads_available||0);
+        return { levels_completed: nextLvl, ads_available: unlocked };
+      });
+      await readState();
+    }
+
+    async function consumeAdAvailabilityAndReward(){
+      // consume one availability gate & grant coins
+      await runTransaction(engageRef, (val)=>{
+        const cur = val || { levels_completed:0, ads_available:1 };
+        return { ...cur, ads_available: 0 };
+      });
+      await runTransaction(balRef, (curr)=> (Number(curr)||0) + REWARD_PER_AD);
+      await readState();
+    }
+
+    /* ---------- Reactive balance chip ---------- */
+    onValue(balRef, (snap)=>{ coinEl.textContent = String(snap.exists()? snap.val() : 0); });
+
+    /* ---------- Pack button ---------- */
     useBtn?.addEventListener('click', async ()=>{
-        await runTransaction(balRef, (curr)=> {
-          const n = (Number(curr)||0) + PACK_COINS;
-          return n < 0 ? 0 : n;
-        });
-      try { alert('+2000 coins added to your balance.'); } catch {}
+      await runTransaction(balRef, (curr)=> (Number(curr)||0) + PACK_COINS);
+      try { alert(`+${PACK_COINS} SUI added to your balance.`); } catch {}
     });
 
-    // Bind all watch buttons to show the modal for now
+    /* ---------- Watch buttons ---------- */
     const modal = new bootstrap.Modal(document.getElementById('adsModal'));
-    document.querySelectorAll('[data-watch]')?.forEach(btn=>{
-      btn.addEventListener('click', async ()=> {
-        // In a real app, verify ad view completion server-side before crediting
-        await runTransaction(balRef, (curr)=> {
-          const n = (Number(curr)||0) + 5;
-          return n < 0 ? 0 : n;
-        });
-        modal.show();
+    document.querySelectorAll('[data-watch]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const e = await get(engageRef);
+        const adsAvail = e.exists()? (e.val().ads_available||0) : 0;
+        if (adsAvail) {
+          await consumeAdAvailabilityAndReward();
+          try { alert(`+${REWARD_PER_AD} SUI added to your balance.`); } catch {}
+        } else {
+          modal.show();
+        }
       });
     });
 
-    // Fake cooldown timer starting at 23h 00m 05s
+    /* ---------- Cooldown Timer (Fixed) ---------- */
     const cd = document.getElementById('cooldown');
-    let seconds = 23*3600 + 5;
-    setInterval(()=>{
-      seconds = Math.max(0, seconds-1);
+    let seconds = 30 * 60; // 30 minutes in seconds
+    
+    // Update timer immediately
+    updateTimer();
+    
+    // Set interval to update timer every second
+    const timerInterval = setInterval(() => {
+      seconds = Math.max(0, seconds - 1);
+      updateTimer();
+      
+      // Reset timer when it reaches 0
+      if (seconds === 0) {
+        seconds = 30 * 60; // Reset to 30 minutes
+      }
+    }, 1000);
+    
+    function updateTimer() {
       const h = String(Math.floor(seconds/3600)).padStart(2,'0');
       const m = String(Math.floor((seconds%3600)/60)).padStart(2,'0');
       const s = String(seconds%60).padStart(2,'0');
       cd.textContent = `${h}:${m}:${s}`;
-    },1000);
-  </script>
-</body>
-</html>
+    }
+
+    /* ====================================================
+       GAMES: Memory • Sudoku (4×4) • Connect the Icons
+       Each clear ⇒ addLevelAndMaybeUnlock()
+       ==================================================== */
+
+    /* ===== Memory Match ===== */
+    const memIcons = [
+      'bi-bus-front','bi-geo-alt-fill','bi-wallet2','bi-lightning',
+      'bi-wifi','bi-joystick','bi-battery-full','bi-bell'
+    ];
+    const $mem = document.getElementById('memoryGrid');
+    let memPairs = 3, memActive = false, memFirst=null, memLock=false, memMatched=0;
+
+    function setupMemory(){
+      const pick = memIcons.slice(0, Math.min(memPairs, memIcons.length));
+      const deck = [...pick, ...pick].sort(()=>Math.random()-0.5);
+      $mem.innerHTML = '';
+      deck.forEach((cls, idx)=>{
+        const el = document.createElement('button');
+        el.type='button'; el.className='card-tile'; el.dataset.icon=cls; el.dataset.idx=String(idx);
+        el.innerHTML = `<i class="bi"></i>`;
+        $mem.appendChild(el);
+      });
+      if (memActive) bindMemoryEvents();
+    }
+    function bindMemoryEvents(){
+      $mem.querySelectorAll('.card-tile').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          if(!memActive || memLock || btn.classList.contains('matched') || btn.classList.contains('flipped')) return;
+          btn.classList.add('flipped');
+          btn.querySelector('.bi').className = `bi ${btn.dataset.icon}`;
+          if(!memFirst){ memFirst = btn; return; }
+          memLock = true;
+          setTimeout(()=>{
+            if(memFirst.dataset.icon === btn.dataset.icon){
+              memFirst.classList.add('matched'); btn.classList.add('matched'); memMatched += 2;
+            } else {
+              memFirst.classList.remove('flipped'); btn.classList.remove('flipped');
+              memFirst.querySelector('.bi').className='bi'; btn.querySelector('.bi').className='bi';
+            }
+            memFirst = null; memLock = false;
+            if (memMatched === $mem.children.length){
+              memActive = false; memMatched = 0;
+              addLevelAndMaybeUnlock();
+              try { alert('Memory Match completed! Level cleared.'); } catch {}
+              setupMemory();
+            }
+          }, 450);
+        });
+      });
+    }
+    document.querySelector('[data-play="memory"]').addEventListener('click', ()=>{
+      if(!memActive){
+        memActive = true; memMatched = 0; memFirst = null; memLock = false;
+        memPairs = Math.min(memPairs + 1, 6);
+        setupMemory();
+      }
+    });
+    setupMemory();
+
+    /* ===== Mini Sudoku 4×4 ===== */
+    const $sudoku = document.getElementById('sudokuGrid');
+    const sudPresets = [
+      [1,0,0,4, 0,4,3,0, 0,3,2,0, 2,0,0,1],
+      [0,0,3,0, 3,0,0,1, 0,1,0,0, 0,0,4,0],
+      [0,2,0,0, 0,0,4,3, 0,3,0,0, 2,0,0,0]
+    ];
+    let sudokuActive = false;
+
+    function newSudoku(){
+      $sudoku.innerHTML = '';
+      const base = sudPresets[Math.floor(Math.random()*sudPresets.length)].slice();
+      base.forEach((v)=>{
+        const wrap = document.createElement('div'); wrap.className='sudoku-cell';
+        const inp = document.createElement('input'); inp.inputMode='numeric'; inp.maxLength=1; inp.pattern='[1-4]';
+        if(v){ inp.value=String(v); inp.disabled=true; }
+        else {
+          inp.addEventListener('input', ()=>{
+            if (sudokuActive && validSudoku()){
+              sudokuActive = false;
+              addLevelAndMaybeUnlock();
+              try { alert('Sudoku completed! Level cleared.'); } catch {}
+              setTimeout(newSudoku, 600);
+            }
+          });
+        }
+        wrap.appendChild(inp); $sudoku.appendChild(wrap);
+      });
+    }
+    function validSudoku(){
+      const vals = [...$sudoku.querySelectorAll('input')].map(i=>Number(i.value||0));
+      const get = (r,c)=> vals[r*4+c];
+      const okSet = (arr)=> {
+        const s = new Set(arr);
+        for(const v of arr){ if(!(v>=1 && v<=4)) return false; }
+        return s.size===4;
+      };
+      for(let r=0;r<4;r++){ if(!okSet([get(r,0),get(r,1),get(r,2),get(r,3)])) return false; }
+      for(let c=0;c<4;c++){ if(!okSet([get(0,c),get(1,c),get(2,c),get(3,c)])) return false; }
+      for(let br=0;br<4;br+=2){
+        for(let bc=0;bc<4;bc+=2){
+          if(!okSet([get(br,bc),get(br,bc+1),get(br+1,bc),get(br+1,bc+1)])) return false;
+        }
+      }
+      return true;
+    }
+    document.querySelector('[data-play="sudoku"]').addEventListener('click', ()=>{
+      sudokuActive = true; newSudoku();
+    });
+    newSudoku();
+
+    /* ===== Connect the Icons ===== */
+    const leftCol = document.getElementById('leftCol');
+    const rightCol = document.getElementById('rightCol');
+    const svg = document.getElementById('connectSvg');
+
+    let leftItems=[], rightItems=[], pairs=[], selectedLeft=null, connections=0, connectActive=false;
+
+    function setupConnect(){
+      leftCol.innerHTML=''; rightCol.innerHTML=''; svg.innerHTML='';
+      const icons = ['bi-geo-alt','bi-bus-front','bi-wallet2','bi-lightning-charge','bi-shield-check'];
+      const left = icons.slice(0);
+      const right = icons.slice(0).sort(()=>Math.random()-0.5);
+      pairs = icons.map((ic)=>({left:ic,right:ic}));
+      leftItems = left.map((ic,idx)=>createConnItem(ic, 'L', idx));
+      rightItems = right.map((ic,idx)=>createConnItem(ic, 'R', idx));
+      leftItems.forEach(n=>leftCol.appendChild(n.el));
+      rightItems.forEach(n=>rightCol.appendChild(n.el));
+      connections=0; selectedLeft=null;
+    }
+    function createConnItem(icon, side, idx){
+      const el = document.createElement('button');
+      el.type='button'; el.className='connect-item';
+      el.innerHTML=`<i class="bi ${icon}"></i>`;
+      el.dataset.icon=icon; el.dataset.side

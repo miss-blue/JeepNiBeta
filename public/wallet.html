@@ -20,10 +20,35 @@
     .bal .amount{ font-size:40px; font-weight:900; line-height:1 }
     .addr{ display:inline-flex; align-items:center; gap:8px; background: rgba(255,255,255,.85); color:#173a66; padding:6px 10px; border-radius:10px; font-weight:700 }
     .tiles{ display:flex; gap:14px; justify-content:center; padding:14px 12px }
-    .tile{ width:112px; height:102px; border-radius:16px; background:#e6f3fd; color:#203a55; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; font-weight:800; box-shadow:0 10px 24px rgba(0,0,0,.12) }
+    .tile{ width:112px; height:102px; border-radius:16px; background:#e6f3fd; color:#203a55; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; font-weight:800; box-shadow:0 10px 24px rgba(0,0,0,.12); transition: transform 0.2s; }
+    .tile:hover { transform: translateY(-3px); }
     .tile i{ font-size:28px; margin-bottom:8px }
     .sheet{ background: rgba(255,255,255,.88); backdrop-filter: blur(6px); border-radius:22px; box-shadow:0 20px 40px rgba(0,0,0,.18); padding:14px; margin: 8px 12px 100px }
     .section-title{ color:#2a476a; font-weight:800; margin-bottom:8px }
+
+    /* QR Code Styles */
+    .qr-container { display: flex; flex-direction: column; align-items: center; gap: 15px; }
+    .qr-code { width: 200px; height: 200px; background: white; padding: 10px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+    .qr-instructions { text-align: center; color: var(--muted); font-size: 14px; max-width: 300px; }
+    .payment-actions { display: flex; gap: 10px; justify-content: center; margin-top: 15px; }
+    
+    /* Scanner Styles */
+    .scanner-container { display: flex; flex-direction: column; align-items: center; gap: 15px; }
+    .scanner-placeholder { width: 250px; height: 250px; background: #f0f0f0; border: 2px dashed #ccc; border-radius: 12px; display: grid; place-items: center; }
+    .scanner-instructions { text-align: center; color: var(--muted); font-size: 14px; max-width: 300px; }
+    
+    /* Payment History */
+    .transaction-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
+    .transaction-details { flex: 1; }
+    .transaction-amount { font-weight: 700; }
+    .transaction-date { font-size: 12px; color: var(--muted); }
+    .transaction-positive { color: #28a745; }
+    .transaction-negative { color: #dc3545; }
+
+    /* Tabs for QR display/scan */
+    .qr-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
+    .qr-tab { flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #e6f3fd; cursor: pointer; font-weight: 600; }
+    .qr-tab.active { background: var(--blue); color: white; }
 
     /* Bottom nav */
     .app-nav{ position:fixed; left:0; right:0; bottom:0; height:84px; z-index:10; background:linear-gradient(180deg, rgba(255,255,255,.6), rgba(255,255,255,.95)); backdrop-filter:blur(8px); border-top:1px solid rgba(0,0,0,.06); display:grid; grid-template-columns:1fr 1fr 72px 1fr 1fr; align-items:center; }
@@ -60,7 +85,7 @@
   <section class="tiles">
     <a href="#" id="btnTxn" class="tile"><i class="bi bi-clock-history"></i><div>Transaction<br>History</div></a>
     <a href="#" id="btnFare" class="tile"><i class="bi bi-cash-coin"></i><div>Fare<br>Information</div></a>
-    <a href="#" id="btnChange" class="tile"><i class="bi bi-wallet2"></i><div>Change<br>Wallets</div></a>
+    <a href="#" id="btnPay" class="tile"><i class="bi bi-qr-code"></i><div>Pay<br>Driver</div></a>
   </section>
 
   <main id="panel" class="sheet">
@@ -79,9 +104,9 @@
   </nav>
 
   <script type="module">
-    import { auth, db, ref, get, set, runTransaction, onValue, requireLogin } from './js/authentication.js';
+    import { auth, db, ref, get, set, runTransaction, onValue, requireRole, push } from './js/authentication.js';
     // Require login; passengers share same auth
-    const user = await requireLogin('login.html');
+    const { user } = await requireRole(['passenger']);
     const uid = user.uid;
 
     const amountEl = document.getElementById('amount');
@@ -109,7 +134,7 @@
       navigator.clipboard?.writeText(a);
     });
 
-    // Simple panel router between History / Fare / Change Wallets
+    // Simple panel router between History / Fare / Pay Driver
     const panel = document.getElementById('panel');
     const bind = (id, fn) => {
       const el = document.getElementById(id);
@@ -118,12 +143,63 @@
     };
     bind('btnTxn', showHistory);
     bind('btnFare', showFare);
-    bind('btnChange', showChangeWallet);
+    bind('btnPay', showPayDriver);
 
-    function showHistory(){
+    // Get transaction history from Firebase
+    async function getTransactionHistory() {
+      try {
+        const transactionsRef = ref(db, `transactions/${uid}`);
+        const snapshot = await get(transactionsRef);
+        
+        if (snapshot.exists()) {
+          const transactions = snapshot.val();
+          // Convert to array and sort by timestamp (newest first)
+          return Object.entries(transactions)
+            .map(([id, transaction]) => ({ id, ...transaction }))
+            .sort((a, b) => b.timestamp - a.timestamp);
+        }
+        return [];
+      } catch (error) {
+        console.error("Error fetching transactions:", error);
+        return [];
+      }
+    }
+
+    // Add a transaction to Firebase
+    async function addTransaction(transaction) {
+      try {
+        const transactionsRef = ref(db, `transactions/${uid}`);
+        const newTransactionRef = push(transactionsRef);
+        await set(newTransactionRef, {
+          ...transaction,
+          timestamp: Date.now()
+        });
+        return true;
+      } catch (error) {
+        console.error("Error adding transaction:", error);
+        return false;
+      }
+    }
+
+    async function showHistory(){
+      const transactions = await getTransactionHistory();
+      
       panel.innerHTML = `
         <div class="section-title">Recent Transaction History <a href="#" class="float-end small">See all</a></div>
-        <div class="text-muted">History coming soon.</div>
+        ${transactions.length > 0 ? 
+          transactions.map(t => `
+            <div class="transaction-item">
+              <div class="transaction-details">
+                <div>${t.description}</div>
+                <div class="transaction-date">${new Date(t.timestamp).toLocaleString()}</div>
+              </div>
+              <div class="transaction-amount ${t.type === 'earned' ? 'transaction-positive' : 'transaction-negative'}">
+                ${t.type === 'earned' ? '+' : '-'}${t.amount} coins
+              </div>
+            </div>
+          `).join('') : 
+          '<div class="text-muted">No transactions yet. Earn by <a href="watch-ads.html">watching ads</a>.</div>'
+        }
       `;
     }
 
@@ -164,19 +240,114 @@
       });
     }
 
-    function showChangeWallet(){
+    function showPayDriver(){
       panel.innerHTML = `
-        <div class="section-title">Manage Wallet</div>
-        <div class="d-grid gap-2">
-          <div class="form-pill"><i class="bi bi-wallet2 text-primary"></i>
-            <input id="alias" class="form-control border-0 p-0" placeholder="Wallet nickname (optional)"/>
+        <div class="section-title">Pay Driver</div>
+        <div class="qr-tabs">
+          <div class="qr-tab active" id="tabDisplay">Display QR</div>
+          <div class="qr-tab" id="tabScan">Scan QR</div>
+        </div>
+        <div id="qrDisplaySection" class="qr-container">
+          <div class="qr-code" id="qrCode">
+            <div style="display: grid; place-items: center; height: 100%;">
+              <i class="bi bi-qr-code" style="font-size: 80px;"></i>
+            </div>
           </div>
-          <button id="btnReset" class="btn btn-primary">Reset Balance (demo)</button>
+          <div class="qr-instructions">
+            Show this QR code to the driver for scanning. The fare amount will be deducted from your wallet.
+          </div>
+          <div class="payment-actions">
+            <button id="simulatePayment" class="btn btn-primary">Simulate Payment</button>
+          </div>
+        </div>
+        <div id="qrScanSection" class="scanner-container" style="display: none;">
+          <div class="scanner-placeholder">
+            <i class="bi bi-camera" style="font-size: 60px; color: #6b7b8a;"></i>
+          </div>
+          <div class="scanner-instructions">
+            Point your camera at the driver's QR code to scan and pay for your fare.
+          </div>
+          <div class="payment-actions">
+            <button id="startScanner" class="btn btn-primary">Start Scanner</button>
+            <button id="simulateScan" class="btn btn-outline-primary">Simulate Scan</button>
+          </div>
         </div>
       `;
-      document.getElementById('btnReset')?.addEventListener('click', async ()=>{
-        await set(ref(db, `all_users/${uid}/wallet`), 0);
-        alert('Balance reset to 0 for your account.');
+      
+      // Tab switching functionality
+      document.getElementById('tabDisplay').addEventListener('click', () => {
+        document.getElementById('tabDisplay').classList.add('active');
+        document.getElementById('tabScan').classList.remove('active');
+        document.getElementById('qrDisplaySection').style.display = 'flex';
+        document.getElementById('qrScanSection').style.display = 'none';
+      });
+      
+      document.getElementById('tabScan').addEventListener('click', () => {
+        document.getElementById('tabScan').classList.add('active');
+        document.getElementById('tabDisplay').classList.remove('active');
+        document.getElementById('qrDisplaySection').style.display = 'none';
+        document.getElementById('qrScanSection').style.display = 'flex';
+      });
+      
+      // Simulate payment from displaying QR
+      document.getElementById('simulatePayment')?.addEventListener('click', async () => {
+        const currentBalance = Number(amountEl.textContent) || 0;
+        const fareAmount = 25; // Example fare amount
+        
+        if (currentBalance < fareAmount) {
+          alert(`Insufficient balance. You need ${fareAmount} coins but only have ${currentBalance}.`);
+          return;
+        }
+        
+        // Deduct fare from balance
+        await runTransaction(balRef, (curr) => (curr || 0) - fareAmount);
+        
+        // Add to transaction history
+        const transactionAdded = await addTransaction({
+          type: 'spent',
+          amount: fareAmount,
+          description: 'Jeepney fare payment (QR displayed)'
+        });
+        
+        if (transactionAdded) {
+          alert(`Payment successful! ${fareAmount} coins deducted from your wallet.`);
+          showHistory(); // Switch to history view to show the new transaction
+        } else {
+          alert('Payment failed. Please try again.');
+        }
+      });
+      
+      // Simulate scanning a QR code
+      document.getElementById('simulateScan')?.addEventListener('click', async () => {
+        const currentBalance = Number(amountEl.textContent) || 0;
+        const fareAmount = 25; // Example fare amount
+        
+        if (currentBalance < fareAmount) {
+          alert(`Insufficient balance. You need ${fareAmount} coins but only have ${currentBalance}.`);
+          return;
+        }
+        
+        // Deduct fare from balance
+        await runTransaction(balRef, (curr) => (curr || 0) - fareAmount);
+        
+        // Add to transaction history
+        const transactionAdded = await addTransaction({
+          type: 'spent',
+          amount: fareAmount,
+          description: 'Jeepney fare payment (QR scanned)'
+        });
+        
+        if (transactionAdded) {
+          alert(`Payment successful! ${fareAmount} coins deducted from your wallet.`);
+          showHistory(); // Switch to history view to show the new transaction
+        } else {
+          alert('Payment failed. Please try again.');
+        }
+      });
+      
+      // Start scanner button (placeholder functionality)
+      document.getElementById('startScanner')?.addEventListener('click', () => {
+        alert('Camera access would be requested here to scan QR codes. This is a simulation.');
       });
     }
 

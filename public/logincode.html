@@ -20,7 +20,8 @@
     import {
       auth,
       signInWithEmailAndPassword,   // make sure authentication.js re-exports this
-      getRole
+      getRole,
+      signOutAndRedirect
     } from "./js/authentication.js";
 
     const msg = (t) => (document.getElementById("msg").textContent = t);
@@ -31,24 +32,32 @@
       return url.searchParams.get(name) || "";
     }
     function goByRole(role) {
-      if (role === "admin" || role === "super_admin") {
+      if (role === "admin") {
         location.replace("secure-admin-dashboard.html");
       } else if (role === "driver") {
-        location.replace("driver-dashboard.html");
-      } else {
+        location.replace("driver-dashboard.html?role=driver");
+      } else if (role === "passenger") {
         location.replace("passenger-dashboard.html");
+      } else {
+        signOutAndRedirect("login.html");
       }
     }
 
     // If already logged in, just route them
     auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        try {
-          const role = await getRole(user.uid);
-          goByRole(role);
-        } catch (e) {
-          // fall through to normal flow if role fetch fails
+      if (!user) return;
+      try {
+        const role = await getRole(user.uid);
+        const normalizedRole = role ? String(role).toLowerCase() : null;
+        if (!normalizedRole || !['admin', 'driver', 'passenger'].includes(normalizedRole)) {
+          msg('Your account is not fully set up. Please contact support.');
+          signOutAndRedirect('login.html');
+          return;
         }
+        goByRole(normalizedRole);
+      } catch (e) {
+        console.warn('logincode: failed to resolve role on session resume', e);
+        signOutAndRedirect('login.html');
       }
     });
 
@@ -65,17 +74,29 @@
 
       try {
         const cred = await signInWithEmailAndPassword(auth, email, pass);
-        const role = await getRole(cred.user.uid);
+        const fetchedRole = await getRole(cred.user.uid);
+        const normalizedRole = fetchedRole ? String(fetchedRole).toLowerCase() : null;
 
-        // lightweight session hints (optional)
-        localStorage.setItem("uid", cred.user.uid);
-        localStorage.setItem("email", cred.user.email ?? "");
-        localStorage.setItem("role", role);
+        if (!normalizedRole) {
+          msg('Your account is not fully set up. Please contact support.');
+          signOutAndRedirect('login.html');
+          return;
+        }
+
+        if (!['admin', 'driver', 'passenger'].includes(normalizedRole)) {
+          msg('Your account role is not recognized. Please contact support.');
+          signOutAndRedirect('login.html');
+          return;
+        }
+
+        try { localStorage.setItem("uid", cred.user.uid); } catch (_) {}
+        try { localStorage.setItem("email", (cred.user.email || '').toLowerCase()); } catch (_) {}
+        try { localStorage.setItem("role", normalizedRole); } catch (_) {}
 
         if (returnUrl) {
           location.replace(returnUrl);
         } else {
-          goByRole(role);
+          goByRole(normalizedRole);
         }
       } catch (e) {
         msg("Login failed: " + (e?.message || e));
@@ -85,3 +106,8 @@
   </script>
 </body>
 </html>
+
+
+
+
+

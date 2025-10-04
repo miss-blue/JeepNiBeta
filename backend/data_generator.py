@@ -26,7 +26,7 @@ class PassengerDataGenerator:
             "Bonuan Buquig National Highschool": {"coords": (16.078721, 120.360024), "type": "student"},
             "7 Eleven Bonuan": {"coords": (16.075331, 120.342945), "type": "commercial"},
             "North Central, Don Marcelo Elementary School": {"coords": (16.073780, 120.340295), "type": "student"},
-            "MCDo Bonuan": {"coords": (16.0716342, 120.3342172), "type": "commercial"},
+            "MCDo Bonuan": {"coords": (16.0722655, 120.3386216), "type": "commercial"},
             "Nepo Mall": {"coords": (16.0511218, 120.3408555), "type": "commercial"},
             "Universidad De Dagupan": {"coords": (16.0511218, 120.3408555), "type": "university"},
             "Junction": {"coords": (16.046392, 120.343012), "type": "transport_hub"},

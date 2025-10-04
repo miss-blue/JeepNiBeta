@@ -1,7 +1,11 @@
 import logging
-from datetime import datetime, date, timedelta
+import csv
+import os
+import threading
+from datetime import datetime, date, timedelta, time
 from app import app, db
 from models import JeepneyStop, Prediction, ModelMetrics
+from data_generator import PassengerDataGenerator
 # Lazy import ML pipeline; it may not be available in some environments
 try:
     from ml_pipeline import generate_prediction_for_stop  # type: ignore
@@ -10,6 +14,51 @@ except Exception:
         return None
 from apscheduler.triggers.cron import CronTrigger
 import random
+
+
+DATASET_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'passenger_demand_data.csv')
+_DATASET_COLUMNS = [
+    'datetime', 'stop_name', 'latitude', 'longitude', 'stop_type', 'passenger_count',
+    'hour_of_day', 'day_of_week', 'is_weekend', 'is_public_holiday', 'is_school_dismissal_time',
+    'is_hightide', 'lag_1_hour_demand', 'lag_24_hour_demand', 'rolling_3_hour_avg_demand',
+    'rolling_6_hour_avg_demand', 'hour_sin', 'hour_cos', 'day_of_week_sin', 'day_of_week_cos'
+]
+_dataset_lock = threading.Lock()
+_data_generator = PassengerDataGenerator()
+
+def _append_prediction_to_dataset(stop, prediction_date, prediction_data):
+    """Persist generated predictions in the synthetic dataset for future retraining."""
+    try:
+        peak_hour = prediction_data.get('peak_hour', 0)
+        dt = datetime.combine(prediction_date, time(peak_hour))
+        features = _data_generator.generate_features(dt, stop.name)
+        stop_meta = _data_generator.stops_data.get(stop.name, {})
+        passenger_count = int(prediction_data.get('predicted_passengers', 0) or 0)
+        row = {
+            'datetime': dt.isoformat(),
+            'stop_name': stop.name,
+            'latitude': getattr(stop, 'latitude', 0.0),
+            'longitude': getattr(stop, 'longitude', 0.0),
+            'stop_type': stop_meta.get('type', 'unknown'),
+            'passenger_count': passenger_count,
+            **features
+        }
+        # Populate lag/rolling features with sensible fallbacks
+        row['lag_1_hour_demand'] = prediction_data.get('lag_1_hour_demand', passenger_count)
+        row['lag_24_hour_demand'] = prediction_data.get('lag_24_hour_demand', passenger_count)
+        row['rolling_3_hour_avg_demand'] = prediction_data.get('rolling_3_hour_avg_demand', passenger_count)
+        row['rolling_6_hour_avg_demand'] = prediction_data.get('rolling_6_hour_avg_demand', passenger_count)
+        payload = {column: row.get(column, 0) for column in _DATASET_COLUMNS}
+        with _dataset_lock:
+            file_exists = os.path.exists(DATASET_FILE)
+            with open(DATASET_FILE, 'a', newline='', encoding='utf-8') as handle:
+                writer = csv.DictWriter(handle, fieldnames=_DATASET_COLUMNS)
+                if not file_exists:
+                    writer.writeheader()
+                writer.writerow(payload)
+    except Exception as exc:
+        logging.error('Failed to append prediction data for %s: %s', getattr(stop, 'name', 'unknown'), exc)
+
 
 def _heuristic_prediction(stop_name: str, prediction_date: date):
     """Lightweight fallback when ML model isn't available.
@@ -85,6 +134,7 @@ def generate_daily_predictions(target_date=None):
                         
                         db.session.add(prediction)
                         predictions_created += 1
+                        _append_prediction_to_dataset(stop, today, prediction_data)
                         
                 except Exception as e:
                     logging.error(f"Error generating prediction for stop {stop.name}: {str(e)}")

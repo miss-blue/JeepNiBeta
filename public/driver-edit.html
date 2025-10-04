@@ -28,16 +28,16 @@
       </div>
       <div class="d-flex gap-2">
         <button type="submit" class="btn btn-primary">Save</button>
-        <a href="driver-dashboard.html" class="btn btn-outline-secondary">Cancel</a>
+        <a href="dashboard.html?role=driver" class="btn btn-outline-secondary">Cancel</a>
       </div>
     </form>
   </div>
 </div>
 
 <script type="module">
-import { requireLogin, db, ref, get, set } from "./js/authentication.js";
+import { requireRole, db, ref, get, set } from "./js/authentication.js";
 
-const user = await requireLogin("login.html");
+const { user } = await requireRole(['driver'], { onDeny: () => alert('Access denied. Drivers only.') });
 const alertBox=document.getElementById("alert");
 function showAlert(m,t="warning"){alertBox.innerHTML=`<div class="alert alert-${t} alert-dismissible fade show" role="alert">${m}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;}
 

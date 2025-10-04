@@ -189,7 +189,7 @@ def get_predictions_by_date(date):
     try:
         prediction_date = datetime.strptime(date, '%Y-%m-%d').date()
         predictions = Prediction.query.filter_by(prediction_date=prediction_date).all()
-    return jsonify([p.to_dict() for p in predictions])
+        return jsonify([p.to_dict() for p in predictions])
     except ValueError:
         return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
 
@@ -238,7 +238,7 @@ def api_admin_create_account():
 def favicon():
     try:
         base = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'public', 'icons'))
-    return send_from_directory(base, 'JEEPNi.png', mimetype='image/png')
+        return send_from_directory(base, 'JEEPNi.png', mimetype='image/png')
     except Exception:
         # Return 204 No Content instead of 404 if the icon is missing
         return ('', 204)

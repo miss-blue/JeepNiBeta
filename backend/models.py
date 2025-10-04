@@ -111,7 +111,7 @@ def initialize_default_data():
         "Bonuan Buquig National Highschool": {"coords": (16.078721, 120.360024), "desc": "High school students location"},
         "7 Eleven Bonuan": {"coords": (16.075331, 120.342945), "desc": "Center of Bonuan area"},
         "North Central, Don Marcelo Elementary School": {"coords": (16.073780, 120.340295), "desc": "Two elementary schools facing each other"},
-        "MCDo Bonuan": {"coords": (16.0716342, 120.3342172), "desc": "Popular eating spot"},
+        "MCDo Bonuan": {"coords": (16.0722655, 120.3386216), "desc": "Popular eating spot"},
         "Nepo Mall": {"coords": (16.0511218, 120.3408555), "desc": "Universidad de Dagupan students and workers wait here"},
         "Universidad De Dagupan": {"coords": (16.0511218, 120.3408555), "desc": "Students wait here to go to city proper"},
         "Junction": {"coords": (16.046392, 120.343012), "desc": "Main hub for Bonuan and bayan routes"},
@@ -139,5 +139,19 @@ def initialize_default_data():
                 description=data["desc"]
             )
             db.session.add(stop)
-    
+        else:
+            changed = False
+            if existing_stop.latitude != data["coords"][0]:
+                existing_stop.latitude = data["coords"][0]
+                changed = True
+            if existing_stop.longitude != data["coords"][1]:
+                existing_stop.longitude = data["coords"][1]
+                changed = True
+            if existing_stop.description != data["desc"]:
+                existing_stop.description = data["desc"]
+                changed = True
+            if changed:
+                db.session.add(existing_stop)
+
     db.session.commit()
+

@@ -18,134 +18,14 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <style>
-    :root{
-      --bg: #f6f7fb;
-      --card-bg: #ffffff;
-      --text: #1f2937;
-      --muted: #6b7280;
-      --brand: #4ED7F1;
-      --accent: #FFD63A;
-      --danger: #dc3545;
-      --radius: 16px;
-      --shadow: 0 8px 24px rgba(0,0,0,.08);
-    }
-    .theme-dark{
-      --bg: #0f172a;
-      --card-bg: #111827;
-      --text: #e5e7eb;
-      --muted: #9ca3af;
-      --brand: #22d3ee;
-      --accent: #fbbf24;
-      --shadow: 0 12px 30px rgba(0,0,0,.5);
-    }
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif;
-      -webkit-font-smoothing: antialiased;
-      text-rendering: optimizeLegibility;
-    }
-    .navbar {
-      background: linear-gradient(90deg, var(--brand), #7ee9ff) !important;
-      box-shadow: var(--shadow);
-    }
-    .navbar-brand {
-      color: #fff !important;
-      font-weight: 700;
-    }
-    .card {
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      border: 1px solid rgba(0,0,0,.04);
-      box-shadow: var(--shadow);
-      transition: transform .15s ease, box-shadow .15s ease;
-    }
-    .card:hover{ transform: translateY(-2px); box-shadow: 0 12px 28px rgba(0,0,0,.12); }
-    .btn-primary {
-      background-color: var(--accent);
-      border-color: var(--accent);
-      color: #111;
-      font-weight: 600;
-    }
-    .btn-primary:hover {
-      background-color: #ffc107;
-      border-color: #ffc107;
-      color: #111;
-    }
-    .btn-outline-primary {
-      color: var(--brand);
-      border-color: var(--brand);
-    }
-    .btn-outline-primary:hover {
-      background-color: var(--brand);
-      border-color: var(--brand);
-      color: #0b1220;
-    }
-    .btn-outline-secondary {
-      color: #6c757d;
-      border-color: #6c757d;
-    }
-    .btn-outline-secondary:hover {
-      background-color: #6c757d;
-      border-color: #6c757d;
-      color: white;
-    }
-    .btn-outline-danger {
-      color: #dc3545;
-      border-color: #dc3545;
-    }
-    .btn-outline-danger:hover {
-      background-color: #dc3545;
-      border-color: #dc3545;
-      color: white;
-    }
-    .card-title { color: var(--brand); font-weight: 700; }
-    #map {
-      height: 450px;
-      width: 100%;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-    .table thead th { position: sticky; top: 0; z-index: 5; background: var(--card-bg); }
-    .table-hover tbody tr:hover{ background-color: rgba(78,215,241,.08); }
-    .badge.bg-success {
-      background-color: var(--accent) !important;
-      color: #111;
-    }
-    .form-control:focus, .form-select:focus {
-      border-color: var(--brand);
-      box-shadow: 0 0 0 0.25rem rgba(78, 215, 241, 0.25);
-    }
-    /* Subtle scenic background to avoid overpowering content */
-    body{ position: relative; }
-    body::before{
-      content:""; position: fixed; inset:0;
-      background: url('icons/Background2.png') center bottom / cover no-repeat;
-      opacity:.15; pointer-events:none; z-index:-1;
-    }
-    /* Skeleton shimmer */
-    .skeleton{ position: relative; overflow: hidden; background: linear-gradient(90deg, rgba(0,0,0,.05), rgba(0,0,0,.08), rgba(0,0,0,.05)); min-height: 12px; border-radius: 8px; }
-    .skeleton::after{ content:""; position:absolute; inset:0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent); animation: shimmer 1.15s infinite; }
-    @keyframes shimmer { 100% { transform: translateX(100%);} }
-    .kpi h3, .kpi h4{ margin: 0; }
-    .nav-tabs .nav-link { display:flex; align-items:center; gap:.5rem; }
-    .nav-tabs .nav-link .bi { opacity:.8; }
-    /* Tighten spacing below feature tabs and inside Data & Reports */
-    #adminFeatureTabs{ margin-bottom: .5rem !important; }
-    #tab-data .card{ margin-top: 0 !important; }
-    #tab-data .card-body{ padding-top: .75rem; }
-  </style>
-  <style>
-    #map{height:450px;width:100%;border-radius:12px}
-  </style>
+  <link rel="stylesheet" href="/css/secure-admin-dashboard.css">
   <link rel="icon" href="/icons/JEEPNi.png" type="image/png">
 </head>
 <body>
 <nav class="navbar bg-light border-bottom">
   <div class="container">
     <span class="navbar-brand fw-semibold d-flex align-items-center gap-2">
-      <i class="bi bi-speedometer2"></i> JeepNi - Admin Dashboard
+      JeepNi - Admin Dashboard
     </span>
     <div class="ms-auto d-flex align-items-center gap-2">
       <button id="btnTheme" class="btn btn-outline-primary btn-sm" data-bs-toggle="tooltip" title="Toggle theme">
@@ -173,11 +53,6 @@
       </button>
     </li>
     <li class="nav-item" role="presentation">
-      <button class="nav-link" id="tab-monitoring-tab" data-bs-toggle="tab" data-bs-target="#tab-monitoring" type="button" role="tab" aria-controls="tab-monitoring" aria-selected="false">
-        <i class="bi bi-geo-alt"></i> Monitoring
-      </button>
-    </li>
-    <li class="nav-item" role="presentation">
       <button class="nav-link" id="tab-data-tab" data-bs-toggle="tab" data-bs-target="#tab-data" type="button" role="tab" aria-controls="tab-data" aria-selected="false">
         <i class="bi bi-table"></i> Data & Reports
       </button>
@@ -200,10 +75,10 @@
     </div>
   </div>
 
-  <!-- Row: Quick Actions / Counters (kept on Dashboard) -->
-  <div class="row g-3 mt-1">
-    <div class="col-md-4">
-      <div class="card shadow-sm">
+  <!-- Row: Quick Actions + Live Map -->
+  <div class="row g-3 mt-1 align-items-stretch">
+    <div class="col-md-4 d-flex">
+      <div class="card shadow-sm w-100">
         <div class="card-body">
           <h5 class="card-title d-flex align-items-center gap-2"><i class="bi bi-lightning-charge"></i> Quick Actions</h5>
           <div class="d-grid gap-2">
@@ -215,30 +90,15 @@
           </div>
         </div>
       </div>
-
-      <div class="card shadow-sm mt-3">
+    </div>
+    <div class="col-md-8 d-flex">
+      <div class="card shadow-sm h-100 w-100">
         <div class="card-body">
-          <h6 class="card-title mb-2">Live Counters</h6>
-          <div class="row text-center kpi g-2">
-            <div class="col-4">
-              <div class="p-2 rounded-3" style="background:rgba(78,215,241,.12)">
-                <div class="small text-muted">Drivers</div>
-                <h3 id="countDrivers">-</h3>
-              </div>
-            </div>
-            <div class="col-4">
-              <div class="p-2 rounded-3" style="background:rgba(255,214,58,.18)">
-                <div class="small text-muted">Passengers</div>
-                <h3 id="countPassengers">-</h3>
-              </div>
-            </div>
-            <div class="col-4">
-              <div class="p-2 rounded-3" style="background:rgba(13,110,253,.12)">
-                <div class="small text-muted">Online</div>
-                <h3 id="countOnline">-</h3>
-              </div>
-            </div>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="card-title mb-0">Live Map</h5>
+            <span class="text-muted small">Drivers & passengers</span>
           </div>
+          <div id="dashboardMap" style="height: 520px;" role="region" aria-label="Live driver and passenger map"></div>
         </div>
       </div>
     </div>
@@ -336,20 +196,6 @@
 
   </div>
   </div><!-- /tab-scheduling -->
-
-  <!-- ===== Pane: Monitoring ===== -->
-  <div class="tab-pane fade" id="tab-monitoring" role="tabpanel" aria-labelledby="tab-monitoring-tab" tabindex="0">
-    <div class="row g-3 mt-1">
-      <div class="col-12">
-        <div class="card shadow-sm">
-          <div class="card-body">
-            <h5 class="card-title">Live Map</h5>
-            <div id="map"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div><!-- /tab-monitoring -->
 
   <!-- ===== Pane: Data & Reports ===== -->
   <div class="tab-pane fade" id="tab-data" role="tabpanel" aria-labelledby="tab-data-tab" tabindex="0">
@@ -676,7 +522,17 @@
  </div>
 
 <script type="module">
-  import { db, ref, get, onValue, signOutAndRedirect, query, orderByChild, equalTo } from "./js/authentication.js";
+  import { 
+  db, 
+  ref, 
+  get, 
+  onValue, 
+  signOutAndRedirect, 
+  query, 
+  orderByChild, 
+  equalTo,
+  update 
+} from "./js/authentication.js";
   import { requireAdmin, attachAdminBadge } from "./js/admin_auth.js";
   import { createDispatch, listDispatches, adminSetStatus } from "./js/scheduling.js";
 
@@ -814,32 +670,6 @@
     return !!rec.online && (Date.now() - last) < ONLINE_WINDOW_MS;
   }
 
-  // Counters
-  async function count(path) {
-    const snap = await get(ref(db, path));
-    return snap.exists() ? Object.keys(snap.val()).length : 0;
-  }
-
-  async function loadCounters() {
-    $("#countDrivers").textContent = await count("drivers");
-    $("#countPassengers").textContent = await count("passengers");
-
-    // Count only actual online drivers from drivers_location that exist in drivers collection
-    const [driversSnap, locSnap] = await Promise.all([
-      get(ref(db, "drivers")),
-      get(ref(db, "drivers_location"))
-    ]);
-    
-    const drivers = driversSnap.exists() ? driversSnap.val() : {};
-    const locs = locSnap.exists() ? locSnap.val() : {};
-    
-    let online = 0;
-    for (const uid in locs) {
-      if (drivers[uid] && computeOnline(locs[uid])) online++;
-    }
-    $("#countOnline").textContent = online;
-  }
-
   function fmtTs(ts) {
     if (!ts) return "";
     const d = new Date(typeof ts === "number" ? ts : ts._serverTimestamp || 0);
@@ -849,9 +679,12 @@
   // Load ONLY real drivers with proper name resolution
   async function loadDriversTable() {
     const tbody = $("#rowsDrivers");
-  tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4"><div class="d-flex align-items-center justify-content-center gap-2"><div class="spinner-border spinner-border-sm text-info" role="status"></div> Loading drivers...</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">
+      <div class="spinner-border spinner-border-sm text-info"></div> Loading...
+    </td></tr>`;
 
     try {
+      // Get both drivers and their locations
       const [driversSnap, locSnap] = await Promise.all([
         get(ref(db, "drivers")),
         get(ref(db, "drivers_location"))
@@ -859,51 +692,46 @@
 
       const drivers = driversSnap.exists() ? driversSnap.val() : {};
       const locs = locSnap.exists() ? locSnap.val() : {};
-
-      // Only process UIDs that exist in the drivers collection
-      const validDrivers = Object.keys(drivers).map(uid => {
-        const driverData = drivers[uid];
-        const locationData = locs[uid] || {};
-        
+      
+      const driversList = Object.entries(drivers).map(([uid, data]) => {
+        const loc = locs[uid] || {};
         return {
-          uid: uid,
-          name: driverData.name || driverData.email || `Driver ${uid.slice(0, 8)}`,
-          route: locationData.route || driverData.route || "No route",
-          online: computeOnline(locationData),
-          lastUpdate: locationData.last_update || null
+          uid,
+          name: data.name || data.email || `Driver ${uid.slice(0,8)}`,
+          route: loc.route || data.route || "No route",
+          status: loc.status || "offline",
+          online: computeOnline(loc),
+          lastUpdate: loc.last_update || null
         };
       });
 
-      if (validDrivers.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">No drivers found.</td></tr>`;
+      if (!driversList.length) {
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No drivers found</td></tr>`;
         return;
       }
 
-      // Sort: online first, then by name
-      validDrivers.sort((a, b) => {
-        if (a.online !== b.online) return b.online - a.online;
-        return a.name.localeCompare(b.name);
-      });
-
-      tbody.innerHTML = validDrivers.map(driver => `
-        <tr>
-          <td>
-            <strong>${driver.name}</strong>
-            <br><small class="text-muted">UID: ${driver.uid.slice(0, 8)}...</small>
-          </td>
-          <td><span class="badge bg-info">${driver.route}</span></td>
-          <td>
-            <span class="badge ${driver.online ? "bg-success" : "bg-secondary"}">
-              ${driver.online ? "Online" : "Offline"}
-            </span>
-          </td>
-          <td>${fmtTs(driver.lastUpdate)}</td>
-        </tr>
-      `).join("");
-
-    } catch (error) {
-      console.error("Error loading drivers:", error);
-      tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger py-4">Error: ${error.message}</td></tr>`;
+      tbody.innerHTML = driversList
+        .sort((a, b) => b.online - a.online || a.name.localeCompare(b.name))
+        .map(d => `
+          <tr>
+            <td>
+              <strong>${d.name}</strong>
+              <br><small class="text-muted">UID: ${d.uid.slice(0,8)}...</small>
+            </td>
+            <td><span class="badge bg-info">${d.route}</span></td>
+            <td>
+              <span class="badge ${d.online ? "bg-success" : "bg-secondary"}">
+                ${d.status || (d.online ? "Online" : "Offline")}
+              </span>
+            </td>
+            <td>${d.lastUpdate ? new Date(d.lastUpdate).toLocaleString() : '-'}</td>
+          </tr>
+        `).join('');
+    } catch (err) {
+      console.error('Error loading drivers:', err);
+      tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">
+        Error loading drivers: ${err.message}
+      </td></tr>`;
     }
   }
 
@@ -1247,7 +1075,7 @@
   // This prevents the module from stalling and speeds up perceived load
   loadDriversForSelect().catch(console.warn);
   loadTripDrivers().catch(console.warn);
-  Promise.all([loadCounters(), loadDriversTable(), loadPassengersTable()]).catch(console.warn);
+  Promise.all([loadDriversTable(), loadPassengersTable()]).catch(console.warn);
   // Auto-load when trips tab becomes active
   const tripsTabBtn = document.querySelector('#trips-tab');
   if (tripsTabBtn) tripsTabBtn.addEventListener('shown.bs.tab', loadTrips);
@@ -1258,7 +1086,7 @@
     if (refreshTimer) return; // throttle rapid updates
     refreshTimer = setTimeout(async () => {
       refreshTimer = null;
-      await Promise.all([loadCounters(), loadDriversTable()]);
+      await loadDriversTable();
     }, 500);
   });
   sanitizeDocument();
@@ -1266,38 +1094,49 @@
   // Dispatch form handling
   $("#formDispatch").addEventListener("submit", async (e) => {
     e.preventDefault();
-    const date = $("#schDate").value;
-    const dep = $("#schTime").value;
-    const route = $("#schRoute").value;
-    const jeep = $("#schJeep").value;
-    const driver = $("#schDriver").value;
-    const notes = $("#schNotes").value;
-
+    const btn = e.target.querySelector('button[type="submit"]');
+    if (btn) btn.disabled = true;
+    
     try {
-      await createDispatch({ 
-        date, 
-        dep_time: dep, 
-        route, 
-        jeep_id: jeep, 
-        driver_uid: driver || "", 
-        notes 
-      });
-      showAlert("Dispatch created.", "success");
-      e.target.reset(); 
-      $("#schDate").value = date;
+      const dispatch = {
+        date: $("#schDate").value,
+        dep_time: $("#schTime").value,
+        route: $("#schRoute").value,
+        jeep_id: $("#schJeep").value.trim(),
+        driver_uid: $("#schDriver").value,
+        notes: $("#schNotes").value.trim()
+      };
+
+      await createDispatch(dispatch);
+      showAlert("Dispatch created successfully", "success");
+      
+      // Reset form but keep the date
+      const currentDate = $("#schDate").value;
+      e.target.reset();
+      $("#schDate").value = currentDate;
+      
+      // Refresh schedule
       await renderSchedule();
+      
     } catch (err) {
-      showAlert("Create failed: " + err.message, "danger");
+      console.error('Create dispatch failed:', err);
+      showAlert(`Failed to create dispatch: ${err.message}`, "danger");
+    } finally {
+      if (btn) btn.disabled = false;
     }
   });
 
   // Schedule rendering
   async function renderSchedule() {
-    const date = listDateEl.value || todayISO;
     const tbody = $("#schRows");
-  tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3"><div class="d-flex align-items-center justify-content-center gap-2"><div class="spinner-border spinner-border-sm text-info" role="status"></div> Loading schedule...</div></td></tr>`;
+    const date = $("#listDate").value || new Date().toISOString().split('T')[0];
     
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3">
+      <div class="spinner-border spinner-border-sm text-info"></div> Loading...
+    </td></tr>`;
+
     try {
+      // Load schedules and drivers in parallel
       const [schedules, driversSnap] = await Promise.all([
         listDispatches(date),
         get(ref(db, "drivers"))
@@ -1305,35 +1144,50 @@
       
       const drivers = driversSnap.exists() ? driversSnap.val() : {};
       
-      if (!schedules || !schedules.length) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3">No dispatches.</td></tr>`;
+      if (!schedules?.length) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">
+          No dispatches found for ${date}
+        </td></tr>`;
         return;
       }
-      
-      schedules.sort((a, b) => (a.dep_time || "").localeCompare(b.dep_time || ""));
-      
-      tbody.innerHTML = schedules.map(r => {
-        const driverName = r.driver_uid && drivers[r.driver_uid] 
-          ? (drivers[r.driver_uid].name || drivers[r.driver_uid].email || r.driver_uid.slice(0, 8))
-          : "(Unassigned)";
-        
-        return `<tr data-id="${r.id}">
-          <td>${r.dep_time || "00:00"}</td>
-          <td>${r.route || ""}</td>
-          <td>${r.jeep_id || ""}</td>
-          <td>${driverName}</td>
-          <td>
-            <select class="form-select form-select-sm sch-status" data-id="${r.id}" data-date="${date}" style="min-width:120px">
-              ${statusOptions(r.status || "assigned")}
-            </select>
-          </td>
-          <td>
-            <button class="btn btn-sm btn-outline-danger sch-cancel" data-id="${r.id}" data-date="${date}">Cancel</button>
-          </td>
-        </tr>`;
-      }).join("");
+
+      tbody.innerHTML = schedules
+        .sort((a, b) => (a.dep_time || "").localeCompare(b.dep_time || ""))
+        .map(sch => {
+          const driver = drivers[sch.driver_uid] || {};
+          const driverName = driver.name || driver.email || sch.driver_uid?.slice(0,8) || "Unassigned";
+          
+          return `
+            <tr data-id="${sch.id}">
+              <td>${sch.dep_time || "00:00"}</td>
+              <td>${sch.route || ""}</td>
+              <td>${sch.jeep_id || ""}</td>
+              <td>${driverName}</td>
+              <td>
+                <select class="form-select form-select-sm sch-status" 
+                        data-id="${sch.id}" 
+                        data-date="${date}">
+                  ${["assigned","accepted","enroute","completed","canceled"]
+                    .map(s => `<option value="${s}" ${s === sch.status ? "selected" : ""}>${s}</option>`)
+                    .join("")}
+                </select>
+              </td>
+              <td>
+                <button class="btn btn-sm btn-outline-danger sch-cancel" 
+                        data-id="${sch.id}" 
+                        data-date="${date}">
+                  Cancel
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join("");
+
     } catch (err) {
-      tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-3">Failed: ${err.message}</td></tr>`;
+      console.error('Render schedule failed:', err);
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">
+        Error loading schedule: ${err.message}
+      </td></tr>`;
     }
   }
 
@@ -1784,25 +1638,24 @@ async function getPredictions(date) {
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script type="module">
-  // Ensure plain ASCII in title
   document.title = 'JeepNi - Admin Dashboard';
 
-  // Lazy-load the live map only when Monitoring tab is shown
   let mapLoaded = false;
-  const monTab = document.getElementById('tab-monitoring-tab');
-  if (monTab) {
-    monTab.addEventListener('shown.bs.tab', async () => {
-      try {
-        if (!mapLoaded) {
-          await import('./js/admin-map-viewer.js');
-          mapLoaded = true;
-        }
-        // Nudge Leaflet to recompute sizes if needed
-        setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
-      } catch (e) {
-        console.warn('Failed to load live map viewer', e);
-      }
-    });
+  async function ensureMapLoaded() {
+    if (mapLoaded) return;
+    try {
+      await import('./js/map-tracker.js');
+      mapLoaded = true;
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
+    } catch (error) {
+      console.warn('Failed to load live map viewer', error);
+      throw error;
+    }
+  }
+
+  const dashboardMapEl = document.getElementById('dashboardMap');
+  if (dashboardMapEl) {
+    ensureMapLoaded().catch(() => {});
   }
 </script>
 </body>

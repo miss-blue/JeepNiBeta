@@ -1,18 +1,13 @@
 // public/js/admin_auth.js
 // Admin-only guards built on top of authentication.js
 
-import { auth, db, ref, get, onAuthReady, requireLogin, getRole, signOutAndRedirect } from "./authentication.js";
+import { onAuthReady, requireRole, getRole } from "./authentication.js";
 
 export async function requireAdmin(redirectIfNotAdmin = "login.html") {
-  const user = await requireLogin(redirectIfNotAdmin);
-  const role = await getRole(user.uid);
-  if (role !== "admin" && role !== "super_admin") {
-    // Optional: show a message page or redirect
-    alert("Access denied. Admins only.");
-    await signOutAndRedirect("login.html");
-    throw new Error("Admin required");
-  }
-  return { user, role };
+  return requireRole(['admin'], {
+    redirectTo: redirectIfNotAdmin,
+    onDeny: () => alert("Access denied. Admins only.")
+  });
 }
 
 export function attachAdminBadge(elSelector = "#adminInfo") {
@@ -24,3 +19,4 @@ export function attachAdminBadge(elSelector = "#adminInfo") {
     el.textContent = `${user.email} (${role})`;
   });
 }
+

@@ -1,121 +1,327 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>JeepNi — Add Driver</title>
+  <title>JeepNi Admin • Add Driver</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+  <link rel="dns-prefetch" href="https://unpkg.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="icon" href="/icons/JEEPNi.png" type="image/png">
   <style>
-    body { background:#AFDDFF; font-family:'Nunito',sans-serif; }
-    .navbar { background:#4ED7F1!important; box-shadow:0 2px 10px rgba(0,0,0,.1); }
-    .navbar-brand { color:#fff!important; font-weight:700; }
-    .card { max-width:760px; margin:6vh auto; border-radius:16px; border:none; box-shadow:0 8px 20px rgba(0,0,0,.1); }
-    .btn-primary { background:#FFD63A; border-color:#FFD63A; color:#333; font-weight:600; }
-    .btn-primary:hover { background:#ffc800; border-color:#ffc800; color:#333; }
-    .form-control:focus,.form-select:focus { border-color:#4ED7F1; box-shadow:0 0 0 .25rem rgba(78,215,241,.25); }
-    h4 { color:#4ED7F1; font-weight:700; }
-    details summary { cursor:pointer; }
-    pre.debug-pre { background:#0b2239; color:#e6f0ff; padding:12px; border-radius:8px; font-size:.85rem;}
+    :root {
+      --bg: #f6f7fb;
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --text: #111827;
+      --muted: #6b7280;
+      --brand: #4ed7f1;
+      --accent: #ffd63a;
+      --radius: 20px;
+      --shadow: 0 24px 48px rgba(15, 23, 42, 0.14);
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: url('icons/Background2.png') center bottom / cover no-repeat;
+      opacity: 0.15;
+      pointer-events: none;
+      z-index: -1;
+    }
+    .navbar {
+      background: linear-gradient(90deg, var(--brand), #7ee9ff) !important;
+      box-shadow: var(--shadow);
+    }
+    .navbar-brand {
+      color: #fff !important;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+    }
+    .navbar .btn-outline-light {
+      border-color: rgba(255, 255, 255, 0.6);
+      color: #fff;
+    }
+    .navbar .btn-outline-light:hover,
+    .navbar .btn-outline-light:focus {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: transparent;
+    }
+    main {
+      flex: 1;
+      width: 100%;
+      padding: 3.5rem 0 4rem;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      border: 1px solid rgba(15, 23, 42, 0.05);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .card h4,
+    .card h5 {
+      font-weight: 700;
+    }
+    .card p {
+      color: var(--muted);
+    }
+    #alert .alert {
+      margin-bottom: 1.5rem;
+      border-radius: 16px;
+    }
+    .badge-soft {
+      border-radius: 999px;
+      padding: 0.35rem 0.9rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(78, 215, 241, 0.16);
+      color: #0f172a;
+    }
+    .icon-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 214, 58, 0.2);
+      color: #7c5800;
+    }
+    .info-list {
+      list-style: none;
+      padding: 0;
+      margin: 1.5rem 0 0;
+      font-size: 0.95rem;
+    }
+    .info-list li {
+      display: flex;
+      gap: 0.7rem;
+      align-items: flex-start;
+      padding: 0.55rem 0;
+      color: var(--muted);
+    }
+    .info-list i {
+      color: var(--brand);
+      margin-top: 0.2rem;
+    }
+    .fieldset-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
+    }
+    .form-control {
+      border-radius: 14px;
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      padding: 0.65rem 1rem;
+      font-size: 1rem;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .form-control:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 0.25rem rgba(78, 215, 241, 0.25);
+    }
+    .form-text {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .btn-primary {
+      background-color: var(--accent);
+      border-color: var(--accent);
+      color: #111;
+      font-weight: 600;
+      border-radius: 12px;
+      padding: 0.75rem 1.4rem;
+      box-shadow: 0 12px 24px rgba(255, 214, 58, 0.35);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .btn-primary:hover,
+    .btn-primary:focus {
+      background-color: #ffc107;
+      border-color: #ffc107;
+      transform: translateY(-1px);
+      box-shadow: 0 16px 28px rgba(255, 214, 58, 0.4);
+    }
+    .btn-outline-secondary {
+      border-radius: 12px;
+      padding: 0.75rem 1.4rem;
+      border-color: rgba(15, 23, 42, 0.22);
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .btn-outline-secondary:hover,
+    .btn-outline-secondary:focus {
+      background: rgba(78, 215, 241, 0.12);
+      border-color: var(--brand);
+      color: #0f172a;
+    }
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, rgba(15, 23, 42, 0), rgba(15, 23, 42, 0.12), rgba(15, 23, 42, 0));
+      margin: 1.75rem -1.5rem;
+    }
+    .helper-banner {
+      background: linear-gradient(135deg, rgba(78, 215, 241, 0.16), rgba(255, 214, 58, 0.2));
+      border-radius: 16px;
+      padding: 1.2rem 1.5rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.9rem;
+      font-size: 0.9rem;
+      color: #0f172a;
+    }
+    .helper-banner i {
+      color: var(--brand);
+      margin-top: 0.15rem;
+    }
+    @media (max-width: 991.98px) {
+      main { padding: 2.5rem 0 3rem; }
+      .card { border-radius: 18px; }
+    }
+    @media (max-width: 575.98px) {
+      .navbar-brand { font-size: 1rem; }
+      main { padding: 2rem 0 2.5rem; }
+      .btn-primary,
+      .btn-outline-secondary { flex: 1 1 100%; }
+    }
   </style>
 </head>
 <body>
-<nav class="navbar border-bottom">
-  <div class="container">
-    <span class="navbar-brand fw-semibold">JeepNi — Admin</span>
-    <div class="ms-auto small text-white" id="adminInfo">Checking session…</div>
+<nav class="navbar navbar-expand-lg border-0 py-3">
+  <div class="container d-flex flex-wrap align-items-center justify-content-between gap-3">
+    <a class="btn btn-outline-light btn-sm d-flex align-items-center gap-2" href="secure-admin-dashboard.html">
+      <i class="bi bi-arrow-left"></i>
+      <span>Back to Dashboard</span>
+    </a>
+    <span class="navbar-brand m-0">JeepNi - Admin</span>
+    <div class="small text-white" id="adminInfo">Checking session...</div>
   </div>
 </nav>
 
-<div class="card shadow-sm">
-  <div class="card-body">
-    <h4 class="mb-3">Add Driver</h4>
-    <div id="alert"></div>
-
-    <form id="formAdd" novalidate>
-      <div class="row g-3">
-        <div class="col-md-6">
-          <label class="form-label">Full name</label>
-          <input id="name" class="form-control" required />
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">Email</label>
-          <input id="email" type="email" class="form-control" required />
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">Temporary password</label>
-          <input id="password" type="password" class="form-control" placeholder="e.g., Pass1234!" required />
-          <div class="form-text">At least 8 characters with letters and numbers</div>
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">Phone (optional)</label>
-          <input id="phone" class="form-control" />
-        </div>
-        <div class="col-12">
-          <label class="form-label d-block mb-1">Assigned route</label>
-          <select id="route" class="form-select" required>
-            <option value="">Select a route…</option>
-            <option value="guest">Guest (blue)</option>
-            <option value="boquig">Boquig (red)</option>
-            <option value="longos">Longos (green)</option>
-            <option value="binloc">Binloc (yellow)</option>
-            <option value="tondaligan">Tondaligan (purple)</option>
-          </select>
-        </div>
-        <div class="col-12">
-          <label class="form-label">Plate number (optional)</label>
-          <input id="plate" class="form-control" />
+<main>
+  <div class="container">
+    <div class="row g-4 align-items-stretch">
+      <div class="col-lg-4">
+        <div class="card h-100 border-0">
+          <div class="card-body p-4">
+            <div class="icon-circle mb-3">
+              <i class="bi bi-person-plus-fill fs-4"></i>
+            </div>
+            <h4 class="mb-2">Add Driver Account</h4>
+            <p class="mb-3">Issue credentials instantly for new fleet members without leaving the dashboard.</p>
+            <span class="badge-soft"><i class="bi bi-lightning-charge-fill"></i> Admin quick action</span>
+            <ul class="info-list">
+              <li><i class="bi bi-envelope-check"></i><span>Drivers receive a verification email once the account is created.</span></li>
+              <li><i class="bi bi-shield-lock"></i><span>Share the temporary password directly and remind them to update it on first login.</span></li>
+              <li><i class="bi bi-clipboard-check"></i><span>Assign vehicles or routes later from the driver management tools.</span></li>
+            </ul>
+            <div class="divider"></div>
+            <div class="helper-banner">
+              <i class="bi bi-info-circle-fill"></i>
+              <div>
+                <strong>Need self-service signups?</strong><br>
+                Generate invite codes from the Driver Codes manager so drivers can register themselves.
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="d-flex gap-2 mt-4">
-        <button class="btn btn-primary" id="btnCreate" type="submit">Create Driver</button>
-        <a class="btn btn-outline-secondary" href="secure-admin-dashboard.html">Back to Dashboard</a>
-      </div>
-    </form>
+      <div class="col-lg-8">
+        <div class="card h-100 border-0">
+          <div class="card-body p-4 p-lg-5">
+            <h5 class="text-uppercase text-muted fw-semibold mb-1" style="letter-spacing:0.15em;">Driver Details</h5>
+            <h3 class="fw-bold mb-4">Create New Driver</h3>
+            <div id="alert"></div>
 
-    <!-- Small collapsible debug panel -->
-    <details class="mt-4">
-      <summary class="small text-muted">Debug (creation logs)</summary>
-      <div class="mt-2">
-        <div class="small text-muted">Last step:</div>
-        <pre id="dbgStep" class="debug-pre">—</pre>
-        <div class="small text-muted">Last error:</div>
-        <pre id="dbgError" class="debug-pre">—</pre>
+            <form id="formAdd" class="vstack gap-4" novalidate>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="fieldset-label" for="name">Full Name</label>
+                  <input id="name" class="form-control" placeholder="e.g. Juan Dela Cruz" required />
+                </div>
+                <div class="col-md-6">
+                  <label class="fieldset-label" for="email">Email Address</label>
+                  <input id="email" type="email" class="form-control" placeholder="driver@email.com" required />
+                </div>
+                <div class="col-md-6">
+                  <label class="fieldset-label" for="password">Temporary Password</label>
+                  <input id="password" type="password" class="form-control" placeholder="Pass1234!" required />
+                  <div class="form-text">At least 8 characters with letters and numbers.</div>
+                </div>
+                <div class="col-md-6">
+                  <label class="fieldset-label" for="phone">Phone (optional)</label>
+                  <input id="phone" class="form-control" placeholder="09xx xxx xxxx" />
+                </div>
+              </div>
+
+              <div class="d-flex flex-wrap gap-2 pt-2">
+                <button class="btn btn-primary" id="btnCreate" type="submit">
+                  <i class="bi bi-person-check-fill me-2"></i>Create Driver
+                </button>
+                <a class="btn btn-outline-secondary" href="secure-admin-dashboard.html">
+                  <i class="bi bi-grid"></i> Back to Dashboard
+                </a>
+              </div>
+            </form>
+
+            <div class="divider"></div>
+            <p class="small text-muted mb-0"><i class="bi bi-clock-history me-1"></i>Tip: document the temporary password securely and schedule route assignments later.</p>
+          </div>
+        </div>
       </div>
-    </details>
+    </div>
   </div>
-</div>
+</main>
 
 <script type="module">
   import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import { getAuth as getAuth2, createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-  // Primary app wrappers (centralized SDK)
   import { auth, db, ref, set, get } from "./js/authentication.js";
   import { requireAdmin, attachAdminBadge } from "./js/admin_auth.js";
 
-  // ---- Admin guard ----
+  document.title = "JeepNi Admin • Add Driver";
   await requireAdmin("login.html");
   attachAdminBadge("#adminInfo");
 
-  // ---- Secondary app for account creation ----
-  let secondaryApp = null, auth2 = null;
-  const firebaseConfig = auth.app.options; // reuse primary app config
+  let secondaryApp = null;
+  let auth2 = null;
+  const firebaseConfig = auth.app.options;
 
   function initSecondary() {
-    if (secondaryApp) deleteApp(secondaryApp).catch(()=>{});
+    if (secondaryApp) {
+      deleteApp(secondaryApp).catch(() => {});
+    }
     secondaryApp = initializeApp(firebaseConfig, "secondary_" + Date.now());
     auth2 = getAuth2(secondaryApp);
     return auth2;
   }
 
-  // ---- UI helpers & debug logging ----
   const alertBox = document.getElementById("alert");
-  const dbgStep = document.getElementById("dbgStep");
-  const dbgError = document.getElementById("dbgError");
+  const createButton = document.getElementById("btnCreate");
+  const defaultButtonHtml = createButton ? createButton.innerHTML : "Create Driver";
 
-  const showAlert = (html, type="warning") => {
+  const showAlert = (html, type = "warning") => {
     alertBox.innerHTML = `
       <div class="alert alert-${type} alert-dismissible fade show" role="alert">
         ${html}
@@ -123,146 +329,167 @@
       </div>`;
   };
 
-  const setStep = (t)=> { dbgStep.textContent = t; console.log("[AddDriver] step:", t); };
-  const setErr  = (e)=> {
-    const payload = (e && typeof e === "object") ? JSON.stringify(e, Object.getOwnPropertyNames(e), 2) : String(e);
-    dbgError.textContent = payload;
+  const setStep = (text) => {
+    console.log("[AddDriver] step:", text);
+  };
+
+  const setErr = (error) => {
     console.groupCollapsed("%c[AddDriver] ERROR", "color:#ff4d4f;font-weight:bold");
-    console.error(e);
-    if (e?.code) console.log("code:", e.code);
-    if (e?.message) console.log("message:", e.message);
-    if (e?.customData) console.log("customData:", e.customData);
+    console.error(error);
+    if (error?.code) console.log("code:", error.code);
+    if (error?.message) console.log("message:", error.message);
+    if (error?.customData) console.log("customData:", error.customData);
     console.groupEnd();
   };
 
-  // Optional: write admin events (success/failure) for auditing
   async function logAdminEvent(kind, data) {
     try {
-      const today = new Date().toISOString().slice(0,10); // YYYY-MM-DD
+      const today = new Date().toISOString().slice(0, 10);
       const id = Date.now().toString();
-      await set(ref(db, `admin_events/${today}/${id}`), {
-        kind, data, ts: Date.now()
-      });
-    } catch (e) {
-      console.warn("[AddDriver] admin_events write failed (non-critical):", e);
+      await set(ref(db, `admin_events/${today}/${id}`), { kind, data, ts: Date.now() });
+    } catch (error) {
+      console.warn("[AddDriver] admin_events write failed (non-critical):", error);
     }
   }
 
-  function validatePassword(p) {
-    if (p.length < 8) return "Password must be at least 8 characters long";
-    if (!/[a-zA-Z]/.test(p)) return "Password must contain at least one letter";
-    if (!/\d/.test(p)) return "Password must contain at least one number";
+  function validatePassword(password) {
+    if (password.length < 8) return "Password must be at least 8 characters long";
+    if (!/[a-zA-Z]/.test(password)) return "Password must contain at least one letter";
+    if (!/\d/.test(password)) return "Password must contain at least one number";
     return null;
   }
 
-  document.getElementById("formAdd").addEventListener("submit", async (e) => {
-    e.preventDefault();
+  document.getElementById("formAdd").addEventListener("submit", async (event) => {
+    event.preventDefault();
 
-    const name  = document.getElementById("name").value.trim();
+    const name = document.getElementById("name").value.trim();
     const email = document.getElementById("email").value.trim();
-    const pass  = document.getElementById("password").value;
+    const password = document.getElementById("password").value;
     const phone = document.getElementById("phone").value.trim();
-    const route = document.getElementById("route").value;
-    const plate = document.getElementById("plate").value.trim();
 
-    if (!name || !email || !pass || !route) {
-      showAlert("Please complete name, email, password and route.","danger");
+    if (!name || !email || !password) {
+      showAlert("Please complete name, email, and password.", "danger");
       return;
     }
-    const pwErr = validatePassword(pass);
-    if (pwErr) { showAlert(pwErr,"danger"); return; }
+    const pwError = validatePassword(password);
+    if (pwError) {
+      showAlert(pwError, "danger");
+      return;
+    }
 
-    // Role double-check
-    setStep("verifying admin role…");
+    setStep("verifying admin role...");
     const roleSnap = await get(ref(db, `all_users/${auth.currentUser.uid}/role`));
     const role = roleSnap.exists() ? roleSnap.val() : "";
-    if (!["admin","super_admin"].includes(role)) {
-      showAlert("Access denied. Admins only.","danger");
-      await logAdminEvent("create_driver_denied", { email, reason:"not_admin" });
+    if (role !== "admin") {
+      showAlert("Access denied. Admins only.", "danger");
+      await logAdminEvent("create_driver_denied", { email, reason: "not_admin" });
       return;
     }
 
-    const btn = document.getElementById("btnCreate");
-    btn.disabled = true; btn.textContent = "Creating…";
+    const button = createButton;
+    if (button) {
+      button.disabled = true;
+      button.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Creating...`;
+    }
 
     let createdUid = null;
 
     try {
-      // Prefer server-side creation for atomicity
-      const API_BASE = window.API_BASE ?? ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'http://localhost:5000' : '');
-      setStep('calling server create_account…');
+      const API_BASE = window.API_BASE ?? ((location.hostname === "localhost" || location.hostname === "127.0.0.1") ? "http://localhost:5000" : "");
+      setStep("calling server create_account...");
       const serverResp = await fetch(`${API_BASE}/api/admin/create_account`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password: pass, role: 'driver', phone, route, plate })
-      }).catch(()=>null);
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password, role: "driver", phone })
+      }).catch(() => null);
+
       if (serverResp && serverResp.ok) {
-        const j = await serverResp.json();
-        if (j.success !== false) {
-          createdUid = j.uid;
-          showAlert(`Driver created successfully! UID: <code>${String(createdUid).slice(0,6)}…</code>`, 'success');
-          e.target.reset(); document.getElementById("route").value = "";
-          setStep('done.');
-          dbgError.textContent = "";
+        const result = await serverResp.json();
+        if (result?.success !== false && result?.uid) {
+          createdUid = result.uid;
+          showAlert(`Driver created successfully! UID: <code>${String(createdUid).slice(0, 6)}...</code>`, "success");
+          event.target.reset();
+          setStep("done.");
           return;
         }
       }
 
-      setStep("initializing secondary app…");
-      const secAuth = initSecondary();
+      setStep("initializing secondary app...");
+      const secondaryAuth = initSecondary();
 
-      setStep("creating auth user…");
-      const cred = await createUserWithEmailAndPassword(secAuth, email, pass);
-      createdUid = cred.user.uid;
+      setStep("creating auth user...");
+      const credential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+      createdUid = credential.user.uid;
 
-      setStep("updating displayName…");
-      await updateProfile(cred.user, { displayName: name });
+      setStep("updating displayName...");
+      await updateProfile(credential.user, { displayName: name });
 
-      setStep("sending email verification (non-blocking)…");
-      try { await sendEmailVerification(cred.user); }
-      catch (ve) { console.warn("[AddDriver] email verification failed:", ve); }
+      setStep("sending email verification (non-blocking)...");
+      try { await sendEmailVerification(credential.user); } catch (verificationError) {
+        console.warn("[AddDriver] email verification failed:", verificationError);
+      }
 
       const profile = {
-        uid: createdUid, name, email, phone,
-        role: "driver", route, plate,
+        uid: createdUid,
+        name,
+        email,
+        phone,
+        role: "driver",
         created_at: new Date().toISOString(),
         created_ts: Date.now()
       };
 
-      setStep("writing profile to DB…");
+      setStep("writing profile to DB...");
       await Promise.all([
         set(ref(db, `all_users/${createdUid}`), profile),
         set(ref(db, `drivers/${createdUid}`), profile)
       ]);
 
-      await logAdminEvent("create_driver_success", { uid: createdUid, email, route });
+      await logAdminEvent("create_driver_success", { uid: createdUid, email });
 
       showAlert(
-        `Driver created successfully! UID: <code>${createdUid.slice(0,6)}…</code><br>
-         Email verification sent.`,
+        `Driver created successfully! UID: <code>${createdUid.slice(0, 6)}...</code><br> Email verification sent.`,
         "success"
       );
-      e.target.reset(); document.getElementById("route").value = "";
+      event.target.reset();
       setStep("done.");
-      dbgError.textContent = "—";
-    } catch (err) {
-      setErr(err);
+    } catch (error) {
+      setErr(error);
       await logAdminEvent("create_driver_failure", {
-        email, route, message: err?.message || String(err), code: err?.code || null
+        email,
+        message: error?.message || String(error),
+        code: error?.code || null
       });
 
-      let m = "Failed to create driver: ";
-      switch (err?.code) {
-        case "auth/email-already-in-use": m += "Email is already registered."; break;
-        case "auth/invalid-email": m += "Invalid email address."; break;
-        case "auth/operation-not-allowed": m += "Email/password sign-in is disabled in Firebase Console."; break;
-        case "auth/weak-password": m += "Password is too weak."; break;
-        default: m += (err?.message || err);
+      let message = "Failed to create driver: ";
+      switch (error?.code) {
+        case "auth/email-already-in-use":
+          message += "Email is already registered.";
+          break;
+        case "auth/invalid-email":
+          message += "Invalid email address.";
+          break;
+        case "auth/operation-not-allowed":
+          message += "Email/password sign-in is disabled in Firebase Console.";
+          break;
+        case "auth/weak-password":
+          message += "Password is too weak.";
+          break;
+        default:
+          message += error?.message || error;
       }
-      showAlert(m, "danger");
+      showAlert(message, "danger");
     } finally {
-      btn.disabled = false; btn.textContent = "Create Driver";
-      setStep("cleanup secondary app…");
-      if (secondaryApp) { try { await deleteApp(secondaryApp); } catch {} secondaryApp = null; auth2 = null; }
+      if (button) {
+        button.disabled = false;
+        button.innerHTML = defaultButtonHtml;
+      }
+      setStep("cleanup secondary app...");
+      if (secondaryApp) {
+        try { await deleteApp(secondaryApp); } catch (_) {}
+        secondaryApp = null;
+        auth2 = null;
+      }
       setStep("idle.");
     }
   });

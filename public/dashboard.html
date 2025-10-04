@@ -86,7 +86,7 @@
 </main>
 
 <script type="module">
-import { auth, db, ref, get, query, orderByChild, equalTo, onAuthStateChanged, signOutAndRedirect, getRole } from "./js/authentication.js";
+import { auth, db, ref, get, query, orderByChild, equalTo, requireRole, signOutAndRedirect, getRole } from "./js/authentication.js";
 
 function showAlert(html, type="warning") {
   const box = document.getElementById("alerts");
@@ -122,19 +122,12 @@ function fmtDur(startTs, endTs) {
   return mins > 0 ? mins + " min" : "";
 }
 
-let currentUser = null;
-
-// Wait for auth to be ready
-onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    location.href = "login.html";
-    return;
-  }
-  
-  currentUser = user;
-  await loadProfile();
-  await loadTrips();
+const { user: currentUser } = await requireRole(['driver', 'passenger'], {
+  onDeny: () => alert('Access denied. Drivers or passengers only.')
 });
+
+await loadProfile();
+await loadTrips();
 
 async function loadProfile() {
   if (!currentUser) return;

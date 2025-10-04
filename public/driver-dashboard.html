@@ -7,91 +7,8 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <style>
-    body {
-      background: #AFDDFF;
-      font-family: 'Nunito', sans-serif;
-    }
-    .navbar {
-      background: #4ED7F1 !important;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    .navbar-brand {
-      color: #fff !important;
-      font-weight: 700;
-    }
-    .card {
-      border-radius: 16px;
-      border: none;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-    }
-    .btn-primary {
-      background-color: #FFD63A;
-      border-color: #FFD63A;
-      color: #333;
-      font-weight: 600;
-    }
-    .btn-primary:hover {
-      background-color: #ffc800;
-      border-color: #ffc800;
-      color: #333;
-    }
-    .btn-outline-primary {
-      color: #4ED7F1;
-      border-color: #4ED7F1;
-    }
-    .btn-outline-primary:hover {
-      background-color: #4ED7F1;
-      border-color: #4ED7F1;
-      color: white;
-    }
-    .btn-outline-secondary {
-      color: #6c757d;
-      border-color: #6c757d;
-    }
-    .btn-outline-secondary:hover {
-      background-color: #6c757d;
-      border-color: #6c757d;
-      color: white;
-    }
-    .btn-outline-danger {
-      color: #dc3545;
-      border-color: #dc3545;
-    }
-    .btn-outline-danger:hover {
-      background-color: #dc3545;
-      border-color: #dc3545;
-      color: white;
-    }
-    .btn-outline-success {
-      color: #28a745;
-      border-color: #28a745;
-    }
-    .btn-outline-success:hover {
-      background-color: #28a745;
-      border-color: #28a745;
-      color: white;
-    }
-    .card-title {
-      color: #4ED7F1;
-      font-weight: 700;
-    }
-    #map {
-      height: 400px;
-      width: 100%;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-    .table th {
-      background-color: #4ED7F1;
-      color: white;
-    }
-  </style>
-  <style>
-    /* Light scenic background */
-    body{ position: relative; }
-    body::before{ content:""; position: fixed; inset:0; background: url('icons/Background2.png') center bottom / cover no-repeat; opacity:.12; pointer-events:none; z-index:-1; }
-  </style>
+  <link rel="stylesheet" href="css/driver-dashboard.css" />
+
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -184,7 +101,7 @@
 </main>
 <script type="module">
   /* Imports */
-  import { requireLogin, signOutAndRedirect, auth, db, ref, get, update, onValue, serverTimestamp } from "./js/authentication.js";
+  import { requireRole, signOutAndRedirect, auth, db, ref, get, update, onValue, serverTimestamp } from "./js/authentication.js";
   import { query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
   import { startTrip } from "./js/create-trip.js";
   import { updateLocation, endTrip } from "./js/trip-tracking.js";
@@ -201,7 +118,7 @@
   }
 
   /* Auth */
-  const user = await requireLogin("login.html");
+  const { user } = await requireRole(['driver'], { onDeny: () => alert('Access denied. Drivers only.') });
   document.getElementById("driverInfo").textContent = user.email;
 
   /* Profile */
@@ -346,29 +263,36 @@
   }
 
   async function changeStatus(next) {
-    if (!currentDispatch) return;
-    await setStatus({ date: currentDispatch.date, dispatchId: currentDispatch.id, status: next });
+  if (!currentDispatch) return;
+  await setStatus({ date: currentDispatch.date, dispatchId: currentDispatch.id, status: next });
 
-    try {
-      if (next === "enroute") {
-        // Start a trip if not already sharing
-        if (!isSharing()) {
-          await beginSharing();
-          showAlert("Trip started and location sharing active.", "success");
-        }
-      } else if (next === "completed") {
-        // End the current trip (if any)
-        await stopSharing({ completed: true });
-        showAlert("Trip completed.", "success");
+  try {
+    if (next === "enroute") {
+      if (!isSharing()) {
+        // Create trip first
+        const tripId = await startTrip({
+          driver_uid: user.uid,
+          route: currentDispatch.route,
+          date: currentDispatch.date
+        });
+        
+        // Start sharing with trip ID
+        await beginSharing(tripId);
+        window.JeepNiTracker?.setActiveTripId(tripId);
+        showAlert("Trip started and location sharing active.", "success");
       }
-    } catch (err) {
-      console.error("Trip start/stop error:", err);
-      showAlert("Trip action failed: " + err.message, "danger");
+    } else if (next === "completed") {
+      await stopSharing({ completed: true });
+      showAlert("Trip completed.", "success");
     }
-
-    await loadMyAssignment();
-    await loadTrips();
+  } catch (err) {
+    console.error("Trip start/stop error:", err);
+    showAlert("Trip action failed: " + err.message, "danger");
   }
+
+  await loadMyAssignment();
+  await loadTrips();
+}
 
   document.getElementById("btnAccept").addEventListener("click", () => changeStatus("accepted"));
   document.getElementById("btnEnroute").addEventListener("click", () => changeStatus("enroute"));
@@ -379,7 +303,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-  // Ensure proper em dash in title/brand regardless of file encoding
+
   (function(){
     const em = String.fromCharCode(8212);
     try {
@@ -389,6 +313,8 @@
     } catch (_) {}
   })();
 </script>
+<script type="module">
+  import './js/map-tracker.js';
+</script>
 </body>
 </html>
-

@@ -95,7 +95,9 @@
     <h3 id="regTitle" class="mb-4 text-center">Create account</h3>
     <div id="alert"></div>
 
+    <!-- Remove the checkbox and modify the form -->
     <form id="formReg" novalidate>
+      <!-- Base fields for both roles -->
       <div class="mb-3">
         <label class="form-label">Full name</label>
         <input id="name" class="form-control" required>
@@ -109,25 +111,15 @@
         <input id="password" type="password" class="form-control" required>
       </div>
 
-      <div class="form-check mb-2">
-        <input class="form-check-input" type="checkbox" id="isDriver">
-        <label class="form-check-label" for="isDriver">I'm a driver</label>
-      </div>
-
+      <!-- Driver-specific fields (shown/hidden based on role) -->
       <div id="driverFields" class="border rounded p-3 mb-3 d-none">
-        <div class="mb-2">
+        <div class="mb-3">
+          <label class="form-label">License Number</label>
+          <input id="licenseNumber" class="form-control" placeholder="Enter your license number">
+        </div>
+        <div class="mb-3">
           <label class="form-label">Driver Code</label>
           <input id="driverCode" class="form-control" placeholder="Enter driver code">
-        </div>
-        <div class="row g-2">
-          <div class="col-md-6">
-            <label class="form-label">Route</label>
-            <input id="driverRoute" class="form-control" placeholder="e.g., boquig">
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Plate / Unit</label>
-            <input id="driverPlate" class="form-control" placeholder="e.g., ABC-1234">
-          </div>
         </div>
       </div>
 
@@ -147,39 +139,56 @@
 </div>
 
 <script type="module">
-import { auth, db, ref, set, get } from "./js/authentication.js";
-import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { auth, db, ref, get, set } from "./js/authentication.js";
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, deleteUser, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import { runTransaction } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
 const alertBox = document.getElementById("alert");
 const show = (m,t="warning") => alertBox.innerHTML =
   `<div class="alert alert-${t} alert-dismissible fade show" role="alert">${m}<button class="btn-close" data-bs-dismiss="alert"></button></div>`;
 
-const isDriverEl = document.getElementById("isDriver");
-const driverFields = document.getElementById("driverFields");
-isDriverEl.addEventListener("change", () => {
-  driverFields.classList.toggle("d-none", !isDriverEl.checked);
-});
-
 // Initialize by role hint from query (?role=driver|passenger)
 const params = new URLSearchParams(location.search);
 const rolePref = (params.get('role')||'').toLowerCase();
-if(rolePref==='driver'){
-  isDriverEl.checked = true;
-  driverFields.classList.remove('d-none');
-  document.getElementById('regTitle').textContent = 'Register as Driver';
-} else if(rolePref==='passenger'){
-  isDriverEl.checked = false;
-  driverFields.classList.add('d-none');
-  document.getElementById('regTitle').textContent = 'Register as Passenger';
+
+// Initialize form based on role
+function initializeForm(role) {
+  const driverFields = document.getElementById('driverFields');
+  const regTitle = document.getElementById('regTitle');
+  
+  if (role === 'driver') {
+    driverFields.classList.remove('d-none');
+    regTitle.textContent = 'Register as Driver';
+    // Make driver fields required
+    document.getElementById('licenseNumber').setAttribute('required', '');
+    document.getElementById('driverCode').setAttribute('required', '');
+  } else {
+    driverFields.classList.add('d-none');
+    regTitle.textContent = 'Register as Passenger';
+    // Remove required attribute from driver fields
+    document.getElementById('licenseNumber').removeAttribute('required');
+    document.getElementById('driverCode').removeAttribute('required');
+  }
+  // Update URL to reflect role
+  history.replaceState(null, '', `?role=${role}`);
 }
 
-// Banner clicks toggle role seamlessly
-document.getElementById('regPassenger')?.addEventListener('click', (e)=>{
-  e.preventDefault(); isDriverEl.checked=false; driverFields.classList.add('d-none'); document.getElementById('regTitle').textContent='Register as Passenger'; history.replaceState(null,'','?role=passenger');
+// Initialize on page load
+if (rolePref === 'driver') {
+  initializeForm('driver');
+} else {
+  initializeForm('passenger');
+}
+
+// Update banner click handlers
+document.getElementById('regPassenger')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  initializeForm('passenger');
 });
-document.getElementById('regDriver')?.addEventListener('click', (e)=>{
-  e.preventDefault(); isDriverEl.checked=true; driverFields.classList.remove('d-none'); document.getElementById('regTitle').textContent='Register as Driver'; history.replaceState(null,'','?role=driver');
+
+document.getElementById('regDriver')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  initializeForm('driver');
 });
 
 /**
@@ -208,26 +217,63 @@ async function claimDriverCode(code) {
   });
 }
 
+/**
+ * Save user profile to Firebase instead of making API call
+ * This replaces the non-existent /api/admin/create_profile endpoint
+ */
+async function saveUserProfile(uid, role, profile) {
+  try {
+    // Save to all_users collection
+    await set(ref(db, `all_users/${uid}`), profile);
+    
+    // Save to role-specific collection
+    if (role === "driver") {
+      await set(ref(db, `drivers/${uid}`), profile);
+    } else {
+      await set(ref(db, `passengers/${uid}`), profile);
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error("Error saving profile:", error);
+    return { success: false, error: error.message };
+  }
+}
+
 document.getElementById("formReg").addEventListener("submit", async (e)=>{
   e.preventDefault();
   const name = document.getElementById("name").value.trim();
-  const email= document.getElementById("email").value.trim();
+  const email = document.getElementById("email").value.trim();
   const pass = document.getElementById("password").value;
-  const phone= document.getElementById("phone").value.trim();
+  const phone = document.getElementById("phone").value.trim();
 
-  const wantsDriver = isDriverEl.checked;
-  const code  = document.getElementById("driverCode").value.trim();
-  const route = document.getElementById("driverRoute").value.trim();
-  const plate = document.getElementById("driverPlate").value.trim();
+  // Check role based on URL parameter instead of checkbox
+  const params = new URLSearchParams(location.search);
+  const isDriver = params.get('role') === 'driver';
+  
+  const code = document.getElementById("driverCode").value.trim();
+  const license = document.getElementById("licenseNumber").value.trim();
 
-  if (!name || !email || !pass) { show("Please complete name, email and password."); return; }
-  if (wantsDriver && !code) { show("Please enter a driver code.", "danger"); return; }
+  if (!name || !email || !pass) { 
+    show("Please complete name, email and password."); 
+    return; 
+  }
+  if (isDriver) {
+    if (!code) { 
+      show("Please enter a driver code.", "danger"); 
+      return; 
+    }
+    if (!license) {
+      show("Please enter your license number.", "danger");
+      return;
+    }
+  }
 
   const btn = document.getElementById("btnReg"); btn.disabled = true; btn.textContent = "Creating…";
   try {
     // If they want driver, validate code first
     let role = "passenger";
-    if (wantsDriver) {
+    if (isDriver) {
       const res = await validateDriverCode(code);
       if (!res.ok) { show(res.reason, "danger"); btn.disabled=false; btn.textContent="Create account"; return; }
       role = "driver";
@@ -235,30 +281,53 @@ document.getElementById("formReg").addEventListener("submit", async (e)=>{
 
     const cred = await createUserWithEmailAndPassword(auth, email, pass);
     await updateProfile(cred.user, { displayName: name });
-    try { await sendEmailVerification(cred.user); } catch (_) {}
+    try { await sendEmailVerification(cred.user); } catch (_) {} 
 
     const uid = cred.user.uid;
     const base = { uid, name, email, phone, role, created_at:new Date().toISOString(), created_ts:Date.now() };
-
-    // Write main profile
-    await set(ref(db, `all_users/${uid}`), base);
-
-    if (role === "passenger") {
-      await set(ref(db, `passengers/${uid}`), base);
-    } else {
-      // role === "driver"
-      await set(ref(db, `drivers/${uid}`), { ...base, route, plate });
-      // Optional: decrement uses_left
-      if (code) {
-        try { await claimDriverCode(code); }
-        catch (e) { console.warn("claimDriverCode failed (non-fatal):", e); }
-      }
+    // Update profile creation to include license
+    const profile = { ...base };
+    if (role === "driver") {
+      if (code) profile.driver_code = code;
+      if (license) profile.license_number = license;
     }
 
-    show(`Account created as ${role}. Please verify your email, then sign in.`, "success");
-    setTimeout(()=> location.href = "login.html", 1500);
+    // Save profile to Firebase instead of making API call
+    const saveResult = await saveUserProfile(uid, role, profile);
+    if (!saveResult.success) {
+      try { await deleteUser(cred.user); } catch (cleanupError) {
+        console.warn("Failed to rollback auth user after DB error:", cleanupError);
+      }
+      throw new Error(saveResult.error || "Failed to save profile");
+    }
+
+    if (role === "driver" && code) {
+      try { await claimDriverCode(code); }
+      catch (e) { console.warn("claimDriverCode failed (non-fatal):", e); }
+    }
+
+    try { localStorage.setItem("notice", "Account created successfully. Please log in."); } catch (_) {}
+
+    try {
+      await signOut(auth);
+    } catch (signOutError) {
+      console.warn("Failed to sign out newly registered user:", signOutError);
+    }
+
+    location.href = "login.html";
   } catch (err) {
-    show("Failed to register: " + err.message, "danger");
+    let errorMessage = "Failed to register: " + err.message;
+    
+    // Handle specific Firebase errors
+    if (err.code === "auth/email-already-in-use") {
+      errorMessage = "This email is already registered. Please sign in instead.";
+    } else if (err.code === "auth/weak-password") {
+      errorMessage = "Password is too weak. Please choose a stronger password.";
+    } else if (err.code === "auth/invalid-email") {
+      errorMessage = "Invalid email address. Please check your email format.";
+    }
+    
+    show(errorMessage, "danger");
   } finally {
     btn.disabled = false; btn.textContent = "Create account";
   }
