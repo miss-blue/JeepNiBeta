@@ -17,7 +17,10 @@
     <span class="navbar-brand fw-semibold">JeepNi — Driver Dashboard</span>
     <div class="ms-auto d-flex align-items-center gap-2">
       <span id="driverInfo" class="small text-muted">Checking session…</span>
-      <button id="btnLogout" class="btn btn-outline-danger btn-sm">Logout</button>
+      <div class="ms-auto d-flex align-items-center gap-2">
+          <a href="my-profile.html" class="btn btn-outline-secondary btn-sm">My Profile</a>
+          <button id="btnLogout" class="btn btn-outline-danger btn-sm">Logout</button>
+      </div>
     </div>
   </div>
 </nav>
@@ -67,6 +70,7 @@
                 <div class="d-flex align-items-center gap-2">
                   <span id="capBadge" class="badge bg-success">Available</span>
                   <button id="btnToggleFull" class="btn btn-sm btn-outline-danger">Mark FULL</button>
+                  <button id="btnStopTracking" class="btn btn-sm btn-outline-warning d-none">Stop Sharing</button>
                 </div>
               </h5>
               <div id="map"></div>
@@ -107,10 +111,9 @@
   import { updateLocation, endTrip } from "./js/trip-tracking.js";
   import { myAssignments, setStatus } from "./js/scheduling.js";
   // Use tracker helpers to begin/stop sharing tied to trips
-  import { beginSharing, stopSharing, isSharing } from "./js/map-tracker.js";
+  import { beginSharing, stopSharing, isSharing, setMyFull } from "./js/map-tracker.js";
 
-  /* UI helpers */
-  const alertBox = document.getElementById("alerts");
+const alertBox = document.getElementById("alerts");
   function showAlert(msg, type = "warning") {
     alertBox.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">
       ${msg}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -129,8 +132,6 @@
     document.getElementById("profileBox").innerHTML = `
       <div><strong>Name:</strong> ${d.name || ""}</div>
       <div><strong>Email:</strong> ${d.email || ""}</div>
-      <div><strong>Route:</strong> ${d.route || ""}</div>
-      <div><strong>Plate:</strong> ${d.plate || ""}</div>
     `;
   }
 
@@ -186,11 +187,113 @@
     URL.revokeObjectURL(url);
   }
 
+  /* Button references */
+  const btnAccept = document.getElementById('btnAccept');
+  const btnEnroute = document.getElementById('btnEnroute');
+  const btnComplete = document.getElementById('btnComplete');
+  const btnStopTracking = document.getElementById('btnStopTracking');
+
+  /* Status update function */
+  async function updateDriverStatus(newStatus) {
+    try {
+      // Make sure we have a current dispatch before proceeding
+      if (!currentDispatch) {
+        showAlert('No active assignment found', 'warning');
+        return;
+      }
+
+      await setStatus({
+        date: currentDispatch.date,
+        dispatchId: currentDispatch.id,
+        status: newStatus
+      });
+      
+      // Show/hide stop tracking button based on status
+      if (newStatus === 'enroute') {
+        btnStopTracking.classList.remove('d-none');
+      } else {
+        btnStopTracking.classList.add('d-none');
+      }
+
+      // Update button states
+      btnAccept.disabled = newStatus !== 'available';
+      btnEnroute.disabled = newStatus !== 'accepted';
+      btnComplete.disabled = newStatus !== 'enroute';
+      
+      // Handle location sharing based on status
+        if (newStatus === 'enroute') {
+          await beginSharing();
+          btnStopTracking.classList.remove('d-none');
+          showAlert('Location sharing started', 'success');
+        } else if (newStatus === 'completed') {
+          await stopSharing();
+          btnStopTracking.classList.add('d-none');
+          showAlert('Location sharing stopped', 'success');
+        }
+      
+      await loadMyAssignment();
+      
+    } catch (err) {
+      console.error('Failed to update status:', err);
+      showAlert('Failed to update status: ' + err.message, 'danger');
+    }
+  }
+
   /* Wire buttons */
   document.getElementById("btnReload").addEventListener("click", loadTrips);
   document.getElementById("btnEdit").addEventListener("click", () => location.href = "driver-edit.html");
   document.getElementById("btnExportTrips").addEventListener("click", exportTripsCsv);
   document.getElementById("btnLogout").addEventListener("click", () => signOutAndRedirect("login.html"));
+
+  if (btnAccept) {
+    btnAccept.addEventListener('click', () => updateDriverStatus('accepted'));
+  }
+
+  if (btnEnroute) {
+    btnEnroute.addEventListener('click', () => updateDriverStatus('enroute'));
+  }
+
+  if (btnComplete) {
+    btnComplete.addEventListener('click', () => updateDriverStatus('completed'));
+  }
+
+// Add stop sharing button handler
+btnStopTracking.addEventListener('click', async () => {
+  try {
+    // Stop location sharing completely
+    await stopSharing();
+    
+    // Hide the stop button
+    btnStopTracking.classList.add('d-none');
+    
+    // Update capacity badge to show not active
+    capBadge.className = 'badge bg-secondary';
+    capBadge.textContent = 'Offline';
+    
+    showAlert('Location sharing stopped - your marker has been removed from the map', 'success');
+    
+    // Optionally mark trip as completed if currently enroute
+    if (currentDispatch && currentDispatch.status === 'enroute') {
+      try {
+        await setStatus({
+          date: currentDispatch.date,
+          dispatchId: currentDispatch.id,
+          status: 'completed'
+        });
+        await loadMyAssignment();
+        
+        // Reset capacity UI
+        fullState = false;
+        renderCapUI();
+      } catch (statusErr) {
+        console.warn('Could not auto-complete trip:', statusErr);
+      }
+    }
+  } catch (err) {
+    console.error('Failed to stop sharing:', err);
+    showAlert('Failed to stop sharing: ' + err.message, 'danger');
+  }
+});
 
   await loadProfile();
   try {
@@ -263,42 +366,73 @@
   }
 
   async function changeStatus(next) {
-  if (!currentDispatch) return;
-  await setStatus({ date: currentDispatch.date, dispatchId: currentDispatch.id, status: next });
+    if (!currentDispatch) return;
+    
+    try {
+      await setStatus({ date: currentDispatch.date, dispatchId: currentDispatch.id, status: next });
 
-  try {
-    if (next === "enroute") {
-      if (!isSharing()) {
-        // Create trip first
-        const tripId = await startTrip({
-          driver_uid: user.uid,
-          route: currentDispatch.route,
-          date: currentDispatch.date
-        });
+      if (next === "enroute") {
+        if (!isSharing()) {
+          // Create trip first
+          const tripId = await startTrip({
+            driver_uid: user.uid,
+            route: currentDispatch.route,
+            date: currentDispatch.date
+          });
+          
+          // Start sharing with trip ID AND assigned route
+          await beginSharing(tripId, currentDispatch.route);
+          window.JeepNiTracker?.setActiveTripId(tripId);
+          
+          // Show stop button
+          btnStopTracking.classList.remove('d-none');
+          
+          showAlert("Trip started and location sharing active.", "success");
+        }
+      } else if (next === "completed") {
+        await stopSharing();
         
-        // Start sharing with trip ID
-        await beginSharing(tripId);
-        window.JeepNiTracker?.setActiveTripId(tripId);
-        showAlert("Trip started and location sharing active.", "success");
+        // Hide stop button
+        btnStopTracking.classList.add('d-none');
+        
+        showAlert("Trip completed and location sharing stopped.", "success");
       }
-    } else if (next === "completed") {
-      await stopSharing({ completed: true });
-      showAlert("Trip completed.", "success");
+    } catch (err) {
+      console.error("Status change error:", err);
+      showAlert("Failed to change status: " + err.message, "danger");
     }
-  } catch (err) {
-    console.error("Trip start/stop error:", err);
-    showAlert("Trip action failed: " + err.message, "danger");
-  }
 
-  await loadMyAssignment();
-  await loadTrips();
-}
+    await loadMyAssignment();
+    await loadTrips();
+  }
 
   document.getElementById("btnAccept").addEventListener("click", () => changeStatus("accepted"));
   document.getElementById("btnEnroute").addEventListener("click", () => changeStatus("enroute"));
   document.getElementById("btnComplete").addEventListener("click", () => changeStatus("completed"));
 
   await loadMyAssignment();
+
+  /* Initial button state setup */
+  async function initializeButtonStates() {
+    try {
+      const driverRef = ref(db, `drivers/${user.uid}`);
+      const snapshot = await get(driverRef);
+      
+      if (snapshot.exists()) {
+        const currentStatus = snapshot.val().status || 'available';
+        
+        // Set initial button states
+        btnAccept.disabled = currentStatus !== 'available';
+        btnEnroute.disabled = currentStatus !== 'accepted';
+        btnComplete.disabled = currentStatus !== 'enroute';
+      }
+    } catch (err) {
+      console.error('Failed to initialize button states:', err);
+    }
+  }
+
+  // Call this after user authentication
+  await initializeButtonStates();
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

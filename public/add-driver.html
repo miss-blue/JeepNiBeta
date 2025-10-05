@@ -230,7 +230,7 @@
             <p class="mb-3">Issue credentials instantly for new fleet members without leaving the dashboard.</p>
             <span class="badge-soft"><i class="bi bi-lightning-charge-fill"></i> Admin quick action</span>
             <ul class="info-list">
-              <li><i class="bi bi-envelope-check"></i><span>Drivers receive a verification email once the account is created.</span></li>
+              <li><i class="bi bi-envelope-check"></i><span>Once added, the driver’s credentials are securely stored and ready for system authentication.</span></li>
               <li><i class="bi bi-shield-lock"></i><span>Share the temporary password directly and remind them to update it on first login.</span></li>
               <li><i class="bi bi-clipboard-check"></i><span>Assign vehicles or routes later from the driver management tools.</span></li>
             </ul>
@@ -271,6 +271,11 @@
                 <div class="col-md-6">
                   <label class="fieldset-label" for="phone">Phone (optional)</label>
                   <input id="phone" class="form-control" placeholder="09xx xxx xxxx" />
+                </div>
+                <div class="col-md-6">
+                  <label class="fieldset-label" for="license">License Number</label>
+                  <input id="license" class="form-control" placeholder="e.g. N01-23-456789" required />
+                  <div class="form-text">Valid Professional Driver's License number</div>
                 </div>
               </div>
 
@@ -366,9 +371,10 @@
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
     const phone = document.getElementById("phone").value.trim();
+    const license = document.getElementById("license").value.trim(); // Add this line
 
-    if (!name || !email || !password) {
-      showAlert("Please complete name, email, and password.", "danger");
+    if (!name || !email || !password || !license) { // Add license check
+      showAlert("Please complete name, email, password, and license number.", "danger");
       return;
     }
     const pwError = validatePassword(password);
@@ -400,7 +406,7 @@
       const serverResp = await fetch(`${API_BASE}/api/admin/create_account`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, role: "driver", phone })
+        body: JSON.stringify({ name, email, password, role: "driver", phone, license })
       }).catch(() => null);
 
       if (serverResp && serverResp.ok) {
@@ -434,6 +440,7 @@
         name,
         email,
         phone,
+        license, // Add this line
         role: "driver",
         created_at: new Date().toISOString(),
         created_ts: Date.now()

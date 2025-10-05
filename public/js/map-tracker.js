@@ -298,7 +298,12 @@ function startWatch(onPoint) {
 
 function stopWatch() {
   if (_watchId != null) {
-    try { navigator.geolocation.clearWatch(_watchId); } catch {}
+    try { 
+      navigator.geolocation.clearWatch(_watchId); 
+      console.log('GPS watch cleared:', _watchId);
+    } catch(e) {
+      console.warn('Failed to clear watch:', e);
+    }
     _watchId = null;
   }
 }
@@ -515,9 +520,23 @@ async function onGeoPoint(lat, lng) {
   if (myRole === "driver") {
     if (!getActiveTripId()) return;
 
-    const { route } = await resolveRoute(auth.currentUser.uid);
+    // Get route from active trip or current driver location first, then fall back to resolver
+    let route = null;
+    try {
+      const locSnap = await get(ref(db, `drivers_location/${auth.currentUser.uid}`));
+      if (locSnap.exists() && locSnap.val().route) {
+        route = locSnap.val().route;
+      }
+    } catch {}
+    
+    if (!route) {
+      const resolved = await resolveRoute(auth.currentUser.uid);
+      route = resolved.route;
+    }
+    
     const oldPos = _lastPos.get(meMarker) || { lat, lng };
     const bearing = updateBearingState(oldPos.lat, oldPos.lng, lat, lng);
+
 
     if (!meMarker) {
       const icon = await getJeepIcon(route);
@@ -550,7 +569,7 @@ async function onGeoPoint(lat, lng) {
       if (myFullBadge) {
         meMarker.bindTooltip("FULL", { permanent: true, direction: "top", className: "full-badge" });
       } else {
-        meMarker.bindTooltip("Available", { permanent: true, direction: "top", className: "available-badge" });
+        meMarker.unbindTooltip();
       }
 
       await updateLocation(lat, lng, route);
@@ -636,7 +655,7 @@ async function checkNearbyPassengers(driverLat, driverLng) {
   }
 }
 
-startWatch(onGeoPoint);
+//startWatch(onGeoPoint);
 
 // ===== Show all drivers and passengers (others) =====
 const otherDriverMarkers = new Map();
@@ -687,7 +706,7 @@ async function upsertOtherDriver(uid, rec) {
   if (rec.status === "full") {
     m.bindTooltip("FULL", { permanent: true, direction: "top", className: "full-badge" });
   } else {
-    m.bindTooltip("Available", { permanent: true, direction: "top", className: "available-badge" });
+    meMarker.unbindTooltip();
   }
 
   m.bindPopup(`
@@ -991,7 +1010,7 @@ let _activeTripId = null;
 export function getActiveTripId() { return _activeTripId; }
 export function setActiveTripId(v) { _activeTripId = v; }
 
-export async function beginSharing(tripId) {
+export async function beginSharing(tripId, assignedRoute = null) {
   if (myRole !== "driver") {
     try {
       const u = auth.currentUser;
@@ -1006,18 +1025,53 @@ export async function beginSharing(tripId) {
   }
   
   _activeTripId = String(tripId || "");
+  
+  // If route is provided, update it immediately in drivers_location
+  if (assignedRoute && auth.currentUser) {
+    try {
+      await update(ref(db, `drivers_location/${auth.currentUser.uid}`), {
+        route: normRouteName(assignedRoute),
+        online: true,
+        active: true,
+        trip_id: _activeTripId,
+        last_update: Date.now()
+      });
+    } catch (e) {
+      console.warn('Failed to set initial route:', e);
+    }
+  }
+  
   startWatch(onGeoPoint);
   return true;
 }
 
 export async function stopSharing() {
   if (myRole !== "driver") return;
+  
+  // CRITICAL: Stop geolocation FIRST before any cleanup
   stopWatch();
-  if (meMarker) { map.removeLayer(meMarker); meMarker = null; }
-  if (myDirectionArrow) { map.removeLayer(myDirectionArrow); myDirectionArrow = null; }
-  if (myCapacityBubble) { map.removeLayer(myCapacityBubble); myCapacityBubble = null; }
-  await clearDriverPresence();
+  
+  // Clear trip state immediately to prevent onGeoPoint from recreating marker
   _activeTripId = null;
+  
+  // Remove ALL driver visual elements from map
+  if (meMarker) { 
+    try { map.removeLayer(meMarker); } catch(e) { console.warn('meMarker removal:', e); }
+    meMarker = null; 
+  }
+  if (myDirectionArrow) { 
+    try { map.removeLayer(myDirectionArrow); } catch(e) { console.warn('arrow removal:', e); }
+    myDirectionArrow = null; 
+  }
+  if (myCapacityBubble) { 
+    try { map.removeLayer(myCapacityBubble); } catch(e) { console.warn('bubble removal:', e); }
+    myCapacityBubble = null; 
+  }
+  
+  // Clear database presence completely
+  await clearDriverPresence();
+  
+  console.log('Driver sharing stopped - marker removed from map');
 }
 
 export function isSharing() {
@@ -1033,7 +1087,7 @@ export async function setMyFull(isFull) {
     if (myFullBadge) {
       meMarker.bindTooltip("FULL", { permanent: true, direction: "top", className: "full-badge" });
     } else {
-      meMarker.bindTooltip("Available", { permanent: true, direction: "top", className: "available-badge" });
+      meMarker.unbindTooltip();
     }
   }
 

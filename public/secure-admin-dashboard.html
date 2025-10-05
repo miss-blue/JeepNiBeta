@@ -85,6 +85,7 @@
             <a class="btn btn-primary" href="add-driver.html">Add Driver</a>
             <a class="btn btn-primary" href="add-passenger.html">Add Passenger</a>
             <button id="btnAddAdmin" class="btn btn-warning">Add Admin</button>
+            <button id="btnRemoveAdmin" class="btn btn-outline-danger">Remove Admin</button>
             <button id="btnExportDrivers" class="btn btn-outline-secondary">Export Drivers (CSV)</button>
             <button id="btnExportPassengers" class="btn btn-outline-secondary">Export Passengers (CSV)</button>
           </div>
@@ -488,26 +489,26 @@
 </main>
 
 <!-- Add Admin Modal -->
-<div class="modal fade" id="modalAddAdmin" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
+<div class="modal" id="modalAddAdmin" tabindex="-1" role="dialog" aria-labelledby="modalAddAdminTitle">
+  <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title"><i class="bi bi-person-gear me-2"></i>Add Admin</h5>
+        <h5 class="modal-title" id="modalAddAdminTitle"><i class="bi bi-person-gear me-2"></i>Add Admin</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <div class="alert alert-info small">
-          Only <strong>super_admin</strong> can promote users to admin.
+          Only <strong>admin</strong> can promote users to admin.
         </div>
         <div class="mb-2">
-          <label class="form-label">Identifier Type</label>
+          <label class="form-label" for="adminIdType">Identifier Type</label>
           <select id="adminIdType" class="form-select form-select-sm">
             <option value="email" selected>Email</option>
             <option value="uid">UID</option>
           </select>
         </div>
         <div class="mb-2">
-          <label class="form-label">Email or UID</label>
+          <label class="form-label" for="adminIdentifier">Email or UID</label>
           <input id="adminIdentifier" class="form-control" placeholder="user@example.com or Firebase UID">
         </div>
         <div class="form-text">User must already exist in <code>all_users</code>.</div>
@@ -519,20 +520,77 @@
       </div>
     </div>
   </div>
- </div>
+</div>
 
+<!-- Remove Admin Modal -->
+<div class="modal" id="modalRemoveAdmin" tabindex="-1" role="dialog" aria-labelledby="modalRemoveAdminTitle">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalRemoveAdminTitle"><i class="bi bi-person-x me-2"></i>Remove Admin</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning small">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          Only <strong>admin</strong> can remove admin privileges.
+        </div>
+        <div class="mb-2">
+          <label class="form-label" for="removeAdminIdType">Identifier Type</label>
+          <select id="removeAdminIdType" class="form-select form-select-sm">
+            <option value="email" selected>Email</option>
+            <option value="uid">UID</option>
+          </select>
+        </div>
+        <div class="mb-2">
+          <label class="form-label" for="removeAdminIdentifier">Email or UID</label>
+          <input id="removeAdminIdentifier" class="form-control" placeholder="user@example.com or Firebase UID">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">New Role</label>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="newRole" id="roleUser" value="user" checked>
+            <label class="form-check-label" for="roleUser">
+              Regular User
+            </label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="newRole" id="roleDriver" value="driver">
+            <label class="form-check-label" for="roleDriver">
+              Driver
+            </label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="newRole" id="rolePassenger" value="passenger">
+            <label class="form-check-label" for="rolePassenger">
+              Passenger
+            </label>
+          </div>
+        </div>
+        <div class="form-text text-danger">This will remove admin privileges and set the selected role.</div>
+        <div class="text-danger small mt-2 d-none" id="removeAdminError"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="btnConfirmRemoveAdmin">Remove Admin</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="module" src="./js/admin-dashboard.js"></script>
 <script type="module">
   import { 
-  db, 
-  ref, 
-  get, 
-  onValue, 
-  signOutAndRedirect, 
-  query, 
-  orderByChild, 
-  equalTo,
-  update 
-} from "./js/authentication.js";
+    db, 
+    ref, 
+    get,
+    onValue,
+    signOutAndRedirect,
+    query,
+    orderByChild,
+    equalTo,
+    update,
+    auth
+  } from "./js/authentication.js";
   import { requireAdmin, attachAdminBadge } from "./js/admin_auth.js";
   import { createDispatch, listDispatches, adminSetStatus } from "./js/scheduling.js";
 
@@ -578,15 +636,30 @@
   // ===== Add Admin (super_admin only) =====
   async function openAddAdminModal() {
     try {
-      // Resolve current user's role via all_users
-      const uid = (window?.firebaseAuth?.currentUser?.uid) || (await (await import('./js/authentication.js')).auth.currentUser?.uid);
-    } catch {}
-    const modalEl = document.getElementById('modalAddAdmin');
-    const modal = new bootstrap.Modal(modalEl);
-    document.getElementById('addAdminError')?.classList.add('d-none');
-    document.getElementById('adminIdentifier').value = '';
-    document.getElementById('adminIdType').value = 'email';
-    modal.show();
+      const modalEl = document.getElementById('modalAddAdmin');
+      if (!modalEl) return;
+
+      // Reset form state
+      document.getElementById('addAdminError')?.classList.add('d-none');
+      document.getElementById('adminIdentifier').value = '';
+      document.getElementById('adminIdType').value = 'email';
+
+      // Initialize modal with proper focus management
+      const modal = new bootstrap.Modal(modalEl, {
+        keyboard: true,
+        focus: true,
+        backdrop: true
+      });
+
+      // Show modal and focus first input
+      modal.show();
+      setTimeout(() => {
+        document.getElementById('adminIdentifier')?.focus();
+      }, 150);
+
+    } catch (err) {
+      console.error('Failed to open modal:', err);
+    }
   }
 
   async function promoteToAdmin() {
@@ -594,16 +667,22 @@
     const idType = document.getElementById('adminIdType').value;
     const ident = (document.getElementById('adminIdentifier').value || '').trim();
     errEl?.classList.add('d-none');
-    if (!ident) { errEl.textContent = 'Please enter an email or UID.'; errEl.classList.remove('d-none'); return; }
+    
+    if (!ident) { 
+      errEl.textContent = 'Please enter an email or UID.'; 
+      errEl.classList.remove('d-none'); 
+      return; 
+    }
 
     try {
-      // Ensure current user is super_admin
+      // Check if current user is admin
       const { auth, getRole } = await import('./js/authentication.js');
       const me = auth.currentUser;
       if (!me) throw new Error('Not signed in');
+      
       const roleSnap = await get(ref(db, `all_users/${me.uid}/role`));
       const myRole = roleSnap.exists() ? roleSnap.val() : 'norole';
-      if (myRole !== 'super_admin') throw new Error('Only super_admin can add admins.');
+      if (myRole !== 'admin') throw new Error('Only admin can promote users.');
 
       // Resolve target UID
       let targetUid = null;
@@ -622,13 +701,16 @@
       }
 
       // Update role to admin
-      await (await import('./js/authentication.js')).update(ref(db, `all_users/${targetUid}`), { role: 'admin' });
-
+      await update(ref(db, `all_users/${targetUid}`), { role: 'admin' });
       showAlert('User promoted to admin successfully.', 'success');
       bootstrap.Modal.getInstance(document.getElementById('modalAddAdmin'))?.hide();
+      
     } catch (e) {
-      console.error('promoteToAdmin failed', e);
-      if (errEl) { errEl.textContent = e.message || 'Failed'; errEl.classList.remove('d-none'); }
+      console.error('promoteToAdmin failed:', e);
+      if (errEl) { 
+        errEl.textContent = e.message || 'Failed'; 
+        errEl.classList.remove('d-none'); 
+      }
     }
   }
 
@@ -636,6 +718,107 @@
   if (btnAddAdmin) btnAddAdmin.addEventListener('click', openAddAdminModal);
   const btnConfirmAddAdmin = document.getElementById('btnConfirmAddAdmin');
   if (btnConfirmAddAdmin) btnConfirmAddAdmin.addEventListener('click', promoteToAdmin);
+
+  // Add this near the other admin-related functions in the script section
+async function openRemoveAdminModal() {
+  try {
+    const modalEl = document.getElementById('modalRemoveAdmin');
+    if (!modalEl) return;
+
+    // Reset form state
+    document.getElementById('removeAdminError')?.classList.add('d-none');
+    document.getElementById('removeAdminIdentifier').value = '';
+    document.getElementById('removeAdminIdType').value = 'email';
+
+    // Initialize modal
+    const modal = new bootstrap.Modal(modalEl, {
+      keyboard: true,
+      focus: true,
+      backdrop: true
+    });
+
+    modal.show();
+    setTimeout(() => {
+      document.getElementById('removeAdminIdentifier')?.focus();
+    }, 150);
+
+  } catch (err) {
+    console.error('Failed to open remove admin modal:', err);
+  }
+}
+
+// Update the removeAdminPrivileges function in your script
+async function removeAdminPrivileges() {
+  const errEl = document.getElementById('removeAdminError');
+  const idType = document.getElementById('removeAdminIdType').value;
+  const ident = (document.getElementById('removeAdminIdentifier').value || '').trim();
+  const newRole = document.querySelector('input[name="newRole"]:checked')?.value || 'user';
+  errEl?.classList.add('d-none');
+  
+  if (!ident) { 
+    errEl.textContent = 'Please enter an email or UID.'; 
+    errEl.classList.remove('d-none'); 
+    return; 
+  }
+
+  try {
+    // Check if current user is admin
+    const { auth, getRole } = await import('./js/authentication.js');
+    const me = auth.currentUser;
+    if (!me) throw new Error('Not signed in');
+    
+    const roleSnap = await get(ref(db, `all_users/${me.uid}/role`));
+    const myRole = roleSnap.exists() ? roleSnap.val() : 'norole';
+    if (myRole !== 'admin') throw new Error('Only admin can remove admin privileges.');
+
+    // Prevent removing own admin access
+    if (idType === 'uid' && ident === me.uid) throw new Error('Cannot remove your own admin privileges.');
+    if (idType === 'email' && ident.toLowerCase() === me.email?.toLowerCase()) {
+      throw new Error('Cannot remove your own admin privileges.');
+    }
+
+    // Resolve target UID
+    let targetUid = null;
+    if (idType === 'uid') {
+      targetUid = ident;
+    } else {
+      const allSnap = await get(ref(db, 'all_users'));
+      if (!allSnap.exists()) throw new Error('all_users is empty.');
+      const all = allSnap.val();
+      const lower = ident.toLowerCase();
+      for (const uid in all) {
+        const email = (all[uid]?.email || '').toLowerCase();
+        if (email === lower) { targetUid = uid; break; }
+      }
+      if (!targetUid) throw new Error('No user with that email found in all_users.');
+    }
+
+    // Verify target is admin before removing+++
+    const targetRoleSnap = await get(ref(db, `all_users/${targetUid}/role`));
+    if (!targetRoleSnap.exists() || targetRoleSnap.val() !== 'admin') {
+      throw new Error('User is not an admin.');
+    }
+
+    // Remove admin role and set new role
+    await update(ref(db, `all_users/${targetUid}`), { role: newRole });
+    showAlert(`Admin privileges removed successfully. New role: ${newRole}`, 'success');
+    bootstrap.Modal.getInstance(document.getElementById('modalRemoveAdmin'))?.hide();
+    
+  } catch (e) {
+    console.error('removeAdminPrivileges failed:', e);
+    if (errEl) { 
+      errEl.textContent = e.message || 'Failed'; 
+      errEl.classList.remove('d-none'); 
+    }
+  }
+}
+
+// Add these event listeners with the other button handlers
+const btnRemoveAdmin = document.getElementById('btnRemoveAdmin');
+if (btnRemoveAdmin) btnRemoveAdmin.addEventListener('click', openRemoveAdminModal);
+const btnConfirmRemoveAdmin = document.getElementById('btnConfirmRemoveAdmin');
+if (btnConfirmRemoveAdmin) btnConfirmRemoveAdmin.addEventListener('click', removeAdminPrivileges);
+
 
   // Normalize any mojibake placeholders to plain ASCII right away
   const setLoading = (sel, cols) => {
@@ -1132,7 +1315,7 @@
     const date = $("#listDate").value || new Date().toISOString().split('T')[0];
     
     tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3">
-      <div class="spinner-border spinner-border-sm text-info"></div> Loading...
+      <div class="spinner-border spinner-border-sm text-info" role="status"></div> Loading...
     </td></tr>`;
 
     try {
@@ -1280,7 +1463,7 @@ function updatePredictionKPIs(predictions) {
   }
   
   // Calculate total predicted passengers
-  const total = predictions.reduce((sum, pred) => sum + (pred.predicted_passengers || 0), 0);
+  const total = predictions.reduce((sum, pred) => sum + (predicted_passengers || 0), 0);
   setText('kpiTotal', total);
   
   // Find busiest stop
@@ -1382,7 +1565,7 @@ $('#predictionDate').value = new Date().toISOString().split('T')[0];
 async function getPredictions(date) {
   try {
     const API_BASE = window.API_BASE ?? ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') && location.port !== '5000' ? 'http://localhost:5000' : '');
-    const response = await fetch(`${API_BASE}/api/predictions/${date}`);    if (!response.ok) return null;
+    const response = await fetch(`${API_BASE}/api/predictions/${date}`);       if (!response.ok) return null;
     return await response.json();
   } catch (error) {
     return null;
@@ -1544,6 +1727,7 @@ async function getPredictions(date) {
   const today = dateKeyLocal(new Date());
   const sevenAgo = (()=>{ const d=new Date(); d.setDate(d.getDate()-7); return dateKeyLocal(d); })();
   const histStartEl = document.querySelector('#histStart');
+ 
   const histEndEl = document.querySelector('#histEnd');
   if (histStartEl && !histStartEl.value) histStartEl.value = sevenAgo;
   if (histEndEl && !histEndEl.value) histEndEl.value = today;
@@ -1638,6 +1822,9 @@ async function getPredictions(date) {
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script type="module">
+  // ADD THESE IMPORTS AT THE TOP
+  import { db, ref, get, onValue } from "./js/authentication.js";
+  
   document.title = 'JeepNi - Admin Dashboard';
 
   let mapLoaded = false;
@@ -1653,9 +1840,99 @@ async function getPredictions(date) {
     }
   }
 
+  let markers = {
+    drivers: new Map(),
+    passengers: new Map()
+  };
+
   const dashboardMapEl = document.getElementById('dashboardMap');
   if (dashboardMapEl) {
-    ensureMapLoaded().catch(() => {});
+    ensureMapLoaded().then(() => {
+      // Initialize map with Dagupan center coordinates
+      const map = L.map('dashboardMap').setView([16.043, 120.333], 14);
+      
+      // Add OpenStreetMap tiles
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      // Track drivers
+      const driversRef = ref(db, 'drivers_location');
+      onValue(driversRef, async (snap) => {
+        const drivers = snap.val() || {};
+        
+        // Clear old markers
+        markers.drivers.forEach(m => m.remove());
+        markers.drivers.clear();
+        
+        // Add new markers
+        for (const [uid, data] of Object.entries(drivers)) {
+          if (!data.lat || !data.lng) continue;
+          
+          try {
+            const driverSnap = await get(ref(db, `drivers/${uid}`));
+            const driver = driverSnap.val() || {};
+            
+            const icon = L.divIcon({
+              className: '',
+              html: `<div style="font-size:24px;color:${getRouteColor(data.route)}">🚌</div>`
+            });
+            
+            const marker = L.marker([data.lat, data.lng], {icon})
+              .bindPopup(`
+                <strong>${driver.name || 'Driver'}</strong><br>
+                Route: ${data.route || 'Unknown'}<br>
+                Status: ${data.status || 'Unknown'}
+              `);
+            
+            marker.addTo(map);
+            markers.drivers.set(uid, marker);
+          } catch (err) {
+            console.warn('Error loading driver details:', err);
+          }
+        }
+      });
+
+      // Track passengers
+      const passengersRef = ref(db, 'passengers_location');
+      onValue(passengersRef, (snap) => {
+        const passengers = snap.val() || {};
+        
+        // Clear old markers
+        markers.passengers.forEach(m => m.remove());
+        markers.passengers.clear();
+        
+        // Add new markers
+        Object.entries(passengers).forEach(([uid, data]) => {
+          if (!data.lat || !data.lng || !data.online) return;
+          
+          const icon = L.divIcon({
+            className: '',
+            html: '<div style="font-size:24px;color:#2196F3">👤</div>'
+          });
+          
+          const marker = L.marker([data.lat, data.lng], {icon})
+            .bindPopup(`Passenger<br>Waiting: ${data.waiting || false}`);
+            
+          marker.addTo(map);
+          markers.passengers.set(uid, marker);
+        });
+      });
+
+    }).catch(console.error);
+  }
+
+  // Route color helper
+  function getRouteColor(route) {
+    const colors = {
+      gueset: '#2196F3',    // Blue
+      boquig: '#F44336',    // Red
+      longos: '#4CAF50',    // Green
+      binloc: '#FFC107',    // Yellow
+      tondaligan: '#9C27B0' // Purple
+    };
+    return colors[route?.toLowerCase()] || '#757575';
   }
 </script>
 </body>

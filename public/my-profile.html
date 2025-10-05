@@ -134,7 +134,49 @@
     const emailInput = document.getElementById('email');
     const logoutBtn = document.getElementById('btnLogout');
 
-    const { user, profile } = await requireRole(['passenger']);
+    const { user, profile } = await requireRole(['passenger', 'driver']); // Allow both roles
+
+    // Get the back button element
+    const backBtn = document.querySelector('a[href="passenger-dashboard.html"]');
+
+    // Set the correct dashboard URL based on user role
+    if (profile?.role === 'driver') {
+      backBtn.href = 'driver-dashboard.html';
+    } else if (profile?.role === 'passenger') {
+      backBtn.href = 'passenger-dashboard.html';
+    } else {
+      // Fallback - check database directly
+      try {
+        const userRef = ref(db, `all_users/${user.uid}`);
+        const userSnap = await get(userRef);
+        const role = userSnap.exists() ? userSnap.val().role : 'passenger';
+        backBtn.href = role === 'driver' ? 'driver-dashboard.html' : 'passenger-dashboard.html';
+      } catch (err) {
+        console.error('Failed to determine user role:', err);
+        // Redirect to login as fallback for safety
+        backBtn.href = 'login.html';
+      }
+    }
+
+    // Add click handler to verify role before navigation
+    backBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      try {
+        // Double check current role in case it changed
+        const userRef = ref(db, `all_users/${user.uid}`);
+        const userSnap = await get(userRef);
+        if (!userSnap.exists()) throw new Error('User not found');
+        
+        const currentRole = userSnap.val().role;
+        const dashboardUrl = currentRole === 'driver' ? 'driver-dashboard.html' : 'passenger-dashboard.html';
+        
+        window.location.href = dashboardUrl;
+      } catch (err) {
+        console.error('Navigation failed:', err);
+        // Fallback to login if role check fails
+        window.location.href = 'login.html';
+      }
+    });
 
     const initialName = profile?.name || user.displayName || '';
     const initialPhone = profile?.phone || '';
@@ -177,17 +219,41 @@
         }
         await updateProfile(user, { displayName: fullName }).catch(() => {});
 
-        const updates = { name: fullName, phone, email, uid: user.uid, role: profile?.role || 'passenger' };
-        await update(ref(db, `all_users/${user.uid}`), updates).catch(() => set(ref(db, `all_users/${user.uid}`), updates));
+        // Update all_users record
+        const updates = { 
+          name: fullName, 
+          phone, 
+          email, 
+          uid: user.uid, 
+          role: profile?.role || 'passenger'
+        };
+        await update(ref(db, `all_users/${user.uid}`), updates);
 
-        const passengerSnap = await get(ref(db, `passengers/${user.uid}`));
-        if (passengerSnap.exists()) {
-          await update(ref(db, `passengers/${user.uid}`), { ...passengerSnap.val(), name: fullName, phone, email });
-        }
-
-        const driverSnap = await get(ref(db, `drivers/${user.uid}`));
-        if (driverSnap.exists()) {
-          await update(ref(db, `drivers/${user.uid}`), { ...driverSnap.val(), name: fullName, email });
+        // Update role-specific record based on user role
+        if (profile?.role === 'driver') {
+          const driverRef = ref(db, `drivers/${user.uid}`);
+          const driverSnap = await get(driverRef);
+          if (driverSnap.exists()) {
+            await update(driverRef, {
+              ...driverSnap.val(),
+              name: fullName,
+              email: email,
+              phone: phone,
+              uid: user.uid
+            });
+          }
+        } else {
+          // Handle passenger updates
+          const passengerRef = ref(db, `passengers/${user.uid}`);
+          const passengerSnap = await get(passengerRef);
+          if (passengerSnap.exists()) {
+            await update(passengerRef, {
+              ...passengerSnap.val(),
+              name: fullName,
+              email: email,
+              phone: phone
+            });
+          }
         }
 
         showMessage(profileAlert, 'Profile updated successfully.', 'success');
@@ -221,7 +287,7 @@
         console.error('Password update failed', error);
         const message = error?.code == 'auth/requires-recent-login'
           ? 'Please log out and sign in again, then try updating your password.'
-          : (error?.message or 'Failed to update password.');
+          : (error?.message || 'Failed to update password.');
         showMessage(passwordAlert, message, 'danger');
       }
     });

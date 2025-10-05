@@ -82,9 +82,19 @@ export async function adminSetStatus({ date, dispatchId, status }) {
  * This was missing and causing imports to fail
  */
 export async function setStatus({ date, dispatchId, status }) {
-  const allowed = ["accepted", "enroute", "completed"];
-  if (!allowed.includes(status)) throw new Error("Invalid status for driver");
-  if (!auth.currentUser) throw new Error("Not signed in");
+  // Make sure all required parameters are present
+  if (!date || !dispatchId || !status) {
+    throw new Error("Missing required parameters");
+  }
+
+  const allowed = ["assigned", "accepted", "enroute", "completed"];
+  if (!allowed.includes(status)) {
+    throw new Error(`Invalid status for driver. Must be one of: ${allowed.join(', ')}`);
+  }
+
+  if (!auth.currentUser) {
+    throw new Error("Not signed in");
+  }
 
   // First verify this dispatch belongs to the current driver
   const dispatchSnap = await get(ref(db, `schedules/${date}/${dispatchId}`));

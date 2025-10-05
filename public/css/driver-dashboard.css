@@ -77,4 +77,14 @@
       color: white;
     }
     body{ position: relative; }
-    body::before{ content:""; position: fixed; inset:0; background: url('icons/Background2.png') center bottom / cover no-repeat; opacity:.12; pointer-events:none; z-index:-1; }
+    body::before{ content:""; position: fixed; inset:0; background: url('/icons/Background2.png') center bottom / cover no-repeat; opacity:.12; pointer-events:none; z-index:-1; }
+
+    #btnStopTracking {
+      transition: opacity 0.3s ease;
+    }
+
+    #btnStopTracking:not(.d-none) {
+      display: inline-flex !important;
+      align-items: center;
+      gap: 0.5rem;
+    }
