@@ -7,6 +7,9 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css">
+  <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
   <link rel="stylesheet" href="css/driver-dashboard.css" />
 
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -61,12 +64,29 @@
       </div>
     </div>
 
-    <div class="col-lg-8">
-      <div class="card shadow-sm">
-        <div class="card shadow-sm mt-3">
-            <div class="card-body">
-              <h5 class="card-title d-flex justify-content-between align-items-center">
-                Live Map
+            <!-- Destinations Panel -->
+                  <div class="card shadow-sm mt-3">
+                    <div class="card-body">
+                      <h5 class="card-title">Navigation</h5>
+                      <div class="mb-3">
+                        <label class="form-label small">Select Destination</label>
+                        <select id="destinationSelect" class="form-select form-select-sm">
+                          <option value="">Choose a stop...</option>
+                          <option value="16.0754843,120.3546182">Saint Gabriel Parish</option>
+                          <option value="16.073742,120.351614">Alip, Boquig Waiting Shed</option>
+                          <option value="16.076286,120.3557308">Bonuan Boquig Barangay Hall</option>
+                          <option value="16.066106,120.353298">Sagor, Longos</option>
+                          <option value="16.070591,120.359635">Centro, Longos</option>
+                          <option value="16.044321,120.343607">SM Center Dagupan</option>
+                          <option value="16.043786,120.344272">DBP</option>
+                          <option value="16.042842,120.344109">Victory Bus Terminal</option>
+                        </select>
+                      </div>
+                      <button id="btnNavigate" class="btn btn-primary btn-sm w-100" disabled>
+                        <i class="bi bi-compass"></i> Start Navigation
+                      </button>
+                    </div>
+                  </div>
                 <div class="d-flex align-items-center gap-2">
                   <span id="capBadge" class="badge bg-success">Available</span>
                   <button id="btnToggleFull" class="btn btn-sm btn-outline-danger">Mark FULL</button>
@@ -163,6 +183,53 @@ const alertBox = document.getElementById("alerts");
         <td>${t.duration || ""}</td>
       </tr>
     `).join("");
+  }
+/* ===== ROUTING FOR DRIVERS ===== */
+  const destinationSelect = document.getElementById('destinationSelect');
+  const btnNavigate = document.getElementById('btnNavigate');
+  const btnClearRoute = document.getElementById('btnClearRoute');
+  let currentRouteTarget = null;
+
+  // Enable navigate button when destination is selected
+  if (destinationSelect && btnNavigate) {
+    destinationSelect.addEventListener('change', () => {
+      const hasSelection = destinationSelect.value !== '';
+      btnNavigate.disabled = !hasSelection;
+    });
+  }
+
+  // Start navigation to selected destination
+  if (btnNavigate) {
+    btnNavigate.addEventListener('click', () => {
+      const coords = destinationSelect.value.split(',');
+      if (coords.length !== 2) return;
+      
+      const lat = parseFloat(coords[0]);
+      const lng = parseFloat(coords[1]);
+      const name = destinationSelect.options[destinationSelect.selectedIndex].text;
+      
+      if (!isNaN(lat) && !isNaN(lng)) {
+        try {
+          // Set destination marker
+          if (window.JeepNiTracker && window.JeepNiTracker.setDestination) {
+            window.JeepNiTracker.setDestination(lat, lng, name);
+          }
+          
+          // Start routing if sharing is active
+          if (window.JeepNiTracker && window.JeepNiTracker.isSharing() && window.JeepNiTracker.routeTo) {
+            window.JeepNiTracker.routeTo(lat, lng);
+            currentRouteTarget = { lat, lng, name };
+            btnClearRoute.disabled = false;
+            showAlert(`Navigation started to ${name}`, 'success');
+          } else {
+            showAlert('Start your trip first (click "Start En-route")', 'warning');
+          }
+        } catch (err) {
+          console.error('Navigation error:', err);
+          showAlert('Failed to start navigation', 'danger');
+        }
+      }
+    });
   }
 
   /* Export trips as CSV using same query */
@@ -324,20 +391,39 @@ btnStopTracking.addEventListener('click', async () => {
     }
   }
 
-  onValue(ref(db, `drivers_location/${user.uid}`), (snap) => {
-    const v = snap.exists() ? snap.val() : {};
-    fullState = !!v.full;
-    renderCapUI();
-    try { window.JeepNiTracker?.setMyFull(fullState); } catch {}
-  });
+    onValue(ref(db, `drivers_location/${user.uid}`), (snap) => {
+      const v = snap.exists() ? snap.val() : {};
+      const newFullState = !!v.full;
+      
+      // Only update if state actually changed to prevent infinite loop
+      if (newFullState !== fullState) {
+        fullState = newFullState;
+        renderCapUI();
+      }
+      
+      // Always sync marker badge with database state (if marker exists)
+      try { 
+        if (window.JeepNiTracker?.setMyFull) {
+          window.JeepNiTracker.setMyFull(fullState); 
+        }
+      } catch (e) {
+        console.warn('Failed to sync FULL badge:', e);
+      }
+    });
 
   btnToggleFull.addEventListener('click', async () => {
     try {
-      fullState = !fullState;
+      const newState = !fullState;
+      fullState = newState;
       renderCapUI();
-      await update(ref(db, `drivers_location/${user.uid}`), { full: fullState, last_update: serverTimestamp() });
-      // Update my marker badge immediately if tracker is loaded
-      try { window.JeepNiTracker?.setMyFull(fullState); } catch {}
+      
+      // Don't call setMyFull here - just update database
+      // The onValue listener will handle syncing the marker
+      await update(ref(db, `drivers_location/${user.uid}`), { 
+        full: fullState, 
+        last_update: serverTimestamp() 
+      });
+      
       showAlert(fullState ? 'You are now marked FULL.' : 'You are now Available.', 'success');
     } catch (e) {
       showAlert('Failed to update capacity: ' + e.message, 'danger');
@@ -432,7 +518,64 @@ btnStopTracking.addEventListener('click', async () => {
   }
 
   // Call this after user authentication
+// Call this after user authentication
   await initializeButtonStates();
+  
+// ---- AUTO-RESUME TRACKING ON PAGE LOAD (OPT-IN) ----
+  (async function autoResumeOnLoad() {
+    try {
+      // Wait for tracker and map to be fully ready
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      if (window.JeepNiTracker && window.JeepNiTracker.getTrackingState) {
+        const state = await window.JeepNiTracker.getTrackingState();
+        
+        if (state && state.active && state.role === 'driver') {
+          // Ask user if they want to resume
+          const resume = confirm(
+            'You have an active trip from your last visit.\n\n' +
+            `Route: ${state.route || 'N/A'}\n` +
+            `Trip ID: ${state.tripId || 'N/A'}\n\n` +
+            'Would you like to resume tracking?'
+          );
+          
+          if (resume) {
+            // Resume tracking
+            const resumed = await window.JeepNiTracker.autoResumeTracking();
+            if (resumed) {
+              console.log('Driver tracking auto-resumed successfully');
+              
+              // Show the stop tracking button
+              btnStopTracking.classList.remove('d-none');
+              
+              // Update capacity badge and button states
+              capBadge.className = 'badge bg-success';
+              capBadge.textContent = 'Tracking Active';
+              
+              // Update assignment display
+              await loadMyAssignment();
+              
+              showAlert('Location sharing resumed - tracking active', 'success');
+            }
+          } else {
+            // User declined - clear the tracking state
+            console.log('User declined to resume tracking');
+            localStorage.removeItem('tracking_state');
+            const u = auth.currentUser;
+            if (u) {
+              await set(ref(db, `active_tracking/${u.uid}`), null);
+              await update(ref(db, `drivers_location/${u.uid}`), {
+                online: false,
+                last_update: Date.now()
+              });
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Auto-resume check failed:', err);
+    }
+  })();
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

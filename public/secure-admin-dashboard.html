@@ -53,11 +53,10 @@
       </button>
     </li>
     <li class="nav-item" role="presentation">
-      <button class="nav-link" id="tab-data-tab" data-bs-toggle="tab" data-bs-target="#tab-data" type="button" role="tab" aria-controls="tab-data" aria-selected="false">
-        <i class="bi bi-table"></i> Data & Reports
+      <button class="nav-link" id="tab-sms-tab" data-bs-toggle="tab" data-bs-target="#tab-sms" type="button" role="tab" aria-controls="tab-sms" aria-selected="false">
+        <i class="bi bi-chat-dots"></i> SMS Notifications
       </button>
     </li>
-  </ul>
 
   <div class="tab-content">
   <!-- ===== Pane: Dashboard ===== -->
@@ -482,7 +481,179 @@
         </div>
       </div>
     </div>
-  </div><!-- /tab-data -->
+</div><!-- /tab-data -->
+
+  <!-- ===== Pane: SMS Notifications ===== -->
+  <div class="tab-pane fade" id="tab-sms" role="tabpanel" aria-labelledby="tab-sms-tab" tabindex="0">
+    <div class="row g-3 mt-1">
+      
+      <!-- SMS Balance Card -->
+      <div class="col-12">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h5 class="card-title mb-1"><i class="bi bi-wallet2 me-2"></i>SMS Balance</h5>
+                <p class="text-muted small mb-0">Semaphore API Account Status</p>
+              </div>
+              <div class="text-end">
+                <h3 class="mb-0" id="smsBalance">
+                  <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+                </h3>
+                <small class="text-muted">credits remaining</small>
+              </div>
+              <button id="btnRefreshBalance" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-arrow-clockwise"></i> Refresh
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Message Composer -->
+      <div class="col-md-5">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <h5 class="card-title d-flex align-items-center gap-2">
+              <i class="bi bi-chat-text"></i> Compose Message
+            </h5>
+            
+            <form id="formSMS">
+              <div class="mb-3">
+                <label class="form-label">Message <span class="text-danger">*</span></label>
+                <textarea 
+                  id="smsMessage" 
+                  class="form-control" 
+                  rows="5" 
+                  maxlength="160" 
+                  placeholder="Type your message here (max 160 characters)..."
+                  required
+                ></textarea>
+                <div class="d-flex justify-content-between mt-1">
+                  <small class="text-muted">
+                    <i class="bi bi-info-circle"></i> Do not start with "TEST"
+                  </small>
+                  <small id="charCount" class="text-muted">0 / 160</small>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Sender Name</label>
+                <input 
+                  id="smsSenderName" 
+                  type="text" 
+                  class="form-control" 
+                  value="SEMAPHORE" 
+                  maxlength="11"
+                  placeholder="e.g., JEEPNI"
+                >
+                <small class="text-muted">Max 11 characters (optional)</small>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Selected Recipients</label>
+                <div class="border rounded p-2" style="min-height: 60px; max-height: 120px; overflow-y: auto;">
+                  <div id="selectedRecipients" class="d-flex flex-wrap gap-1">
+                    <small class="text-muted">No recipients selected</small>
+                  </div>
+                </div>
+                <small class="text-muted">
+                  <span id="recipientCount">0</span> recipient(s) selected
+                </small>
+              </div>
+
+              <div class="alert alert-warning small" role="alert">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <strong>Note:</strong> Each SMS costs 1 credit per 160 characters.
+              </div>
+
+              <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-success" id="btnSendSMS" disabled>
+                  <i class="bi bi-send"></i> Send SMS
+                </button>
+                <button type="button" class="btn btn-outline-secondary" id="btnCopyFromPredictions">
+                  <i class="bi bi-clipboard"></i> Copy from Peak Hours
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recipients List -->
+      <div class="col-md-7">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="card-title mb-0">
+                <i class="bi bi-people"></i> Recipients
+              </h5>
+              <div class="d-flex gap-2">
+                <div class="btn-group btn-group-sm" role="group">
+                  <input type="radio" class="btn-check" name="roleFilter" id="filterAll" value="all" checked autocomplete="off">
+                  <label class="btn btn-outline-primary" for="filterAll">All</label>
+                  
+                  <input type="radio" class="btn-check" name="roleFilter" id="filterDrivers" value="driver" autocomplete="off">
+                  <label class="btn btn-outline-primary" for="filterDrivers">Drivers</label>
+                  
+                  <input type="radio" class="btn-check" name="roleFilter" id="filterPassengers" value="passenger" autocomplete="off">
+                  <label class="btn btn-outline-primary" for="filterPassengers">Passengers</label>
+                </div>
+                <button id="btnRefreshRecipients" class="btn btn-outline-secondary btn-sm">
+                  <i class="bi bi-arrow-clockwise"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <div class="input-group input-group-sm">
+                <span class="input-group-text bg-transparent">
+                  <i class="bi bi-search"></i>
+                </span>
+                <input 
+                  id="searchRecipients" 
+                  type="text" 
+                  class="form-control" 
+                  placeholder="Search by name or phone..."
+                >
+              </div>
+            </div>
+
+            <div class="d-flex gap-2 mb-2">
+              <button id="btnSelectAll" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-check-square"></i> Select All
+              </button>
+              <button id="btnDeselectAll" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-square"></i> Deselect All
+              </button>
+            </div>
+
+            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+              <table class="table table-hover table-sm align-middle">
+                <thead class="sticky-top bg-white">
+                  <tr>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                  </tr>
+                </thead>
+                <tbody id="recipientsTableBody">
+                  <tr>
+                    <td colspan="4" class="text-center text-muted py-3">
+                      <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                      Loading recipients...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /tab-sms -->
 
   </div><!-- /tab-content (feature tabs) -->
   </div>
@@ -577,7 +748,6 @@
     </div>
   </div>
 </div>
-<script type="module" src="./js/admin-dashboard.js"></script>
 <script type="module">
   import { 
     db, 
@@ -593,6 +763,15 @@
   } from "./js/authentication.js";
   import { requireAdmin, attachAdminBadge } from "./js/admin_auth.js";
   import { createDispatch, listDispatches, adminSetStatus } from "./js/scheduling.js";
+  import { 
+      getAllRecipients,
+      sendSMS,
+      getSMSBalance,
+      getSMSInfo,
+      renderRecipientsTable,
+      formatPredictionForSMS
+    } from "./js/sms-integration.js";
+
 
   const $ = (sel) => document.querySelector(sel);
   // Sanitize any mojibake or bad bytes to ASCII
@@ -1795,6 +1974,358 @@ async function getPredictions(date) {
   const _origLoadPassengersTable = loadPassengersTable;
   loadPassengersTable = async function(){ await _origLoadPassengersTable(); refreshPassengersFilter(); };
 
+  // ===== SMS PANEL =====
+  let allRecipients = [];
+  let selectedPhones = new Set();
+
+  // Load SMS balance
+  async function loadSMSBalance() {
+    const balanceEl = document.getElementById('smsBalance');
+    if (!balanceEl) return;
+    
+    balanceEl.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+    
+    try {
+      const result = await getSMSBalance();
+      balanceEl.textContent = result.balance || '0';
+    } catch (error) {
+      balanceEl.innerHTML = '<span class="text-danger">Error</span>';
+      console.error('Failed to load SMS balance:', error);
+    }
+  }
+
+  // Load recipients
+  async function loadRecipients() {
+    const tbody = document.getElementById('recipientsTableBody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-3">
+      <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+      Loading recipients...
+    </td></tr>`;
+    
+    try {
+      allRecipients = await getAllRecipients();
+      const roleFilter = document.querySelector('input[name="roleFilter"]:checked')?.value || 'all';
+      renderRecipientsTable(allRecipients, 'recipientsTableBody', roleFilter);
+      
+      // Restore selected checkboxes
+      selectedPhones.forEach(phone => {
+        const checkbox = document.querySelector(`.recipient-checkbox[value="${phone}"]`);
+        if (checkbox) checkbox.checked = true;
+      });
+      
+      updateSelectedDisplay();
+    } catch (error) {
+      tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger py-3">
+        Error: ${error.message}
+      </td></tr>`;
+    }
+  }
+
+  // Update selected recipients display
+  function updateSelectedDisplay() {
+    const container = document.getElementById('selectedRecipients');
+    const countEl = document.getElementById('recipientCount');
+    const btnSend = document.getElementById('btnSendSMS');
+    
+    if (!container || !countEl || !btnSend) return;
+    
+    countEl.textContent = selectedPhones.size;
+    
+    if (selectedPhones.size === 0) {
+      container.innerHTML = '<small class="text-muted">No recipients selected</small>';
+      btnSend.disabled = true;
+      return;
+    }
+    
+    const selectedRecipients = allRecipients.filter(r => selectedPhones.has(r.phone));
+    container.innerHTML = selectedRecipients.map(r => `
+      <span class="badge ${r.role === 'driver' ? 'bg-primary' : 'bg-info'}">
+        ${r.name}
+        <button type="button" class="btn-close btn-close-white" style="font-size: 0.6em;" 
+                onclick="this.closest('.badge').remove(); document.querySelector('.recipient-checkbox[value=\\'${r.phone}\\']').checked = false; document.querySelector('.recipient-checkbox[value=\\'${r.phone}\\']').dispatchEvent(new Event('change'));">
+        </button>
+      </span>
+    `).join('');
+    
+    const message = document.getElementById('smsMessage')?.value || '';
+    btnSend.disabled = selectedPhones.size === 0 || message.trim().length === 0;
+  }
+
+  // Handle checkbox changes
+  document.addEventListener('change', (e) => {
+    if (e.target.classList.contains('recipient-checkbox')) {
+      const phone = e.target.value;
+      if (e.target.checked) {
+        selectedPhones.add(phone);
+      } else {
+        selectedPhones.delete(phone);
+      }
+      updateSelectedDisplay();
+    }
+  });
+
+  // Character counter
+  const smsMessageEl = document.getElementById('smsMessage');
+  if (smsMessageEl) {
+    smsMessageEl.addEventListener('input', (e) => {
+      const info = getSMSInfo(e.target.value);
+      const charCountEl = document.getElementById('charCount');
+      if (charCountEl) {
+        charCountEl.textContent = `${info.characters} / ${info.maxLength}`;
+        charCountEl.className = info.remaining < 20 ? 'text-danger fw-bold' : 'text-muted';
+      }
+      
+      const btnSend = document.getElementById('btnSendSMS');
+      if (btnSend) {
+        btnSend.disabled = !info.isValid || selectedPhones.size === 0;
+      }
+    });
+  }
+
+  // Select/Deselect All
+  const btnSelectAll = document.getElementById('btnSelectAll');
+  if (btnSelectAll) {
+    btnSelectAll.addEventListener('click', () => {
+      document.querySelectorAll('.recipient-checkbox').forEach(cb => {
+        cb.checked = true;
+        selectedPhones.add(cb.value);
+      });
+      updateSelectedDisplay();
+    });
+  }
+
+  const btnDeselectAll = document.getElementById('btnDeselectAll');
+  if (btnDeselectAll) {
+    btnDeselectAll.addEventListener('click', () => {
+      document.querySelectorAll('.recipient-checkbox').forEach(cb => {
+        cb.checked = false;
+        selectedPhones.delete(cb.value);
+      });
+      updateSelectedDisplay();
+    });
+  }
+
+  // Role filter
+  document.querySelectorAll('input[name="roleFilter"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      const roleFilter = radio.value;
+      renderRecipientsTable(allRecipients, 'recipientsTableBody', roleFilter);
+      
+      // Restore selected checkboxes
+      selectedPhones.forEach(phone => {
+        const checkbox = document.querySelector(`.recipient-checkbox[value="${phone}"]`);
+        if (checkbox) checkbox.checked = true;
+      });
+    });
+  });
+
+  // Search filter
+  const searchRecipientsEl = document.getElementById('searchRecipients');
+  if (searchRecipientsEl) {
+    searchRecipientsEl.addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase();
+      const rows = document.querySelectorAll('#recipientsTableBody tr');
+      
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(query) ? '' : 'none';
+      });
+    });
+  }
+
+  // Refresh buttons
+  const btnRefreshBalance = document.getElementById('btnRefreshBalance');
+  if (btnRefreshBalance) {
+    btnRefreshBalance.addEventListener('click', loadSMSBalance);
+  }
+
+  const btnRefreshRecipients = document.getElementById('btnRefreshRecipients');
+  if (btnRefreshRecipients) {
+    btnRefreshRecipients.addEventListener('click', loadRecipients);
+  }
+
+  // Copy from predictions
+  const btnCopyFromPredictions = document.getElementById('btnCopyFromPredictions');
+if (btnCopyFromPredictions) {
+  btnCopyFromPredictions.addEventListener('click', async () => {
+    try {
+      const date = document.getElementById('predictionDate')?.value || new Date().toISOString().split('T')[0];
+      
+      // Fetch predictions
+      const predictions = await getPredictions(date);
+      
+      if (!predictions || predictions.length === 0) {
+        showAlert('No predictions found. Please generate predictions first in the Peak Hours tab.', 'warning');
+        // Switch to predictions tab
+        const predictionsTab = document.getElementById('predictions-tab');
+        if (predictionsTab) predictionsTab.click();
+        return;
+      }
+      
+      // Format all predictions into SMS-friendly messages
+      const messages = predictions.map((p, index) => {
+        const stopName = p.stop_name || p.stop?.name || 'Unknown';
+        const peakHour = p.peak_hour || p.peak || 0;
+        const passengers = p.predicted_passengers || 0;
+        
+        // Format hour (12-hour format)
+        const hour12 = peakHour === 0 ? 12 : (peakHour > 12 ? peakHour - 12 : peakHour);
+        const ampm = peakHour < 12 ? 'AM' : 'PM';
+        
+        return `${stopName}: ${hour12}:00 ${ampm}, ${passengers} pax expected`;
+      });
+      
+      // Take first 3-4 predictions to stay under 160 chars
+      let compiledMessage = '';
+      let count = 0;
+      
+      for (const msg of messages) {
+        const testMessage = compiledMessage ? `${compiledMessage}. ${msg}` : msg;
+        if (testMessage.length <= 160) {
+          compiledMessage = testMessage;
+          count++;
+        } else {
+          break;
+        }
+      }
+      
+      if (compiledMessage) {
+        // Paste into SMS message field
+        const smsMessageEl = document.getElementById('smsMessage');
+        if (smsMessageEl) {
+          smsMessageEl.value = compiledMessage;
+          smsMessageEl.dispatchEvent(new Event('input')); // Trigger character counter
+          
+          showAlert(`Copied ${count} prediction(s) to message field (${compiledMessage.length}/160 chars)`, 'success');
+          
+          // Scroll to message field
+          smsMessageEl.focus();
+          smsMessageEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      } else {
+        showAlert('Could not format predictions within 160 character limit.', 'warning');
+      }
+      
+    } catch (error) {
+      console.error('Error copying predictions:', error);
+      showAlert('Failed to copy predictions: ' + error.message, 'danger');
+    }
+  });
+}
+
+  // Send SMS form
+  const formSMS = document.getElementById('formSMS');
+  if (formSMS) {
+    formSMS.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const message = document.getElementById('smsMessage').value.trim();
+      const senderName = document.getElementById('smsSenderName').value.trim() || 'JEEPNI';
+      const btnSend = document.getElementById('btnSendSMS');
+      
+      // Validation checks
+      if (selectedPhones.size === 0) {
+        showAlert('Please select at least one recipient.', 'warning');
+        return;
+      }
+      
+      if (message.length === 0) {
+        showAlert('Please enter a message.', 'warning');
+        return;
+      }
+      
+      if (message.length > 160) {
+        showAlert(`Message exceeds 160 characters (${message.length}/160). Please shorten your message.`, 'danger');
+        return;
+      }
+
+      // Check if message starts with TEST (Semaphore silently ignores these)
+      if (message.toUpperCase().startsWith('TEST')) {
+        showAlert('Messages cannot start with "TEST" - Semaphore will ignore them. Please modify your message.', 'warning');
+        return;
+      }
+      
+      // Rate limiting check
+      if (!smsRateLimiter.canMakeRequest()) {
+        const remaining = Math.ceil(smsRateLimiter.getTimeUntilReset() / 1000);
+        showAlert(`Rate limit exceeded. Please wait ${remaining} seconds before sending again.`, 'warning');
+        return;
+      }
+      
+      // Confirm before sending
+      const phoneArray = Array.from(selectedPhones);
+      const costEstimate = phoneArray.length;
+      const confirmMsg = `Send SMS to ${phoneArray.length} recipient(s)?\n\nEstimated cost: ${costEstimate} credit(s)\nMessage: "${message.substring(0, 50)}${message.length > 50 ? '...' : ''}"`;
+      
+      if (!confirm(confirmMsg)) return;
+      
+      // Disable button and show loading
+      btnSend.disabled = true;
+      btnSend.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Sending...';
+      
+      try {
+        // Record this request for rate limiting
+        smsRateLimiter.recordRequest();
+        
+        const result = await sendSMS(phoneArray, message, senderName);
+        
+        if (result.success) {
+          const successMsg = `SMS sent successfully!\n• Sent: ${result.successful || phoneArray.length}\n• Failed: ${result.failed || 0}\n• Total cost: ~${result.successful || phoneArray.length} credits`;
+          showAlert(successMsg.replace(/\n/g, '<br>'), 'success');
+          
+          // Clear form
+          document.getElementById('smsMessage').value = '';
+          document.getElementById('charCount').textContent = '0 / 160';
+          selectedPhones.clear();
+          document.querySelectorAll('.recipient-checkbox').forEach(cb => cb.checked = false);
+          updateSelectedDisplay();
+          
+          // Refresh balance
+          await loadSMSBalance();
+        } else {
+          throw new Error(result.error || 'Failed to send SMS');
+        }
+        
+      } catch (error) {
+        console.error('SMS send error:', error);
+        let errorMsg = 'Failed to send SMS: ' + error.message;
+        
+        // Provide helpful error messages
+        if (error.message.includes('TEST')) {
+          errorMsg = 'Message rejected: Cannot start with "TEST". Please modify your message.';
+        } else if (error.message.includes('160')) {
+          errorMsg = 'Message too long. Please limit to 160 characters.';
+        } else if (error.message.includes('Invalid phone')) {
+          errorMsg = 'Invalid phone number format detected. Please check recipients.';
+        } else if (error.message.includes('API key')) {
+          errorMsg = 'SMS service not configured. Please contact administrator.';
+        }
+        
+        showAlert(errorMsg, 'danger');
+        
+      } finally {
+        btnSend.disabled = false;
+        btnSend.innerHTML = '<i class="bi bi-send"></i> Send SMS';
+        
+        // Show rate limit status
+        const remaining = smsRateLimiter.getRemainingRequests();
+        if (remaining < 5) {
+          showAlert(`Rate limit: ${remaining} requests remaining in this minute`, 'info');
+        }
+      }
+    });
+  }
+
+  // Auto-load when SMS tab is shown
+  const smsTabBtn = document.querySelector('#tab-sms-tab');
+  if (smsTabBtn) {
+    smsTabBtn.addEventListener('shown.bs.tab', () => {
+      loadSMSBalance();
+      loadRecipients();
+    });
+  }
   // Quick range buttons for History
   document.querySelectorAll('[data-range]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1824,7 +2355,8 @@ async function getPredictions(date) {
 <script type="module">
   // ADD THESE IMPORTS AT THE TOP
   import { db, ref, get, onValue } from "./js/authentication.js";
-  
+  import { smsRateLimiter } from './js/rate-limiter.js';
+
   document.title = 'JeepNi - Admin Dashboard';
 
   let mapLoaded = false;

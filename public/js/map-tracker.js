@@ -36,7 +36,8 @@ let _lastAccuracy = null; // Add this line
 
 let _manualMode = false;
 let _manualClickHandler = null;
-
+let routing = null; // for routing shekret
+let routingTarget = null;
 
 // Smooth animation helpers
 const _lastPos = new WeakMap();
@@ -308,7 +309,6 @@ function stopWatch() {
   }
 }
 
-// -------- DB writes (privacy for passengers) --------
 async function updateLocation(lat, lng, route) {
   const u = auth.currentUser;
   if (!u) return;
@@ -335,6 +335,12 @@ async function updateLocation(lat, lng, route) {
         accuracy: _lastAccuracy || null,
         bearing: getLastBearing()
       });
+      
+      // Update tracking state with latest location
+      await saveTrackingState('passenger', { 
+        companions: companionCount,
+        location: { lat, lng }
+      });
     }
   }
 
@@ -345,9 +351,19 @@ async function updateLocation(lat, lng, route) {
       route: normRouteName(route || "Gueset"),
       bearing: getLastBearing(),
       status: myFullBadge ? "full" : "available",
+      full: myFullBadge,
       online: true,
       last_update: timestamp
     });
+    
+    // Update tracking state with latest location
+    if (_activeTripId) {
+      await saveTrackingState('driver', { 
+        tripId: _activeTripId, 
+        route: route ? normRouteName(route) : null,
+        location: { lat, lng }
+      });
+    }
   }
 }
 
@@ -499,8 +515,10 @@ async function onGeoPoint(lat, lng) {
       smoothMove(meMarker, lat, lng, 500);
     }
 
-    meMarker.bindPopup(`<strong>Passenger</strong><br>Total: ${companionCount + 1} (You + ${companionCount} companions)`);
-
+    const popupText = companionCount === 0 
+      ? `<strong>Passenger</strong><br>Just you (no companions)`
+      : `<strong>Passenger</strong><br>Total: ${companionCount + 1} (You + ${companionCount} companion${companionCount > 1 ? 's' : ''})`;
+    meMarker.bindPopup(popupText);
     if (map) {
       map.panTo([lat, lng]); // Always center on current position
     }
@@ -573,18 +591,25 @@ async function onGeoPoint(lat, lng) {
       }
 
       await updateLocation(lat, lng, route);
-      checkNearbyPassengers(lat, lng);
+            checkNearbyPassengers(lat, lng);
 
-    } catch (e) {
-      console.warn("Driver tracking update failed:", e);
-    }
-  }
-}
+            // Update routing if target is set
+            if (routingTarget) {
+              ensureRouting({ lat, lng }, routingTarget);
+            }
+
+          } catch (e) {
+            console.warn("Driver tracking update failed:", e);
+          }
+        }
+      }
+
 
 // -------- Create passenger icon with proper badge --------
 function createPassengerIcon() {
   // Show badge only if there are companions (companionCount > 0)
   const showBadge = companionCount > 0;
+  const totalCount = companionCount; // passenger + companions
   
   return L.divIcon({
     html: `
@@ -608,7 +633,7 @@ function createPassengerIcon() {
             border: 2px solid white;
             box-shadow: 0 2px 8px rgba(0,0,0,0.25);
             padding: 0 4px;
-          ">${companionCount + 1}</div>
+          ">+${totalCount}</div>
         ` : ''}
       </div>
     `,
@@ -703,10 +728,10 @@ async function upsertOtherDriver(uid, rec) {
     m.setZIndexOffset(700);
   }
 
-  if (rec.status === "full") {
+  if (rec.status === "full" || rec.full === true) {
     m.bindTooltip("FULL", { permanent: true, direction: "top", className: "full-badge" });
   } else {
-    meMarker.unbindTooltip();
+    m.unbindTooltip();
   }
 
   m.bindPopup(`
@@ -786,16 +811,53 @@ async function upsertPassenger(uid, rec) {
         }
     } catch {}
 
+    const comps = Number(rec.companions || 0);
+    const totalCount = comps + 1; // passenger + companions
+    const showBadge = comps > 0;
+    
+    // Create custom icon with badge for other passengers
+    const otherPassengerIcon = L.divIcon({
+      html: `
+        <div style="position: relative; width: 40px; height: 40px;">
+          <img src="/icons/passenger.png" style="width: 100%; height: 100%; object-fit: contain;">
+          ${showBadge ? `
+            <div style="
+              position: absolute;
+              top: -8px;
+              right: -8px;
+              background: linear-gradient(135deg, #ff4f81, #ff6b6b);
+              color: white;
+              border-radius: 50%;
+              min-width: 22px;
+              height: 22px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 12px;
+              font-weight: 700;
+              border: 2px solid white;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+              padding: 0 4px;
+            ">+${totalCount}</div>
+          ` : ''}
+        </div>
+      `,
+      className: 'passenger-marker-with-badge',
+      iconSize: [40, 40],
+      iconAnchor: [20, 40],
+      popupAnchor: [0, -40]
+    });
+
     let m = passengerMarkers.get(uid);
     if (!m) {
-      m = L.marker([rec.lat, rec.lng], { icon: PASSENGER_ICON, zIndexOffset: 300 }).addTo(map);
+      m = L.marker([rec.lat, rec.lng], { icon: otherPassengerIcon, zIndexOffset: 300 }).addTo(map);
       passengerMarkers.set(uid, m);
       _lastPos.set(m, { lat: rec.lat, lng: rec.lng });
     } else {
       smoothMove(m, rec.lat, rec.lng, 500);
+      m.setIcon(otherPassengerIcon); // Update icon when companion count changes
     }
 
-    const comps = Number(rec.companions || 0);
     m.bindPopup(`<strong>Passenger</strong><br>Companions: ${comps}`);
 }
 
@@ -829,8 +891,7 @@ onValue(ref(db, "passenger_driver_links"), async (snap) => {
     }
   }
 });
-
-// -------- Passenger tracking controls --------
+//passenger tracking controls
 export async function startPassengerTracking(companions = 0) {
   if (myRole !== 'passenger') {
     try {
@@ -849,7 +910,10 @@ export async function startPassengerTracking(companions = 0) {
   companionCount = Math.max(0, Number(companions) || 0);
 
   console.log(`Starting passenger tracking with ${companionCount} companions`);
-
+  
+  // Save tracking state for persistence
+  await saveTrackingState('passenger', { companions: companionCount });
+  
   // Try to get immediate location, but don't wait too long
   let immediateLocation = null;
   try {
@@ -897,10 +961,16 @@ export async function startPassengerTracking(companions = 0) {
     console.log("Using default position, waiting for continuous tracking...");
   }
 
-  meMarker.bindPopup(`<strong>Passenger</strong><br>Total: ${companionCount + 1} (You + ${companionCount} companions)`);
-
-  // Start continuous tracking
+// Start continuous GPS tracking
   startWatch(onGeoPoint);
+
+  // If destination was set before tracking started, trigger routing now
+  if (myDestinationMarker) {
+    const destPos = myDestinationMarker.getLatLng();
+    const myPos = meMarker.getLatLng();
+    console.log('Triggering routing from startPassengerTracking');
+    ensureRouting({ lat: myPos.lat, lng: myPos.lng }, { lat: destPos.lat, lng: destPos.lng });
+  }
 }
 
 // NEW: Function to get precise location with better accuracy
@@ -938,6 +1008,9 @@ export async function stopPassengerTracking(options = {}) {
     if (myRole !== "passenger") return;
     passengerTrackingActive = false;
     companionCount = 0; // Reset companion count when stopping
+    
+    // Clear tracking state
+    await clearTrackingState();
 
     // Only remove visual elements from the map
     if (meMarker) { 
@@ -951,6 +1024,24 @@ export async function stopPassengerTracking(options = {}) {
     if (myDestinationMarker) { 
         map.removeLayer(myDestinationMarker); 
         myDestinationMarker = null; 
+    }
+    
+    // CRITICAL: Remove routing control
+    if (routing) {
+        try {
+            map.removeControl(routing);
+        } catch (e) {
+            console.warn('Failed to remove routing control:', e);
+        }
+        routing = null;
+    }
+    
+    // Clear routing target
+    routingTarget = null;
+    
+    // Clear pending destination
+    if (typeof window !== 'undefined') {
+        window._pendingDestination = null;
     }
 
     // Stop geolocation watching
@@ -969,7 +1060,7 @@ export async function stopPassengerTracking(options = {}) {
         detail: { reason: options.reason || 'manual' } 
     }));
 
-    console.log("Passenger tracking stopped - marker removed");
+    console.log("Passenger tracking stopped - marker and routing removed");
 }
 
 export function isPassengerTracking() {
@@ -977,13 +1068,20 @@ export function isPassengerTracking() {
 }
 
 export function setPassengerWaitingCount(count = 0) {
-  companionCount = Math.max(0, Number(count) || 0);
+  const newCount = Math.max(0, Number(count) || 0);
+  
+  // Update companionCount FIRST before any icon creation
+  companionCount = newCount;
   console.log(`Companion count updated to: ${companionCount}`);
   
-  if (meMarker && map) {
+  if (meMarker && map && passengerTrackingActive) {
+    // Now create icon with the updated companionCount
     const iconWithBadge = createPassengerIcon();
     meMarker.setIcon(iconWithBadge);
-    meMarker.bindPopup(`<strong>Passenger</strong><br>Total: ${companionCount + 1} (You + ${companionCount} companions)`);
+    const popupText = companionCount === 0 
+      ? `<strong>Passenger</strong><br>Just you (no companions)`
+      : `<strong>Passenger</strong><br>Companions: ${companionCount}`;
+    meMarker.bindPopup(popupText);
   }
   
   const u = auth.currentUser;
@@ -1010,6 +1108,70 @@ let _activeTripId = null;
 export function getActiveTripId() { return _activeTripId; }
 export function setActiveTripId(v) { _activeTripId = v; }
 
+// Persistence tracking state
+const TRACKING_STATE_KEY = 'tracking_state';
+
+async function saveTrackingState(role, data) {
+  const u = auth.currentUser;
+  if (!u) return;
+  
+  // Include current location if available
+  let currentLocation = null;
+  if (meMarker) {
+    const pos = meMarker.getLatLng();
+    currentLocation = { lat: pos.lat, lng: pos.lng };
+  }
+  
+  const state = {
+    role,
+    active: true,
+    timestamp: Date.now(),
+    location: currentLocation,
+    ...data
+  };
+  
+  try {
+    await set(ref(db, `active_tracking/${u.uid}`), state);
+    localStorage.setItem(TRACKING_STATE_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.warn('Failed to save tracking state:', e);
+  }
+}
+
+async function clearTrackingState() {
+  const u = auth.currentUser;
+  if (!u) return;
+  
+  try {
+    await set(ref(db, `active_tracking/${u.uid}`), null);
+    localStorage.removeItem(TRACKING_STATE_KEY);
+  } catch (e) {
+    console.warn('Failed to clear tracking state:', e);
+  }
+}
+
+export async function getTrackingState() {
+  const u = auth.currentUser;
+  if (!u) return null;
+  
+  try {
+    const snap = await get(ref(db, `active_tracking/${u.uid}`));
+    if (snap.exists()) {
+      return snap.val();
+    }
+    
+    // Fallback to localStorage
+    const stored = localStorage.getItem(TRACKING_STATE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (e) {
+    console.warn('Failed to get tracking state:', e);
+  }
+  
+  return null;
+}
+
 export async function beginSharing(tripId, assignedRoute = null) {
   if (myRole !== "driver") {
     try {
@@ -1025,6 +1187,12 @@ export async function beginSharing(tripId, assignedRoute = null) {
   }
   
   _activeTripId = String(tripId || "");
+  
+  // Save tracking state for persistence
+  await saveTrackingState('driver', { 
+    tripId: _activeTripId, 
+    route: assignedRoute ? normRouteName(assignedRoute) : null 
+  });
   
   // If route is provided, update it immediately in drivers_location
   if (assignedRoute && auth.currentUser) {
@@ -1048,30 +1216,73 @@ export async function beginSharing(tripId, assignedRoute = null) {
 export async function stopSharing() {
   if (myRole !== "driver") return;
   
+  console.log('stopSharing called - removing driver marker');
+  
   // CRITICAL: Stop geolocation FIRST before any cleanup
   stopWatch();
   
   // Clear trip state immediately to prevent onGeoPoint from recreating marker
   _activeTripId = null;
   
+  // Clear tracking state
+  await clearTrackingState();
+  
   // Remove ALL driver visual elements from map
   if (meMarker) { 
-    try { map.removeLayer(meMarker); } catch(e) { console.warn('meMarker removal:', e); }
+    try { 
+      console.log('Removing driver marker (meMarker)');
+      map.removeLayer(meMarker); 
+    } catch(e) { 
+      console.warn('meMarker removal failed:', e); 
+    }
     meMarker = null; 
   }
   if (myDirectionArrow) { 
-    try { map.removeLayer(myDirectionArrow); } catch(e) { console.warn('arrow removal:', e); }
+    try { 
+      console.log('Removing direction arrow');
+      map.removeLayer(myDirectionArrow); 
+    } catch(e) { 
+      console.warn('arrow removal failed:', e); 
+    }
     myDirectionArrow = null; 
   }
   if (myCapacityBubble) { 
-    try { map.removeLayer(myCapacityBubble); } catch(e) { console.warn('bubble removal:', e); }
+    try { 
+      console.log('Removing capacity bubble');
+      map.removeLayer(myCapacityBubble); 
+    } catch(e) { 
+      console.warn('bubble removal failed:', e); 
+    }
     myCapacityBubble = null; 
   }
+  if (myDestinationMarker) {
+    try { 
+      console.log('Removing destination marker');
+      map.removeLayer(myDestinationMarker); 
+    } catch(e) { 
+      console.warn('destination removal failed:', e); 
+    }
+    myDestinationMarker = null;
+  }
+  
+  // CRITICAL: Remove routing control
+  if (routing) {
+    try {
+      console.log('Removing routing control');
+      map.removeControl(routing);
+    } catch (e) {
+      console.warn('Failed to remove routing control:', e);
+    }
+    routing = null;
+  }
+  
+  // Clear routing target
+  routingTarget = null;
   
   // Clear database presence completely
   await clearDriverPresence();
   
-  console.log('Driver sharing stopped - marker removed from map');
+  console.log('Driver sharing stopped - all markers removed from map');
 }
 
 export function isSharing() {
@@ -1083,6 +1294,7 @@ export async function setMyFull(isFull) {
 
   myFullBadge = !!isFull;
 
+  // Update marker tooltip immediately if marker exists
   if (meMarker) {
     if (myFullBadge) {
       meMarker.bindTooltip("FULL", { permanent: true, direction: "top", className: "full-badge" });
@@ -1091,14 +1303,28 @@ export async function setMyFull(isFull) {
     }
   }
 
+  // ALWAYS update database so the status persists
   try {
     const u = auth.currentUser;
-    if (u && getActiveTripId()) {
-      await update(ref(db, `drivers_location/${u.uid}`), {
-        full: myFullBadge,
-        status: myFullBadge ? "full" : "available",
-        last_update: Date.now()
-      });
+    if (u) {
+      const locSnap = await get(ref(db, `drivers_location/${u.uid}`));
+      
+      if (locSnap.exists()) {
+        // Update existing location record
+        await update(ref(db, `drivers_location/${u.uid}`), {
+          full: myFullBadge,
+          status: myFullBadge ? "full" : "available",
+          last_update: Date.now()
+        });
+      } else {
+        // Create initial record with full status (no location yet)
+        await set(ref(db, `drivers_location/${u.uid}`), {
+          full: myFullBadge,
+          status: myFullBadge ? "full" : "available",
+          online: false,
+          last_update: Date.now()
+        });
+      }
     }
   } catch (e) {
     console.warn("Failed to update driver status:", e);
@@ -1186,6 +1412,145 @@ export function getCurrentLocation() {
   });
 }
 
+// -------- Routing functionality --------
+function ensureRouting(meLatLng, targetLatLng) {
+  if (!map || !targetLatLng) return;
+
+  const waypoints = [
+    L.latLng(meLatLng.lat, meLatLng.lng),
+    L.latLng(targetLatLng.lat, targetLatLng.lng)
+  ];
+
+  if (!routing) {
+    routing = L.Routing.control({
+      waypoints,
+      addWaypoints: false,
+      draggableWaypoints: false,
+      routeWhileDragging: false,
+      showAlternatives: false,
+      show: false,
+      collapsible: true,
+      fitSelectedRoutes: true,
+      router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/route/v1' })
+    })
+    .on('routesfound', (e) => {
+      try {
+        const route = e.routes[0];
+        const coords = route.coordinates.map(p => [p.lat, p.lng]);
+
+        // Build corridor and filter passengers
+        const line = turf.lineString(coords.map(([lat, lng]) => [lng, lat]));
+        const corridor = turf.buffer(line, 0.08, { units: 'kilometers' });
+        refreshPassengersAlongRoute(corridor);
+
+        // Dispatch ETA event
+        const { totalDistance, totalTime } = route.summary;
+        window.dispatchEvent(new CustomEvent('jeepni:eta', { detail: {
+          meters: Math.round(totalDistance), 
+          seconds: Math.round(totalTime)
+        }}));
+      } catch (err) { 
+        console.warn('routesfound handler error:', err); 
+      }
+    })
+    .addTo(map);
+  } else {
+    routing.setWaypoints(waypoints);
+  }
+}
+
+export function routeTo(targetLat, targetLng) {
+  routingTarget = { lat: Number(targetLat), lng: Number(targetLng) };
+  if (meMarker) {
+    const me = meMarker.getLatLng();
+    ensureRouting({ lat: me.lat, lng: me.lng }, routingTarget);
+  }
+}
+
+function refreshPassengersAlongRoute(geojsonPolygon) {
+  passengerMarkers.forEach((marker, uid) => {
+    const latlng = marker.getLatLng();
+    const pt = turf.point([latlng.lng, latlng.lat]);
+    const inside = turf.booleanPointInPolygon(pt, geojsonPolygon);
+    if (!inside) {
+      try { map.removeLayer(marker); } catch {}
+      passengerMarkers.delete(uid);
+    }
+  });
+}
+
+// -------- Global API --------
+// -------- Auto-resume tracking --------
+export async function autoResumeTracking() {
+  const state = await getTrackingState();
+  if (!state || !state.active) return false;
+  
+  const u = auth.currentUser;
+  if (!u) return false;
+  
+  // Set myRole from saved state to prevent race conditions
+  myRole = state.role || 'norole';
+  
+  console.log('Auto-resuming tracking from saved state:', state);
+  
+  if (state.role === 'passenger') {
+    // Restore passenger tracking
+    passengerTrackingActive = true;
+    companionCount = state.companions || 0;
+    
+    // Restore marker at last known location if available
+    if (state.location) {
+      const iconWithBadge = createPassengerIcon();
+      if (meMarker) map.removeLayer(meMarker);
+      
+      meMarker = L.marker([state.location.lat, state.location.lng], {
+        icon: iconWithBadge,
+        zIndexOffset: 1000
+      }).addTo(map);
+      
+      const popupText = companionCount === 0 
+        ? `<strong>Passenger</strong><br>Just you (no companions)`
+        : `<strong>Passenger</strong><br>Total: ${companionCount + 1} (You + ${companionCount} companion${companionCount > 1 ? 's' : ''})`;
+      meMarker.bindPopup(popupText);
+      
+      map.setView([state.location.lat, state.location.lng], 16);
+      updateGeofenceCircle(state.location.lat, state.location.lng);
+    }
+    
+    // Start GPS tracking
+    startWatch(onGeoPoint);
+    return true;
+    
+  } else if (state.role === 'driver') {
+    if (state.tripId) {
+      _activeTripId = state.tripId;
+      
+      // Restore marker at last known location if available
+      if (state.location && state.route) {
+        const icon = await getJeepIcon(state.route);
+        if (meMarker) map.removeLayer(meMarker);
+        
+        meMarker = L.marker([state.location.lat, state.location.lng], {
+          icon,
+          zIndexOffset: 1200
+        }).addTo(map);
+        
+        _lastPos.set(meMarker, { lat: state.location.lat, lng: state.location.lng });
+        map.setView([state.location.lat, state.location.lng], 16);
+        
+        updateDirectionArrow(state.location.lat, state.location.lng, getLastBearing());
+        updateCapacityBubble(state.location.lat, state.location.lng);
+      }
+      
+      // Start GPS tracking
+      startWatch(onGeoPoint);
+      return true;
+    }
+  }
+  
+  return false;
+}
+
 // -------- Global API --------
 if (typeof window !== "undefined") {
   window.JeepNiTracker = {
@@ -1220,6 +1585,13 @@ if (typeof window !== "undefined") {
     isGeolocationBlocked,
 
     // Route legend
-    ROUTE_LEGEND
+    ROUTE_LEGEND,
+
+    // Routing
+    routeTo,
+    
+    // Auto-resume
+    autoResumeTracking,
+    getTrackingState
   };
 }

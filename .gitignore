@@ -27,3 +27,38 @@ yarn-error.log*
 
 # dataconnect
 .dataconnect
+js/firebaseConfig.js
+
+# Environment variables
+.env
+*.env
+
+# API Keys (never commit!)
+firebase_credentials.json
+semaphore_api_key.txt
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+data/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+.env
+*.env
+.env.local
