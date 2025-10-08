@@ -12,65 +12,88 @@
 
   <style>
     :root{
-      --bg: linear-gradient(135deg, #c2f3ff 0%, #f6f7fb 60%);
-      --card-bg: rgba(255,255,255,0.9);
-      --text:#1f2937; --muted:#6b7280; --brand:#4ED7F1; --accent:#FFD63A; --radius:18px; --shadow:0 16px 40px rgba(0,0,0,.12);
-    }
-    .theme-dark{
-      --bg: radial-gradient(1200px 600px at 10% 10%, #0ea5b2 0%, #0f172a 40%, #050816 100%);
-      --card-bg: rgba(17,24,39,0.9); --text:#e5e7eb; --muted:#94a3b8; --brand:#22d3ee; --accent:#fbbf24; --shadow:0 28px 60px rgba(0,0,0,.5);
-    }
-    html,body{height:100%}
-    body{background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;}
+        --bg: linear-gradient(135deg, #c2f3ff 0%, #f6f7fb 60%);
+        --card-bg: rgba(255,255,255,0.9);
+        --text:#1f2937; --muted:#6b7280; --brand:#4ED7F1; --accent:#FFD63A; --radius:18px; --shadow:0 16px 40px rgba(0,0,0,.12);
+     }
+     .theme-dark{
+        --bg: radial-gradient(1200px 600px at 10% 10%, #0ea5b2 0%, #0f172a 40%, #050816 100%);
+        --card-bg: rgba(17,24,39,0.9); --text:#e5e7eb; --muted:#94a3b8; --brand:#22d3ee; --accent:#fbbf24; --shadow:0 28px 60px rgba(0,0,0,.5);
+     }
+     html,body{height:100%}
+     body{background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;}
 
-    /* HERO with merged jeep and humans */
-    .login-wrap{min-height:100%; display:grid; place-items:center; padding:6vh 16px}
-    .jeep-hero{max-width:520px; width:100%; margin:2vh auto 0; position:relative}
-    .jeep-hero img{user-select:none; -webkit-user-drag:none}
-    .jeep-hero .bg-blur{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:blur(6px); opacity:.25; border-radius:18px}
-    .jeep-hero .jeep{position:relative; width:100%; height:auto; display:block; filter:drop-shadow(0 10px 22px rgba(0,0,0,.25)); margin-inline:auto}
-    
-    /* Banner positioning */
-    .banner{position:absolute; display:block; filter: drop-shadow(0 8px 14px rgba(0,0,0,.18)); z-index: 2;}
-    .banner img{width:100%; height:auto; display:block; transition: transform .25s ease, box-shadow .25s ease;}
-    .banner.active img{ transform: scale(1.12); box-shadow:0 6px 16px rgba(0,0,0,.28); z-index:2; }
-    .banner.passenger{left:30%; top:20%; width:36%; transform:rotate(-5deg)}
-    .banner.driver{left:42%; top:20%; width:36%; transform:rotate(5deg)}      
-    
-    @media (max-width:380px){
-      .banner.passenger{left:28%; top:22%; width:40%; transform:rotate(-5deg)}
-      .banner.driver{left:38%; top:22%; width:40%; transform:rotate(5deg)}
-    }
-    
-    @media (min-width:520px){
-      /* Larger screens - fine-tune positioning */
-      .banner.passenger{left:32%; top:18%; width:32%; transform:rotate(-5deg)}
-      .banner.driver{left:44%; top:18%; width:32%; transform:rotate(5deg)}
-    } 
-    
-    /* Soft background overlay */
-    body{ position: relative; }
-    body::before{
-      content:""; position: fixed; inset:0;
-      background: url('icons/Background2.png') center bottom / cover no-repeat;
-      opacity:.12; pointer-events:none; z-index:-1;
+     /* HERO with merged jeep and humans */
+     .login-wrap{min-height:100%; display:grid; place-items:center; padding:6vh 16px}
+     .jeep-hero{max-width:520px; width:100%; margin:2vh auto 0; position:relative}
+     .jeep-hero img{user-select:none; -webkit-user-drag:none}
+     .jeep-hero .bg-blur{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:blur(6px); opacity:.25; border-radius:18px}
+     .jeep-hero .jeep{position:relative; width:100%; height:auto; display:block; filter:drop-shadow(0 10px 22px rgba(0,0,0,.25)); margin-inline:auto}
+
+    .banner-container {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%); 
+        
+        top: 10%;
+        width: 30%;
+      
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        
+        gap: 2px;
+        z-index: 2;
     }
 
-    /* CARD */
-    .card-login{max-width:460px; width:100%; background:var(--card-bg); backdrop-filter: blur(10px); border:1px solid rgba(0,0,0,.06); border-radius:var(--radius); box-shadow:var(--shadow)}
-    .card-login .header{display:flex; align-items:center; justify-content:space-between}
-    .title{font-weight:800; color:var(--brand)}
-    .btn-brand{background:var(--accent); border-color:var(--accent); color:#111; font-weight:700}
-    .btn-brand:hover{background:#ffc107; border-color:#ffc107; color:#111}
-    .form-control:focus{border-color:var(--brand); box-shadow:0 0 0 .20rem rgba(78,215,241,.25)}
-    .input-icon{position:relative}
-    .input-icon .bi{position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--muted)}
-    .input-icon input{padding-left:2rem}
-    .muted{color:var(--muted)}
-    .link{color:var(--brand); text-decoration:none}
-    .link:hover{text-decoration:underline}
-    .toggle-theme{border-color:var(--brand); color:var(--brand)}
-  </style>
+    .banner {
+        display: block; 
+        position: relative;
+        width: 100%;
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,.2)); 
+        transform: none; 
+        transition: transform .2s ease;
+    }
+
+    .banner img {
+        width: 100%; 
+        height: auto; 
+        display: block; 
+        transition: transform .25s ease, filter .25s ease; 
+    }
+
+    .banner:hover {
+        transform: translateY(-2px);
+    }
+
+    .banner.active img { 
+        transform: scale(1.06); 
+        filter: drop-shadow(0 6px 12px rgba(0,0,0,.35));
+        z-index: 2; 
+    }
+
+     body{ position: relative; }
+     body::before{
+        content:""; position: fixed; inset:0;
+        background: url('icons/Background2.png') center bottom / cover no-repeat;
+        opacity:.12; pointer-events:none; z-index:-1;
+     }
+
+     /* CARD */
+     .card-login{max-width:460px; width:100%; background:var(--card-bg); backdrop-filter: blur(10px); border:1px solid rgba(0,0,0,.06); border-radius:var(--radius); box-shadow:var(--shadow)}
+     .card-login .header{display:flex; align-items:center; justify-content:space-between}
+     .title{font-weight:800; color:var(--brand)}
+     .btn-brand{background:var(--accent); border-color:var(--accent); color:#111; font-weight:700}
+     .btn-brand:hover{background:#ffc107; border-color:#ffc107; color:#111}
+     .form-control:focus{border-color:var(--brand); box-shadow:0 0 0 .20rem rgba(78,215,241,.25)}
+     .input-icon{position:relative}
+     .input-icon .bi{position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--muted)}
+     .input-icon input{padding-left:2rem}
+     .muted{color:var(--muted)}
+     .link{color:var(--brand); text-decoration:none}
+     .link:hover{text-decoration:underline}
+     .toggle-theme{border-color:var(--brand); color:var(--brand)}
+   </style>
   <link rel="icon" href="/icons/JEEPNi.png" type="image/png">
 </head>
 <body>
@@ -80,15 +103,15 @@
       <img class="bg-blur" src="icons/Background1.png" alt="">
       <!-- Combined jeep and humans image -->
       <img class="jeep" src="icons/JeepNiWithTao.png" alt="Jeepney with driver and passenger">
-
-      <!-- Clickable banners -->
-      <a id="banPassenger" class="banner passenger" href="#" role="button" tabindex="0" aria-pressed="false" aria-label="Pasahero Para Po!">
-        <img src="icons/17 Passenger Button.png" alt="Pasahero Para Po!">
-      </a>
-      <a id="banDriver" class="banner driver" href="#" role="button" tabindex="0" aria-pressed="false" aria-label="Manong Driver">
-        <img src="icons/18 Driver Button.png" alt="Manong Driver">
-      </a>
-    </div>
+   
+      <div class="banner-container"> 
+        <a id="banPassenger" class="banner passenger" href="#" role="button" tabindex="0" aria-pressed="false" aria-label="Pasahero Para Po!">
+         <img src="icons/17 Passenger Button.png" alt="Pasahero Para Po!">
+        </a>
+        <a id="banDriver" class="banner driver" href="#" role="button" tabindex="0" aria-pressed="false" aria-label="Manong Driver">
+          <img src="icons/18 Driver Button.png" alt="Manong Driver">
+        </a>
+      </div>
 
     <!-- Small Admin link under hero -->
     <div class="text-center mt-1">

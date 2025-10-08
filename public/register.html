@@ -2,337 +2,432 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>JeepNi — Register</title>
+  <title>JeepNi - Register</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#4ED7F1" />
+  <!-- Fonts / Icons / Bootstrap -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" integrity="sha512-dPXYcDub/aeb08c63jRq/k6GaKccl256JQy/AnOq7CAnEZ9FzSL9wSbcZkMp4R26vBsMLFYH4kQ67/bbV8XaCQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
   <style>
-    body {
-      background: #AFDDFF; 
-      font-family: 'Nunito', sans-serif;
+    :root{
+        --bg: linear-gradient(135deg, #c2f3ff 0%, #f6f7fb 60%);
+        --card-bg: rgba(255,255,255,0.9);
+        --text:#1f2937; --muted:#6b7280; --brand:#4ED7F1; --accent:#FFD63A; --radius:18px; --shadow:0 16px 40px rgba(0,0,0,.12);
+     }
+     .theme-dark{
+        --bg: radial-gradient(1200px 600px at 10% 10%, #0ea5b2 0%, #0f172a 40%, #050816 100%);
+        --card-bg: rgba(17,24,39,0.9); --text:#e5e7eb; --muted:#94a3b8; --brand:#22d3ee; --accent:#fbbf24; --shadow:0 28px 60px rgba(0,0,0,.5);
+     }
+     html,body{height:100%}
+     body{background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;}
+
+     /* HERO with merged jeep and humans */
+     .register-wrap{min-height:100%; display:grid; place-items:center; padding:6vh 16px}
+     .jeep-hero{max-width:520px; width:100%; margin:2vh auto 0; position:relative}
+     .jeep-hero img{user-select:none; -webkit-user-drag:none}
+     .jeep-hero .bg-blur{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:blur(6px); opacity:.25; border-radius:18px}
+     .jeep-hero .jeep{position:relative; width:100%; height:auto; display:block; filter:drop-shadow(0 10px 22px rgba(0,0,0,.25)); margin-inline:auto}
+
+    .banner-container {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%); 
+        top: 20%;
+        width: 28%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        z-index: 2;
     }
-    .card {
-      max-width: 520px;
-      margin: 8vh auto;
-      border-radius: 16px;
-      border: none;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+
+    .banner {
+        display: block; 
+        position: relative;
+        width: 100%;
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,.2)); 
+        transform: none; 
+        transition: transform .2s ease;
     }
-    .navbar {
-      background: #4ED7F1 !important;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+
+    .banner img {
+        width: 100%; 
+        height: auto; 
+        display: block; 
+        transition: transform .25s ease, filter .25s ease; 
     }
-    .navbar-brand {
-      color: #fff !important;
-      font-weight: 800;
-      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+
+    .banner:hover {
+        transform: translateY(-2px);
     }
-    .btn-primary {
-      background-color: #FFD63A;
-      border-color: #FFD63A;
-      color: #333;
-      font-weight: 600;
+
+    .banner.active img { 
+        transform: scale(1.06); 
+        filter: drop-shadow(0 6px 12px rgba(0,0,0,.35));
+        z-index: 2; 
     }
-    .btn-primary:hover {
-      background-color: #ffc800;
-      border-color: #ffc800;
-      color: #333;
-    }
-    .btn-outline-primary {
-      color: #FFD63A;
-      border-color: #FFD63A;
-    }
-    .btn-outline-primary:hover {
-      background-color: #FFD63A;
-      border-color: #FFD63A;
-      color: #333;
-    }
-    .form-control:focus {
-      border-color: #4ED7F1;
-      box-shadow: 0 0 0 0.25rem rgba(78, 215, 241, 0.25);
-    }
-    h3 {
-      color: #4ED7F1;
-      font-weight: 700;
-    }
-    #driverFields {
-      background-color: rgba(78, 215, 241, 0.1);
-      border-color: #4ED7F1 !important;
-    }
-  </style>
-  <style>
-    /* Soft Background 2 overlay */
-    body{ position: relative; }
-    body::before{ content:""; position: fixed; inset:0; background: url('icons/Background2.png') center bottom / cover no-repeat; opacity:.12; pointer-events:none; z-index:-1; }
-  </style>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+     body{ position: relative; }
+     body::before{
+        content:""; position: fixed; inset:0;
+        background: url('icons/Background2.png') center bottom / cover no-repeat;
+        opacity:.12; pointer-events:none; z-index:-1;
+     }
+
+     /* CARD */
+     .card-register{max-width:460px; width:100%; background:var(--card-bg); backdrop-filter: blur(10px); border:1px solid rgba(0,0,0,.06); border-radius:var(--radius); box-shadow:var(--shadow)}
+     .card-register .header{display:flex; align-items:center; justify-content:space-between}
+     .title{font-weight:800; color:var(--brand)}
+     .btn-brand{background:var(--accent); border-color:var(--accent); color:#111; font-weight:700}
+     .btn-brand:hover{background:#ffc107; border-color:#ffc107; color:#111}
+     .form-control:focus{border-color:var(--brand); box-shadow:0 0 0 .20rem rgba(78,215,241,.25)}
+     .input-icon{position:relative}
+     .input-icon .bi{position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--muted)}
+     .input-icon input{padding-left:2rem}
+     .muted{color:var(--muted)}
+     .link{color:var(--brand); text-decoration:none}
+     .link:hover{text-decoration:underline}
+     .toggle-theme{border-color:var(--brand); color:var(--brand)}
+     #driverFields{background-color:rgba(78, 215, 241, 0.1); border:1px solid var(--brand) !important;}
+   </style>
+  <link rel="icon" href="/icons/JEEPNi.png" type="image/png">
 </head>
 <body>
+  <div class="register-wrap">
+    <!-- HERO with clickable banners -->
+    <div class="mb-3 jeep-hero" aria-label="Choose role">
+      <img class="bg-blur" src="icons/Background1.png" alt="">
+      <!-- Combined jeep and humans image -->
+      <img class="jeep" src="icons/JeepNiWithTao.png" alt="Jeepney with driver and passenger">
+   
+      <div class="banner-container"> 
+        <a id="regPassenger" class="banner passenger" href="#" role="button" tabindex="0" aria-pressed="false" aria-label="Pasahero Para Po!">
+         <img src="icons/17 Passenger Button.png" alt="Pasahero Para Po!">
+        </a>
+        <a id="regDriver" class="banner driver" href="#" role="button" tabindex="0" aria-pressed="false" aria-label="Manong Driver">
+          <img src="icons/18 Driver Button.png" alt="Manong Driver">
+        </a>
+      </div>
+    </div>
 
-<nav class="navbar navbar-expand-lg shadow-sm">
-  <div class="container-fluid">
-    <a class="navbar-brand fw-bold" href="index.html">JeepNi</a>
-    <div class="ms-auto">
-      <a class="btn btn-outline-primary me-2" href="login.html">Login</a>
-      <a class="btn btn-primary" href="register.html">Register</a>
+    <!-- AUTH CARD -->
+    <div class="card-register p-4 p-md-5 auth-card mt-2">
+      <div class="header mb-3">
+        <a class="brand" href="index.html"><img src="/icons/JEEPNi.png" width="28" height="28" alt="JeepNi"><span class="fw-bold">JeepNi</span></a>
+        <button id="btnTheme" class="btn btn-sm toggle-theme" title="Toggle theme" aria-label="Toggle theme"><i class="bi bi-moon-stars"></i></button>
+      </div>
+      <h4 id="regTitle" class="title mb-1">Create account</h4>
+      <div id="regSub" class="muted mb-3">Sign up to get started</div>
+      <div data-role-chip class="small mb-2" style="display:inline-block; background:rgba(78,215,241,.15); color:#0f172a; padding:4px 8px; border-radius:999px; font-weight:600">Registering as: Passenger</div>
+      <div id="alert" class="mb-2"></div>
+
+      <form id="formReg" novalidate>
+        <div class="mb-3 input-icon">
+          <i class="bi bi-person"></i>
+          <label class="form-label">Full name</label>
+          <input id="name" class="form-control" placeholder="Juan Dela Cruz" required>
+        </div>
+        <div class="mb-3 input-icon">
+          <i class="bi bi-at"></i>
+          <label class="form-label">Email</label>
+          <input id="email" type="email" class="form-control" placeholder="you@example.com" autocomplete="email" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Password</label>
+          <div class="input-group">
+            <span class="input-group-text bg-transparent"><i class="bi bi-lock"></i></span>
+            <input id="password" type="password" class="form-control" placeholder="••••••••" autocomplete="new-password" required>
+            <button class="btn btn-outline-secondary" type="button" id="togglePass" title="Show/Hide"><i class="bi bi-eye"></i></button>
+          </div>
+          <div class="form-text">Use at least 6 characters</div>
+        </div>
+
+        <!-- Driver-specific fields (shown/hidden based on role) -->
+        <div id="driverFields" class="rounded p-3 mb-3 d-none">
+          <div class="mb-3">
+            <label class="form-label"><i class="bi bi-card-text me-1"></i>License Number</label>
+            <input id="licenseNumber" class="form-control" placeholder="Enter your license number">
+          </div>
+          <div class="mb-2">
+            <label class="form-label"><i class="bi bi-key me-1"></i>Driver Code</label>
+            <input id="driverCode" class="form-control" placeholder="Enter driver code">
+          </div>
+        </div>
+
+        <div class="mb-3 input-icon">
+          <i class="bi bi-phone"></i>
+          <label class="form-label">Phone <span class="text-muted">(optional)</span></label>
+          <input id="phone" class="form-control" placeholder="+63 912 345 6789">
+        </div>
+
+        <div class="d-grid">
+          <button class="btn btn-brand py-2" type="submit" id="btnReg">
+            <span class="btn-text">Create account</span>
+            <span class="spinner-border spinner-border-sm ms-2 d-none" id="spinner" role="status" aria-hidden="true"></span>
+          </button>
+        </div>
+        <div class="text-center mt-3">
+          <a class="small link" href="login.html">Already have an account? Sign in</a>
+        </div>
+      </form>
     </div>
   </div>
-</nav>
 
-<!-- Hero jeep with banners -->
-<div class="mb-3" style="max-width:520px; width:100%; margin:6vh auto 0; position:relative">
-  <img src="icons/Background1.png" alt="" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:blur(6px); opacity:.25; border-radius:18px;">
-  <img src="icons/21 Jeepney Face.png" alt="Jeepney" style="position:relative; width:100%; height:auto; display:block; filter: drop-shadow(0 10px 22px rgba(0,0,0,.25));">
-  <a id="regPassenger" href="#" aria-label="Passenger" style="position:absolute; left:18%; top:18%; width:40%; display:block">
-    <img src="icons/17 Passenger Button.png" alt="Pasahero Para Po!" style="width:100%; height:auto;">
-  </a>
-  <a id="regDriver" href="#" aria-label="Driver" style="position:absolute; left:46%; top:28%; width:44%; display:block">
-    <img src="icons/18 Driver Button.png" alt="Manong Driver" style="width:100%; height:auto;">
-  </a>
-</div>
+  <script type="module">
+    import { auth, db, ref, get, set } from "./js/authentication.js";
+    import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, deleteUser, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { runTransaction } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
-<div class="card shadow-sm">
-  <div class="card-body p-4">
-    <h3 id="regTitle" class="mb-4 text-center">Create account</h3>
-    <div id="alert"></div>
+    // ------- DOM -------
+    const alertBox = document.getElementById("alert");
+    const btnTheme = document.getElementById('btnTheme');
+    const btnReg = document.getElementById('btnReg');
+    const spinner = document.getElementById('spinner');
+    const regPassenger = document.getElementById('regPassenger');
+    const regDriver = document.getElementById('regDriver');
+    const roleChip = document.querySelector('[data-role-chip]');
+    const regTitle = document.getElementById('regTitle');
+    const regSub = document.getElementById('regSub');
+    const driverFields = document.getElementById('driverFields');
 
-    <!-- Remove the checkbox and modify the form -->
-    <form id="formReg" novalidate>
-      <!-- Base fields for both roles -->
-      <div class="mb-3">
-        <label class="form-label">Full name</label>
-        <input id="name" class="form-control" required>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Email</label>
-        <input id="email" type="email" class="form-control" required>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Password</label>
-        <input id="password" type="password" class="form-control" required>
-      </div>
-
-      <!-- Driver-specific fields (shown/hidden based on role) -->
-      <div id="driverFields" class="border rounded p-3 mb-3 d-none">
-        <div class="mb-3">
-          <label class="form-label">License Number</label>
-          <input id="licenseNumber" class="form-control" placeholder="Enter your license number">
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Driver Code</label>
-          <input id="driverCode" class="form-control" placeholder="Enter driver code">
-        </div>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">Phone (optional)</label>
-        <input id="phone" class="form-control">
-      </div>
-
-      <div class="d-grid">
-        <button class="btn btn-primary py-2 fw-bold" id="btnReg" type="submit">Create account</button>
-      </div>
-      <div class="text-center mt-3">
-        <a class="small" href="login.html">Already have an account? Sign in</a>
-      </div>
-    </form>
-  </div>
-</div>
-
-<script type="module">
-import { auth, db, ref, get, set } from "./js/authentication.js";
-import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, deleteUser, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { runTransaction } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
-
-const alertBox = document.getElementById("alert");
-const show = (m,t="warning") => alertBox.innerHTML =
-  `<div class="alert alert-${t} alert-dismissible fade show" role="alert">${m}<button class="btn-close" data-bs-dismiss="alert"></button></div>`;
-
-// Initialize by role hint from query (?role=driver|passenger)
-const params = new URLSearchParams(location.search);
-const rolePref = (params.get('role')||'').toLowerCase();
-
-// Initialize form based on role
-function initializeForm(role) {
-  const driverFields = document.getElementById('driverFields');
-  const regTitle = document.getElementById('regTitle');
-  
-  if (role === 'driver') {
-    driverFields.classList.remove('d-none');
-    regTitle.textContent = 'Register as Driver';
-    // Make driver fields required
-    document.getElementById('licenseNumber').setAttribute('required', '');
-    document.getElementById('driverCode').setAttribute('required', '');
-  } else {
-    driverFields.classList.add('d-none');
-    regTitle.textContent = 'Register as Passenger';
-    // Remove required attribute from driver fields
-    document.getElementById('licenseNumber').removeAttribute('required');
-    document.getElementById('driverCode').removeAttribute('required');
-  }
-  // Update URL to reflect role
-  history.replaceState(null, '', `?role=${role}`);
-}
-
-// Initialize on page load
-if (rolePref === 'driver') {
-  initializeForm('driver');
-} else {
-  initializeForm('passenger');
-}
-
-// Update banner click handlers
-document.getElementById('regPassenger')?.addEventListener('click', (e) => {
-  e.preventDefault();
-  initializeForm('passenger');
-});
-
-document.getElementById('regDriver')?.addEventListener('click', (e) => {
-  e.preventDefault();
-  initializeForm('driver');
-});
-
-/**
- * Validate a driver code.
- * Simple approach: store codes in RTDB at driver_invite_codes/{CODE}:
- * { is_active: true, uses_left: 10, expires_at: 4102444800000 }
- */
-async function validateDriverCode(code) {
-  if (!code) return { ok:false, reason:"No code entered." };
-  const snap = await get(ref(db, `driver_invite_codes/${code}`));
-  if (!snap.exists()) return { ok:false, reason:"Invalid code." };
-  const c = snap.val();
-  if (c.is_active === false) return { ok:false, reason:"Code is disabled." };
-  if (c.expires_at && Date.now() > c.expires_at) return { ok:false, reason:"Code has expired." };
-  if (typeof c.uses_left === "number" && c.uses_left <= 0) return { ok:false, reason:"Code has no remaining uses." };
-  return { ok:true, meta:c };
-}
-
-/** Atomically decrement uses_left (optional but recommended) */
-async function claimDriverCode(code) {
-  const codeRef = ref(db, `driver_invite_codes/${code}/uses_left`);
-  await runTransaction(codeRef, current => {
-    if (current === null) return current;      // no uses_left field
-    if (current <= 0) return;                  // abort
-    return current - 1;
-  });
-}
-
-/**
- * Save user profile to Firebase instead of making API call
- * This replaces the non-existent /api/admin/create_profile endpoint
- */
-async function saveUserProfile(uid, role, profile) {
-  try {
-    // Save to all_users collection
-    await set(ref(db, `all_users/${uid}`), profile);
-    
-    // Save to role-specific collection
-    if (role === "driver") {
-      await set(ref(db, `drivers/${uid}`), profile);
-    } else {
-      await set(ref(db, `passengers/${uid}`), profile);
-    }
-    
-    return { success: true };
-  } catch (error) {
-    console.error("Error saving profile:", error);
-    return { success: false, error: error.message };
-  }
-}
-
-document.getElementById("formReg").addEventListener("submit", async (e)=>{
-  e.preventDefault();
-  const name = document.getElementById("name").value.trim();
-  const email = document.getElementById("email").value.trim();
-  const pass = document.getElementById("password").value;
-  const phone = document.getElementById("phone").value.trim();
-
-  // Check role based on URL parameter instead of checkbox
-  const params = new URLSearchParams(location.search);
-  const isDriver = params.get('role') === 'driver';
-  
-  const code = document.getElementById("driverCode").value.trim();
-  const license = document.getElementById("licenseNumber").value.trim();
-
-  if (!name || !email || !pass) { 
-    show("Please complete name, email and password."); 
-    return; 
-  }
-  if (isDriver) {
-    if (!code) { 
-      show("Please enter a driver code.", "danger"); 
-      return; 
-    }
-    if (!license) {
-      show("Please enter your license number.", "danger");
-      return;
-    }
-  }
-
-  const btn = document.getElementById("btnReg"); btn.disabled = true; btn.textContent = "Creating…";
-  try {
-    // If they want driver, validate code first
-    let role = "passenger";
-    if (isDriver) {
-      const res = await validateDriverCode(code);
-      if (!res.ok) { show(res.reason, "danger"); btn.disabled=false; btn.textContent="Create account"; return; }
-      role = "driver";
+    // ------- Helpers -------
+    function showAlert(msg, type="warning") {
+      alertBox.innerHTML =
+        `<div class="alert alert-${type} alert-dismissible fade show" role="alert">
+           ${msg}
+           <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+         </div>`;
     }
 
-    const cred = await createUserWithEmailAndPassword(auth, email, pass);
-    await updateProfile(cred.user, { displayName: name });
-    try { await sendEmailVerification(cred.user); } catch (_) {} 
-
-    const uid = cred.user.uid;
-    const base = { uid, name, email, phone, role, created_at:new Date().toISOString(), created_ts:Date.now() };
-    // Update profile creation to include license
-    const profile = { ...base };
-    if (role === "driver") {
-      if (code) profile.driver_code = code;
-      if (license) profile.license_number = license;
-    }
-
-    // Save profile to Firebase instead of making API call
-    const saveResult = await saveUserProfile(uid, role, profile);
-    if (!saveResult.success) {
-      try { await deleteUser(cred.user); } catch (cleanupError) {
-        console.warn("Failed to rollback auth user after DB error:", cleanupError);
-      }
-      throw new Error(saveResult.error || "Failed to save profile");
-    }
-
-    if (role === "driver" && code) {
-      try { await claimDriverCode(code); }
-      catch (e) { console.warn("claimDriverCode failed (non-fatal):", e); }
-    }
-
-    try { localStorage.setItem("notice", "Account created successfully. Please log in."); } catch (_) {}
-
+    // Toggle theme
     try {
-      await signOut(auth);
-    } catch (signOutError) {
-      console.warn("Failed to sign out newly registered user:", signOutError);
+      const saved = localStorage.getItem('theme') || 'light';
+      if (saved === 'dark') document.body.classList.add('theme-dark');
+    } catch {}
+    btnTheme?.addEventListener('click', () => {
+      const dark = document.body.classList.toggle('theme-dark');
+      try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch {}
+      const ico = btnTheme.querySelector('i');
+      if (ico) ico.className = dark ? 'bi bi-brightness-high' : 'bi bi-moon-stars';
+    });
+
+    // Show/Hide password
+    document.getElementById('togglePass').addEventListener('click', () => {
+      const passEl = document.getElementById('password');
+      const type = passEl.getAttribute('type') === 'password' ? 'text' : 'password';
+      passEl.setAttribute('type', type);
+      const icon = document.querySelector('#togglePass i');
+      if (icon) icon.className = type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
+    });
+
+    // ------- Role UI -------
+    function setTexts(role) {
+      if (role === 'driver') {
+        regTitle.textContent = 'Register as Driver';
+        regSub.textContent = 'Create your driver account';
+        roleChip.textContent = 'Registering as: Driver';
+        driverFields.classList.remove('d-none');
+        document.getElementById('licenseNumber').setAttribute('required', '');
+        document.getElementById('driverCode').setAttribute('required', '');
+      } else {
+        regTitle.textContent = 'Register as Passenger';
+        regSub.textContent = 'Create your passenger account';
+        roleChip.textContent = 'Registering as: Passenger';
+        driverFields.classList.add('d-none');
+        document.getElementById('licenseNumber').removeAttribute('required');
+        document.getElementById('driverCode').removeAttribute('required');
+      }
+      // Visual highlight on hero banners
+      [regPassenger, regDriver].forEach(b => b && b.classList.remove('active'));
+      if (role === 'driver') regDriver?.classList.add('active');
+      else regPassenger?.classList.add('active');
     }
 
-    location.href = "login.html";
-  } catch (err) {
-    let errorMessage = "Failed to register: " + err.message;
-    
-    // Handle specific Firebase errors
-    if (err.code === "auth/email-already-in-use") {
-      errorMessage = "This email is already registered. Please sign in instead.";
-    } else if (err.code === "auth/weak-password") {
-      errorMessage = "Password is too weak. Please choose a stronger password.";
-    } else if (err.code === "auth/invalid-email") {
-      errorMessage = "Invalid email address. Please check your email format.";
+    // Read desired role
+    let rolePref = (new URLSearchParams(location.search).get('role') || 'passenger').toLowerCase();
+    if (!['passenger', 'driver'].includes(rolePref)) rolePref = 'passenger';
+    setTexts(rolePref);
+
+    // Clicking a banner → set role + reload with ?role=
+    function goToRole(role) {
+      const url = new URL(location.href);
+      url.searchParams.set('role', role);
+      location.href = url.toString();
     }
-    
-    show(errorMessage, "danger");
-  } finally {
-    btn.disabled = false; btn.textContent = "Create account";
-  }
-});
-</script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    regPassenger?.addEventListener('click', (e) => { e.preventDefault(); goToRole('passenger'); });
+    regDriver?.addEventListener('click', (e) => { e.preventDefault(); goToRole('driver'); });
+
+    // Keyboard access
+    [regPassenger, regDriver].forEach((el, i) => {
+      el?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          goToRole(i === 0 ? 'passenger' : 'driver');
+        }
+      });
+    });
+
+    // ------- Validation & Registration -------
+    async function validateDriverCode(code) {
+      if (!code) return { ok: false, reason: "No code entered." };
+      const snap = await get(ref(db, `driver_invite_codes/${code}`));
+      if (!snap.exists()) return { ok: false, reason: "Invalid code." };
+      const c = snap.val();
+      if (c.is_active === false) return { ok: false, reason: "Code is disabled." };
+      if (c.expires_at && Date.now() > c.expires_at) return { ok: false, reason: "Code has expired." };
+      if (typeof c.uses_left === "number" && c.uses_left <= 0) return { ok: false, reason: "Code has no remaining uses." };
+      return { ok: true, meta: c };
+    }
+
+    async function claimDriverCode(code) {
+      const codeRef = ref(db, `driver_invite_codes/${code}/uses_left`);
+      await runTransaction(codeRef, current => {
+        if (current === null) return current;
+        if (current <= 0) return;
+        return current - 1;
+      });
+    }
+
+    async function saveUserProfile(uid, role, profile) {
+      try {
+        // Save to all_users collection
+        await set(ref(db, `all_users/${uid}`), profile);
+        
+        // Save to role-specific collection
+        if (role === "driver") {
+          await set(ref(db, `drivers/${uid}`), profile);
+        } else {
+          await set(ref(db, `passengers/${uid}`), profile);
+        }
+        
+        console.log("Profile saved successfully:", profile);
+        return { success: true };
+      } catch (error) {
+        console.error("Error saving profile:", error);
+        return { success: false, error: error.message };
+      }
+    }
+
+    document.getElementById("formReg").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const pass = document.getElementById("password").value;
+      const phone = document.getElementById("phone").value.trim();
+
+      const params = new URLSearchParams(location.search);
+      const isDriver = params.get('role') === 'driver';
+
+      const code = document.getElementById("driverCode").value.trim();
+      const license = document.getElementById("licenseNumber").value.trim();
+
+      if (!name || !email || !pass) {
+        showAlert("Please complete name, email and password.");
+        return;
+      }
+      if (isDriver) {
+        if (!code) {
+          showAlert("Please enter a driver code.", "danger");
+          return;
+        }
+        if (!license) {
+          showAlert("Please enter your license number.", "danger");
+          return;
+        }
+      }
+
+      btnReg.disabled = true;
+      spinner.classList.remove('d-none');
+
+      try {
+        let role = "passenger";
+        if (isDriver) {
+          const res = await validateDriverCode(code);
+          if (!res.ok) {
+            showAlert(res.reason, "danger");
+            btnReg.disabled = false;
+            spinner.classList.add('d-none');
+            return;
+          }
+          role = "driver";
+        }
+
+        const cred = await createUserWithEmailAndPassword(auth, email, pass);
+        await updateProfile(cred.user, { displayName: name });
+        try { await sendEmailVerification(cred.user); } catch (_) {}
+
+        const uid = cred.user.uid;
+        const base = { 
+          uid, 
+          name, 
+          email, 
+          phone, 
+          role, 
+          created_at: new Date().toISOString(), 
+          created_ts: Date.now() 
+        };
+        
+        const profile = { ...base };
+        if (role === "driver") {
+          if (code) profile.driver_code = code;
+          if (license) profile.license_number = license;
+        }
+
+        console.log("Attempting to save profile:", profile);
+        const saveResult = await saveUserProfile(uid, role, profile);
+        if (!saveResult.success) {
+          console.error("Profile save failed, rolling back auth user");
+          try { 
+            await deleteUser(cred.user); 
+          } catch (cleanupError) {
+            console.warn("Failed to rollback auth user after DB error:", cleanupError);
+          }
+          throw new Error(saveResult.error || "Failed to save profile");
+        }
+
+        if (role === "driver" && code) {
+          try { 
+            await claimDriverCode(code); 
+            console.log("Driver code claimed successfully");
+          }
+          catch (e) { 
+            console.warn("claimDriverCode failed (non-fatal):", e); 
+          }
+        }
+
+        try { 
+          localStorage.setItem("notice", "Account created successfully. Please log in."); 
+        } catch (_) {}
+
+        try {
+          await signOut(auth);
+        } catch (signOutError) {
+          console.warn("Failed to sign out newly registered user:", signOutError);
+        }
+
+        location.href = "login.html";
+      } catch (err) {
+        console.error("Registration error:", err);
+        let errorMessage = "Failed to register: " + err.message;
+
+        if (err.code === "auth/email-already-in-use") {
+          errorMessage = "This email is already registered. Please sign in instead.";
+        } else if (err.code === "auth/weak-password") {
+          errorMessage = "Password is too weak. Please choose a stronger password.";
+        } else if (err.code === "auth/invalid-email") {
+          errorMessage = "Invalid email address. Please check your email format.";
+        }
+
+        showAlert(errorMessage, "danger");
+      } finally {
+        btnReg.disabled = false;
+        spinner.classList.add('d-none');
+      }
+    });
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
