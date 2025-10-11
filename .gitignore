@@ -37,6 +37,9 @@ js/firebaseConfig.js
 firebase_credentials.json
 semaphore_api_key.txt
 
+# SMS config (local only)
+public/js/sms-config.js
+
 # Python
 __pycache__/
 *.pyc
@@ -62,3 +65,5 @@ Thumbs.db
 .env
 *.env
 .env.local
+
+js/env-config.js

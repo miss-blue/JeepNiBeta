@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -18,11 +18,14 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="/css/secure-admin-dashboard.css">
+
+  <link rel="stylesheet" href="/css/sms-integration.css">
   <link rel="icon" href="/icons/JEEPNi.png" type="image/png">
 </head>
 <body>
-<nav class="navbar bg-light border-bottom">
+<nav class="navbar navbar-main fixed-top bg-light border-bottom">
   <div class="container">
     <span class="navbar-brand fw-semibold d-flex align-items-center gap-2">
       JeepNi - Admin Dashboard
@@ -37,28 +40,25 @@
   </div>
 </nav>
 
-<main class="container my-4">
-  <div id="alerts"></div>
+<main class="dashboard-main container-fluid py-4">
+  <div id="alerts" class="mb-3"></div>
 
-  <!-- Top-level feature tabs -->
-  <ul class="nav nav-tabs mb-3" id="adminFeatureTabs" role="tablist">
-    <li class="nav-item" role="presentation">
+  <div class="dashboard-shell row gx-4 gy-3">
+    <nav class="dashboard-sidebar col-12 col-lg-3 col-xl-2 nav flex-column nav-pills" id="adminFeatureTabs" role="tablist" aria-orientation="vertical">
       <button class="nav-link active" id="tab-dashboard-tab" data-bs-toggle="tab" data-bs-target="#tab-dashboard" type="button" role="tab" aria-controls="tab-dashboard" aria-selected="true">
         <i class="bi bi-grid-1x2"></i> Dashboard
       </button>
-    </li>
-    <li class="nav-item" role="presentation">
       <button class="nav-link" id="tab-scheduling-tab" data-bs-toggle="tab" data-bs-target="#tab-scheduling" type="button" role="tab" aria-controls="tab-scheduling" aria-selected="false">
-        <i class="bi bi-truck"></i> Scheduling
+        <i class="bi bi-calendar-check"></i> Scheduling
       </button>
-    </li>
-    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="tab-peak-tab" data-bs-toggle="tab" data-bs-target="#tab-peak" type="button" role="tab" aria-controls="tab-peak" aria-selected="false">
+        <i class="bi bi-bar-chart-line"></i> Peak Hours
+      </button>
       <button class="nav-link" id="tab-sms-tab" data-bs-toggle="tab" data-bs-target="#tab-sms" type="button" role="tab" aria-controls="tab-sms" aria-selected="false">
         <i class="bi bi-chat-dots"></i> SMS Notifications
       </button>
-    </li>
-
-  <div class="tab-content">
+    </nav>
+    <div class="dashboard-content col-12 col-lg-9 col-xl-10 tab-content" id="adminTabContent">
   <!-- ===== Pane: Dashboard ===== -->
   <div class="tab-pane fade show active" id="tab-dashboard" role="tabpanel" aria-labelledby="tab-dashboard-tab" tabindex="0">
   <!-- Row: Driver Codes -->
@@ -99,6 +99,79 @@
             <span class="text-muted small">Drivers & passengers</span>
           </div>
           <div id="dashboardMap" style="height: 520px;" role="region" aria-label="Live driver and passenger map"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row: Waiting Analytics -->
+  <div class="row g-3 mt-1">
+    <div class="col-12">
+      <div class="card shadow-sm h-100">
+        <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <h5 class="card-title mb-0"><i class="bi bi-graph-up-arrow me-2"></i>Waiting Passengers by Stop</h5>
+          <span class="badge bg-primary" id="waitingTotalBadge">0</span>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-lg-7">
+              <div style="height: 280px;">
+                <canvas id="waitingPassengersChart" role="img" aria-label="Waiting passengers per stop"></canvas>
+              </div>
+            </div>
+            <div class="col-lg-5">
+              <div class="waiting-stops-list" id="waitingStopsList">
+                <div class="text-muted small">No live waiting data yet.</div>
+              </div>
+            </div>
+          </div>
+          <div class="small text-muted mt-3" id="waitingChartNote">Live counts refresh automatically from passenger devices.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row: Trip Monitoring -->
+  <div class="row g-3 mt-1">
+    <div class="col-12">
+      <div class="card shadow-sm h-100">
+        <div class="card-header">
+          <h5 class="card-title mb-0"><i class="bi bi-geo-alt me-2"></i>Trip Monitoring</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-2 align-items-end">
+            <div class="col-md-3">
+              <label class="form-label">Date</label>
+              <input id="tripDate" type="date" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-5">
+              <label class="form-label">Driver</label>
+              <select id="tripDriver" class="form-select form-select-sm">
+                <option value="">Select a driver</option>
+              </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end gap-2">
+              <button id="btnLoadTrips" class="btn btn-outline-secondary btn-sm">Load Trips</button>
+              <button id="btnExportTripCSV" class="btn btn-outline-primary btn-sm" disabled>Export CSV</button>
+              <button id="btnExportTripAll" class="btn btn-outline-success btn-sm" disabled>Export All</button>
+            </div>
+          </div>
+          <div class="table-responsive mt-3">
+            <table class="table table-striped table-hover table-sm align-middle">
+              <thead>
+                <tr>
+                  <th>Trip ID</th>
+                  <th>Start</th>
+                  <th>End</th>
+                  <th>Duration</th>
+                  <th>Samples</th>
+                </tr>
+              </thead>
+              <tbody id="tripRows">
+                <tr><td colspan="5" class="text-center text-muted py-3">No trips loaded.</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -194,324 +267,310 @@
     </div>
   </div>
 
-  </div>
-  </div><!-- /tab-scheduling -->
-
-  <!-- ===== Pane: Data & Reports ===== -->
-  <div class="tab-pane fade" id="tab-data" role="tabpanel" aria-labelledby="tab-data-tab" tabindex="0">
-    <div class="row g-3 mt-0">
-      <div class="col-12">
-      <div class="card shadow-sm">
+  <!-- Row: Dispatch History -->
+  <div class="row g-3 mt-1">
+    <div class="col-12">
+      <div class="card shadow-sm h-100">
+        <div class="card-header">
+          <h5 class="card-title mb-0"><i class="bi bi-clock-history me-2"></i>Dispatch History</h5>
+        </div>
         <div class="card-body">
-          <!-- Side tabs layout -->
-          <div class="row">
-            <div class="col-md-3 border-end">
-              <div class="nav flex-column nav-pills" id="dataSideTabs" role="tablist" aria-orientation="vertical">
-                <button class="nav-link active text-start" id="drivers-tab" data-bs-toggle="tab" data-bs-target="#drivers" type="button" role="tab" aria-controls="drivers" aria-selected="true">
-                  <i class="bi bi-people"></i> Drivers Online
-                </button>
-                <button class="nav-link text-start" id="passengers-tab" data-bs-toggle="tab" data-bs-target="#passengers" type="button" role="tab" aria-controls="passengers" aria-selected="false">
-                  <i class="bi bi-person-badge"></i> All Passengers
-                </button>
-                <button class="nav-link text-start" id="predictions-tab" data-bs-toggle="tab" data-bs-target="#predictions" type="button" role="tab" aria-controls="predictions" aria-selected="false">
-                  <i class="bi bi-graph-up"></i> Peak Hours
-                </button>
-                <button class="nav-link text-start" id="trips-tab" data-bs-toggle="tab" data-bs-target="#trips" type="button" role="tab" aria-controls="trips" aria-selected="false">
-                  <i class="bi bi-geo-alt"></i> Trip Monitoring
-                </button>
-                <button class="nav-link text-start" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab" aria-controls="history" aria-selected="false">
-                  <i class="bi bi-clock-history"></i> Dispatch History
-                </button>
-                <div class="mt-3">
-                  <button id="btnReloadDrivers" class="btn btn-sm btn-outline-secondary w-100 mb-2" data-bs-toggle="tooltip" title="Reload drivers"><i class="bi bi-arrow-clockwise"></i> Reload Drivers</button>
-                  <button id="btnReloadPassengers" class="btn btn-sm btn-outline-secondary w-100 mb-2" data-bs-toggle="tooltip" title="Reload passengers"><i class="bi bi-arrow-clockwise"></i> Reload Passengers</button>
-                  <button id="btnReloadPredictions" class="btn btn-sm btn-outline-secondary w-100" data-bs-toggle="tooltip" title="Reload predictions"><i class="bi bi-arrow-clockwise"></i> Reload Predictions</button>
-                </div>
+          <div class="row g-2 align-items-end">
+            <div class="col-sm-4">
+              <label class="form-label">Start Date</label>
+              <input id="histStart" type="date" class="form-control form-control-sm">
+            </div>
+            <div class="col-sm-4">
+              <label class="form-label">End Date</label>
+              <input id="histEnd" type="date" class="form-control form-control-sm">
+            </div>
+            <div class="col-sm-4 d-flex gap-2">
+              <div class="flex-grow-1">
+                <label class="form-label">Sort</label>
+                <select id="histSort" class="form-select form-select-sm">
+                  <option value="desc">Newest first</option>
+                  <option value="asc">Oldest first</option>
+                </select>
+              </div>
+              <div class="d-flex align-items-end gap-2">
+                <button id="btnLoadHistory" class="btn btn-outline-secondary btn-sm">Load</button>
+                <button id="btnExportHistory" class="btn btn-outline-primary btn-sm" disabled>Export CSV</button>
               </div>
             </div>
-            <div class="col-md-9">
-              <!-- Tab content -->
-              <div class="tab-content" id="myTabContent">
-            <!-- Drivers Tab -->
-            <div class="tab-pane fade show active" id="drivers" role="tabpanel" aria-labelledby="drivers-tab">
-              <div class="d-flex justify-content-between align-items-center mt-3">
-                <div class="input-group input-group-sm" style="max-width:280px">
-                  <span class="input-group-text bg-transparent"><i class="bi bi-search"></i></span>
-                  <input id="searchDrivers" class="form-control" placeholder="Search drivers...">
-                </div>
-              </div>
-              <div class="table-responsive mt-2">
-                <table class="table table-striped table-hover table-sm align-middle">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Route</th>
-                      <th>Status</th>
-                      <th>Last Update</th>
-                    </tr>
-                  </thead>
-                  <tbody id="rowsDrivers">
-                    <tr><td colspan="4" class="text-center text-muted py-4">
-                      <div class="d-flex align-items-center justify-content-center gap-2">
-                        <div class="spinner-border spinner-border-sm text-info" role="status"></div>
-                        Loading drivers...
-                      </div>
-                    </td></tr>
-                  </tbody>
-                </table>
+            <div class="col-12">
+              <div class="btn-group btn-group-sm" role="group" aria-label="Quick ranges">
+                <button type="button" class="btn btn-outline-secondary" data-range="today">Today</button>
+                <button type="button" class="btn btn-outline-secondary" data-range="7">Last 7 days</button>
+                <button type="button" class="btn btn-outline-secondary" data-range="30">Last 30 days</button>
+                <button type="button" class="btn btn-outline-secondary" data-range="month">This month</button>
               </div>
             </div>
-
-            <!-- Passengers Tab -->
-            <div class="tab-pane fade" id="passengers" role="tabpanel" aria-labelledby="passengers-tab">
-              <div class="d-flex justify-content-between align-items-center mt-3">
-                <div class="input-group input-group-sm" style="max-width:280px">
-                  <span class="input-group-text bg-transparent"><i class="bi bi-search"></i></span>
-                  <input id="searchPassengers" class="form-control" placeholder="Search passengers...">
-                </div>
-              </div>
-              <div class="table-responsive mt-2">
-                <table class="table table-striped table-hover table-sm align-middle">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Email</th>
-                      <th>Phone</th>
-                      <th>Joined</th>
-                    </tr>
-                  </thead>
-                  <tbody id="rowsPassengers">
-                    <tr><td colspan="4" class="text-center text-muted py-4">
-                      <div class="d-flex align-items-center justify-content-center gap-2">
-                        <div class="spinner-border spinner-border-sm text-info" role="status"></div>
-                        Loading passengers...
-                      </div>
-                    </td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- Predictions Tab -->
-            <div class="tab-pane fade" id="predictions" role="tabpanel" aria-labelledby="predictions-tab">
-              <div class="row mt-3">
-                <!-- Controls -->
-                <div class="col-12 mb-3">
-                  <div class="d-flex gap-2 align-items-center">
-                    <label class="form-label mb-0">Date:</label>
-                    <input id="predictionDate" type="date" class="form-control form-control-sm" style="width: auto;">
-                    <button id="btnGeneratePredictions" class="btn btn-primary btn-sm">Generate</button>
-                    <button id="btnSendPredictions" class="btn btn-success btn-sm">Send to Drivers</button>
-                    <div class="ms-auto">
-                      <span class="badge bg-info" id="predictionStatus">No predictions</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Summary Cards -->
-                <div class="col-md-3">
-                  <div class="card bg-primary">
-                    <div class="card-body">
-                      <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                          <h6 class="card-title text-white">Today's Predictions</h6>
-                          <h3 class="text-white mb-0" id="ph_count">0</h3>
-                        </div>
-                        <i class="bi bi-graph-up text-white" style="font-size:1.6rem; opacity:.7"></i>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <div class="card bg-success">
-                    <div class="card-body">
-                      <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                          <h6 class="card-title text-white">Registered Users</h6>
-                          <h3 class="text-white mb-0" id="ph_users">-</h3>
-                        </div>
-                        <i class="bi bi-people text-white" style="font-size:1.6rem; opacity:.7"></i>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <div class="card bg-info">
-                    <div class="card-body">
-                      <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                          <h6 class="card-title text-white">Messages Sent</h6>
-                          <h3 class="text-white mb-0" id="ph_sent">0</h3>
-                        </div>
-                        <i class="bi bi-send text-white" style="font-size:1.6rem; opacity:.7"></i>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <div class="card bg-warning">
-                    <div class="card-body">
-                      <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                          <h6 class="card-title text-white">Total Stops</h6>
-                          <h3 class="text-white mb-0" id="ph_stops">-</h3>
-                        </div>
-                        <i class="bi bi-geo-alt text-white" style="font-size:1.6rem; opacity:.7"></i>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Preview Cards -->
-                <div class="col-12 mt-3">
-                  <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                      <h6 class="mb-0"><i class="bi bi-eye me-2"></i>Today's Peak Hours Preview</h6>
-                      <div>
-                        <span class="badge bg-primary me-2" id="ph_date_badge">-</span>
-                        <button class="btn btn-success btn-sm" id="btnSendAllPH"><i class="bi bi-send me-1"></i>Send All</button>
-                      </div>
-                    </div>
-                    <div class="card-body">
-                      <div id="predictionsCards" class="row g-3">
-                        <div class="text-center text-muted py-3">No predictions available</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-              </div><!-- /row -->
-            </div><!-- /tab-pane predictions -->
-
-            <!-- Trip Monitoring Tab (Viewer) -->
-            <div class="tab-pane fade" id="trips" role="tabpanel" aria-labelledby="trips-tab">
-              <div class="row g-2 mt-3">
-                <div class="col-md-3">
-                  <label class="form-label">Date</label>
-                  <input id="tripDate" type="date" class="form-control form-control-sm">
-                </div>
-                <div class="col-md-5">
-                  <label class="form-label">Driver</label>
-                  <select id="tripDriver" class="form-select form-select-sm">
-                    <option value="">Select a driver…</option>
-                  </select>
-                </div>
-                <div class="col-md-4 d-flex align-items-end gap-2">
-                  <button id="btnLoadTrips" class="btn btn-outline-secondary btn-sm">Load Trips</button>
-                  <button id="btnExportTripCSV" class="btn btn-outline-primary btn-sm" disabled>Export CSV</button>
-                  <button id="btnExportTripAll" class="btn btn-outline-success btn-sm" disabled>Export All</button>
-                </div>
-              </div>
-
-              <div class="table-responsive mt-3">
-                <table class="table table-striped table-hover table-sm align-middle">
-                  <thead>
-                    <tr>
-                      <th>Trip ID</th>
-                      <th>Start</th>
-                      <th>End</th>
-                      <th>Duration</th>
-                      <th>Samples</th>
-                    </tr>
-                  </thead>
-                  <tbody id="tripRows">
-                    <tr><td colspan="5" class="text-center text-muted py-3">No trips loaded.</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div><!-- /tab-pane trips -->
-
-            <!-- Dispatch History Tab -->
-            <div class="tab-pane fade" id="history" role="tabpanel" aria-labelledby="history-tab">
-              <div class="row g-2 mt-3 align-items-end">
-                <div class="col-sm-4">
-                  <label class="form-label">Start Date</label>
-                  <input id="histStart" type="date" class="form-control form-control-sm">
-                </div>
-                <div class="col-sm-4">
-                  <label class="form-label">End Date</label>
-                  <input id="histEnd" type="date" class="form-control form-control-sm">
-                </div>
-                <div class="col-sm-4 d-flex gap-2">
-                  <div class="flex-grow-1">
-                    <label class="form-label">Sort</label>
-                    <select id="histSort" class="form-select form-select-sm">
-                      <option value="desc">Newest first</option>
-                      <option value="asc">Oldest first</option>
-                    </select>
-                  </div>
-                  <div class="d-flex align-items-end gap-2">
-                    <button id="btnLoadHistory" class="btn btn-outline-secondary btn-sm">Load</button>
-                    <button id="btnExportHistory" class="btn btn-outline-primary btn-sm" disabled>Export CSV</button>
-                  </div>
-                </div>
-                <div class="col-12">
-                  <div class="btn-group btn-group-sm" role="group" aria-label="Quick ranges">
-                    <button type="button" class="btn btn-outline-secondary" data-range="today">Today</button>
-                    <button type="button" class="btn btn-outline-secondary" data-range="7">Last 7 days</button>
-                    <button type="button" class="btn btn-outline-secondary" data-range="30">Last 30 days</button>
-                    <button type="button" class="btn btn-outline-secondary" data-range="month">This month</button>
-                  </div>
-                </div>
-              </div>
-
-              <div class="table-responsive mt-3">
-                <table class="table table-striped table-hover table-sm align-middle">
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Time</th>
-                      <th>Route</th>
-                      <th>Jeep</th>
-                      <th>Driver</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody id="historyRows">
-                    <tr><td colspan="6" class="text-center text-muted py-3">Choose a range and click Load</td></tr>
-                  </tbody>
-                </table>
-                <div class="small text-muted mt-1" id="histSummary"></div>
-              </div>
-            </div><!-- /tab-pane history -->
-
-          </div><!-- /tab-content -->
-            </div><!-- /col-md-9 -->
-          </div><!-- /row (side tabs + content) -->
+          </div>
+          <div class="table-responsive mt-3">
+            <table class="table table-striped table-hover table-sm align-middle">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Time</th>
+                  <th>Route</th>
+                  <th>Jeep</th>
+                  <th>Driver</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="historyRows">
+                <tr><td colspan="6" class="text-center text-muted py-3">Choose a range and click Load</td></tr>
+              </tbody>
+            </table>
+            <div class="small text-muted mt-1" id="histSummary"></div>
+          </div>
         </div>
       </div>
     </div>
-</div><!-- /tab-data -->
+  </div>
 
-  <!-- ===== Pane: SMS Notifications ===== -->
-  <div class="tab-pane fade" id="tab-sms" role="tabpanel" aria-labelledby="tab-sms-tab" tabindex="0">
-    <div class="row g-3 mt-1">
-      
-      <!-- SMS Balance Card -->
+  </div>
+</div><!-- /tab-scheduling -->
+
+  <!-- ===== Pane: Peak Hours ===== -->
+  <div class="tab-pane fade" id="tab-peak" role="tabpanel" aria-labelledby="tab-peak-tab" tabindex="0">
+    <div class="row g-3 peak-toolbar">
       <div class="col-12">
         <div class="card shadow-sm">
           <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+              <div class="d-flex align-items-center gap-2">
+                <label class="form-label mb-0" for="predictionDate">Date</label>
+                <input id="predictionDate" type="date" class="form-control form-control-sm" style="width:auto">
+              </div>
+              <div class="d-flex flex-wrap gap-2">
+                <button id="btnReloadPredictions" class="btn btn-outline-secondary btn-sm">
+                  <i class="bi bi-arrow-clockwise"></i> Reload
+                </button>
+                <button id="btnGeneratePredictions" class="btn btn-primary btn-sm">
+                  <i class="bi bi-lightning-charge"></i> Generate
+                </button>
+              </div>
+              <div class="ms-auto">
+                <span class="badge bg-info" id="predictionStatus">No predictions</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 align-items-stretch peak-metrics">
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card shadow-sm peak-metric-card bg-primary text-white">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start gap-2">
               <div>
-                <h5 class="card-title mb-1"><i class="bi bi-wallet2 me-2"></i>SMS Balance</h5>
-                <p class="text-muted small mb-0">Semaphore API Account Status</p>
+                <h6 class="card-title text-white mb-2">Today's Predictions</h6>
+                <h3 class="text-white mb-0" id="ph_count">0</h3>
               </div>
-              <div class="text-end">
-                <h3 class="mb-0" id="smsBalance">
-                  <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
-                </h3>
-                <small class="text-muted">credits remaining</small>
+              <i class="bi bi-graph-up"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card shadow-sm peak-metric-card bg-success text-white">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start gap-2">
+              <div>
+                <h6 class="card-title text-white mb-2">Registered Users</h6>
+                <h3 class="text-white mb-0" id="ph_users">-</h3>
               </div>
-              <button id="btnRefreshBalance" class="btn btn-outline-primary btn-sm">
-                <i class="bi bi-arrow-clockwise"></i> Refresh
-              </button>
+              <i class="bi bi-people"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card shadow-sm peak-metric-card bg-info text-white">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start gap-2">
+              <div>
+                <h6 class="card-title text-white mb-2">Messages Sent</h6>
+                <h3 class="text-white mb-0" id="ph_sent">0</h3>
+              </div>
+              <i class="bi bi-send"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card shadow-sm peak-metric-card bg-warning text-dark">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start gap-2">
+              <div>
+                <h6 class="card-title mb-2">Total Stops</h6>
+                <h3 class="mb-0" id="ph_stops">-</h3>
+              </div>
+              <i class="bi bi-geo-alt"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 peak-kpis">
+      <div class="col-12">
+        <div class="card shadow-sm">
+          <div class="card-body py-4">
+            <div class="row g-3 text-center">
+              <div class="col-md-4">
+                <div class="kpi">
+                  <h6 class="text-muted text-uppercase small mb-1">Total Predicted Riders</h6>
+                  <h3 class="mb-0" id="kpiTotal">0</h3>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="kpi">
+                  <h6 class="text-muted text-uppercase small mb-1">Busiest Stop</h6>
+                  <h3 class="mb-0" id="kpiBusiest">-</h3>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="kpi">
+                  <h6 class="text-muted text-uppercase small mb-1">Busiest Hour</h6>
+                  <h3 class="mb-0" id="kpiPeak">-</h3>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 peak-predictions">
+      <div class="col-12">
+        <div class="card shadow-sm h-100">
+          <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <h6 class="mb-0"><i class="bi bi-eye me-2"></i>Today's Peak Hours Preview</h6>
+            <span class="badge bg-primary" id="ph_date_badge">-</span>
+          </div>
+          <div class="card-body">
+            <div id="predictionsCards" class="row g-3">
+              <div class="text-center text-muted py-3">No predictions available</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /tab-peak -->
+
+  <!-- ===== Pane: Data & Reports ===== -->
+  <!-- ===== Pane: SMS Notifications ===== -->
+  <div class="tab-pane fade" id="tab-sms" role="tabpanel" aria-labelledby="tab-sms-tab" tabindex="0">
+    <div class="row g-3 sms-layout align-items-start">
+      <div class="col-12 col-lg-7 order-1 order-lg-2">
+        <div class="sms-right-column d-flex flex-column gap-3 gap-lg-4">
+          <!-- SMS Balance Card -->
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <h5 class="card-title mb-1"><i class="bi bi-wallet2 me-2"></i>SMS Balance</h5>
+                  <p class="text-muted small mb-0">Semaphore API Account Status</p>
+                </div>
+                <div class="text-end">
+                  <h3 class="mb-0" id="smsBalance">
+                    <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+                  </h3>
+                  <small class="text-muted">credits remaining</small>
+                </div>
+                <button id="btnRefreshBalance" class="btn btn-outline-primary btn-sm">
+                  <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recipients List -->
+          <div class="card shadow-sm h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="card-title mb-0">
+                  <i class="bi bi-people"></i> Recipients
+                </h5>
+                <div class="d-flex gap-2 flex-wrap">
+                  <div class="btn-group btn-group-sm" role="group">
+                    <input type="radio" class="btn-check" name="roleFilter" id="filterAll" value="all" checked autocomplete="off">
+                    <label class="btn btn-outline-primary" for="filterAll">All</label>
+                    
+                    <input type="radio" class="btn-check" name="roleFilter" id="filterDrivers" value="driver" autocomplete="off">
+                    <label class="btn btn-outline-primary" for="filterDrivers">Drivers</label>
+                    
+                    <input type="radio" class="btn-check" name="roleFilter" id="filterPassengers" value="passenger" autocomplete="off">
+                    <label class="btn btn-outline-primary" for="filterPassengers">Passengers</label>
+                  </div>
+                  <button id="btnRefreshRecipients" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-clockwise"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text bg-transparent">
+                    <i class="bi bi-search"></i>
+                  </span>
+                  <input 
+                    id="searchRecipients" 
+                    type="text" 
+                    class="form-control" 
+                    placeholder="Search by name or phone..."
+                  >
+                </div>
+              </div>
+
+              <div class="d-flex gap-2 mb-2 flex-wrap">
+                <button id="btnSelectAll" class="btn btn-sm btn-outline-primary">
+                  <i class="bi bi-check-square"></i> Select All
+                </button>
+                <button id="btnDeselectAll" class="btn btn-sm btn-outline-secondary">
+                  <i class="bi bi-square"></i> Deselect All
+                </button>
+              </div>
+
+              <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                <table class="table table-hover table-sm align-middle">
+                  <thead class="sticky-top bg-white">
+                    <tr>
+                      <th>Name</th>
+                      <th>Role</th>
+                      <th>Phone</th>
+                      <th>Email</th>
+                    </tr>
+                  </thead>
+                  <tbody id="recipientsTableBody">
+                    <tr>
+                      <td colspan="4" class="text-center text-muted py-3">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                        Loading recipients...
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="mt-3 small text-muted">
+                <p class="mb-1">
+                  <i class="bi bi-info-circle me-1"></i> Selecting a recipient automatically updates the count in the composer.
+                </p>
+                <p class="mb-0">
+                  <i class="bi bi-shield-check me-1"></i> Phone numbers are validated and formatted before sending.
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Message Composer -->
-      <div class="col-md-5">
+      <div class="col-12 col-lg-5 order-2 order-lg-1">
         <div class="card shadow-sm h-100">
           <div class="card-body">
             <h5 class="card-title d-flex align-items-center gap-2">
@@ -551,6 +610,23 @@
               </div>
 
               <div class="mb-3">
+                <label class="form-label">Add Recipient by Number</label>
+                <div class="input-group">
+                  <input 
+                    id="manualRecipientInput" 
+                    type="text" 
+                    class="form-control" 
+                    placeholder="Enter phone number (e.g., 09171234567, +639171234567)" 
+                    autocomplete="off"
+                  >
+                  <button type="button" class="btn btn-outline-primary" id="btnAddManualRecipient">
+                    <i class="bi bi-person-plus"></i> Add Number
+                  </button>
+                </div>
+                <small class="text-muted">Separate multiple numbers with commas or spaces. Numbers are normalised to 63XXXXXXXXXX.</small>
+              </div>
+
+              <div class="mb-3">
                 <label class="form-label">Selected Recipients</label>
                 <div class="border rounded p-2" style="min-height: 60px; max-height: 120px; overflow-y: auto;">
                   <div id="selectedRecipients" class="d-flex flex-wrap gap-1">
@@ -579,84 +655,10 @@
           </div>
         </div>
       </div>
-
-      <!-- Recipients List -->
-      <div class="col-md-7">
-        <div class="card shadow-sm h-100">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <h5 class="card-title mb-0">
-                <i class="bi bi-people"></i> Recipients
-              </h5>
-              <div class="d-flex gap-2">
-                <div class="btn-group btn-group-sm" role="group">
-                  <input type="radio" class="btn-check" name="roleFilter" id="filterAll" value="all" checked autocomplete="off">
-                  <label class="btn btn-outline-primary" for="filterAll">All</label>
-                  
-                  <input type="radio" class="btn-check" name="roleFilter" id="filterDrivers" value="driver" autocomplete="off">
-                  <label class="btn btn-outline-primary" for="filterDrivers">Drivers</label>
-                  
-                  <input type="radio" class="btn-check" name="roleFilter" id="filterPassengers" value="passenger" autocomplete="off">
-                  <label class="btn btn-outline-primary" for="filterPassengers">Passengers</label>
-                </div>
-                <button id="btnRefreshRecipients" class="btn btn-outline-secondary btn-sm">
-                  <i class="bi bi-arrow-clockwise"></i>
-                </button>
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <div class="input-group input-group-sm">
-                <span class="input-group-text bg-transparent">
-                  <i class="bi bi-search"></i>
-                </span>
-                <input 
-                  id="searchRecipients" 
-                  type="text" 
-                  class="form-control" 
-                  placeholder="Search by name or phone..."
-                >
-              </div>
-            </div>
-
-            <div class="d-flex gap-2 mb-2">
-              <button id="btnSelectAll" class="btn btn-sm btn-outline-primary">
-                <i class="bi bi-check-square"></i> Select All
-              </button>
-              <button id="btnDeselectAll" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-square"></i> Deselect All
-              </button>
-            </div>
-
-            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-              <table class="table table-hover table-sm align-middle">
-                <thead class="sticky-top bg-white">
-                  <tr>
-                    <th>Name</th>
-                    <th>Role</th>
-                    <th>Phone</th>
-                    <th>Email</th>
-                  </tr>
-                </thead>
-                <tbody id="recipientsTableBody">
-                  <tr>
-                    <td colspan="4" class="text-center text-muted py-3">
-                      <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                      Loading recipients...
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div>
   </div><!-- /tab-sms -->
-
-  </div><!-- /tab-content (feature tabs) -->
-  </div>
+    </div><!-- /dashboard-content -->
+  </div><!-- /dashboard-shell -->
 </main>
 
 <!-- Add Admin Modal -->
@@ -769,17 +771,18 @@
       getSMSBalance,
       getSMSInfo,
       renderRecipientsTable,
-      formatPredictionForSMS
+      formatPhoneNumber,
+      isValidPhoneNumber
     } from "./js/sms-integration.js";
-
+  import { smsRateLimiter } from "./js/rate-limiter.js";
 
   const $ = (sel) => document.querySelector(sel);
   // Sanitize any mojibake or bad bytes to ASCII
   function cleanText(s) {
     if (s == null) return "";
     return String(s)
-      .replace(/â€”/g, ' - ')
-      .replace(/[�\uFFFD]+/g, '')
+      .replace(/Ã¢â‚¬â€/g, ' - ')
+      .replace(/[ï¿½\uFFFD]+/g, '')
       .replace(/\s{2,}/g, ' ')
       .trim();
   }
@@ -789,6 +792,399 @@
         ${html}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
       </div>`;
+  }
+  window.showAlert = showAlert;
+
+  let waitingChart = null;
+  let stopCatalog = [];
+  let passengerWaitingUnsubscribe = null;
+  let stopsEndpointAvailable = true;
+  let predictionServiceAvailable = true;
+  let waitingAnalyticsSetup = false;
+  let analyticsHydrated = false;
+  let waitingHistoryLoaded = false;
+  let historicalWaitingSummary = null;
+  let historicalWaitingNote = '';
+  const FALLBACK_STOPS = [
+    { name: "Saint Gabriel The Archangel Parish", latitude: 16.0754843, longitude: 120.3546182 },
+    { name: "Alip, Boquig Waiting Shed", latitude: 16.073742, longitude: 120.351614 },
+    { name: "Bonuan Boquig, Baranggay Hall", latitude: 16.076286, longitude: 120.3557308 },
+    { name: "Sagor, Longos", latitude: 16.066106, longitude: 120.353298 },
+    { name: "Centro, Longos", latitude: 16.070591, longitude: 120.359635 },
+    { name: "Don Leon Francisco Maramba Elementary School, Longos", latitude: 16.0710835, longitude: 120.3591833 },
+    { name: "Bonuan Boquig - Biazon Waiting Shed", latitude: 16.0756322, longitude: 120.3656381 },
+    { name: "Bonuan Buquig National Highschool", latitude: 16.078721, longitude: 120.360024 },
+    { name: "7 Eleven Bonuan", latitude: 16.075331, longitude: 120.342945 },
+    { name: "North Central, Don Marcelo Elementary School", latitude: 16.07378, longitude: 120.340295 },
+    { name: "MCDo Bonuan", latitude: 16.0722655, longitude: 120.3386216 },
+    { name: "Nepo Mall", latitude: 16.0511218, longitude: 120.3408555 },
+    { name: "Universidad De Dagupan", latitude: 16.0511218, longitude: 120.3408555 },
+    { name: "Junction", latitude: 16.046392, longitude: 120.343012 },
+    { name: "Region 1 Medical Center", latitude: 16.048645, longitude: 120.341774 },
+    { name: "Phinma-University of Pangasinan", latitude: 16.046392, longitude: 120.343012 },
+    { name: "CSI City Mall", latitude: 16.043989, longitude: 120.335708 },
+    { name: "Herrero-Perez Waiting Shed", latitude: 16.042155, longitude: 120.34246 },
+    { name: "Victory, Five Star", latitude: 16.042842, longitude: 120.344109 },
+    { name: "SM Center Dagupan", latitude: 16.0444626, longitude: 120.3425649 },
+    { name: "DBP", latitude: 16.043786, longitude: 120.344272 },
+    { name: "Tondaligan Centro", latitude: 16.084194, longitude: 120.348134 },
+    { name: "Region 1 MC Annex", latitude: 16.090689, longitude: 120.3622115 },
+    { name: "Bliss Waiting Shed, Binloc", latitude: 16.0935083, longitude: 120.3675867 },
+    { name: "Leisure Coast Resort", latitude: 16.0959466, longitude: 120.3724469 },
+    { name: "Binloc Barangay Hall", latitude: 16.1002609, longitude: 120.3778482 }
+  ];
+
+async function ensureStopCatalog() {
+  if (stopCatalog.length) return stopCatalog;
+  if (!stopsEndpointAvailable) {
+    stopCatalog = FALLBACK_STOPS.slice();
+    return stopCatalog;
+  }
+  try {
+    const apiBase = window.API_BASE ?? 'http://127.0.0.1:5000';
+    const resp = await fetch(`${apiBase}/api/stops`, {
+      method: 'GET',
+      cache: 'no-store'
+    }).catch(err => {
+      console.warn('Stops API unavailable, using fallback:', err.message);
+      stopsEndpointAvailable = false;
+      return null;
+    });
+    
+    if (!resp || !resp.ok) {
+      stopCatalog = FALLBACK_STOPS.slice();
+      stopsEndpointAvailable = false;
+    } else {
+      stopCatalog = await resp.json();
+    }
+    return stopCatalog;
+  } catch (error) {
+    console.warn('Failed to load stops catalogue:', error);
+    stopCatalog = FALLBACK_STOPS.slice();
+    stopsEndpointAvailable = false;
+    return stopCatalog;
+  }
+}
+
+function toRadians(deg) {
+  return (deg * Math.PI) / 180;
+}  function haversineMeters(lat1, lon1, lat2, lon2) {
+    const R = 6371000;
+    const dLat = toRadians(lat2 - lat1);
+    const dLon = toRadians(lon2 - lon1);
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLon / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  function resolveStopName(record) {
+    if (!record) return 'Outside Stop Radius';
+    if (record.stop_name) return record.stop_name;
+    if (record.stop && record.stop.name) return record.stop.name;
+    if (typeof record.lat !== 'number' || typeof record.lng !== 'number' || !stopCatalog.length) {
+      return 'Outside Stop Radius';
+    }
+
+    let nearestName = 'Outside Stop Radius';
+    let nearestDistance = Number.POSITIVE_INFINITY;
+    for (const stop of stopCatalog) {
+      const lat = stop.latitude ?? stop.lat;
+      const lng = stop.longitude ?? stop.lng ?? stop.lon;
+      if (typeof lat !== 'number' || typeof lng !== 'number') continue;
+      const distance = haversineMeters(record.lat, record.lng, lat, lng);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestName = stop.name || stop.stop_name || 'Stop';
+      }
+    }
+    return nearestDistance <= 150 ? nearestName : 'Outside Stop Radius';
+  }
+
+  function normaliseTimestamp(ts) {
+    if (!ts) return 0;
+    if (typeof ts === 'number') return ts;
+    if (typeof ts === 'string') {
+      const parsed = Number(ts);
+      return Number.isFinite(parsed) ? parsed : Date.parse(ts) || 0;
+    }
+    if (typeof ts === 'object') {
+      if (typeof ts._serverTimestamp === 'number') return ts._serverTimestamp;
+      if (typeof ts.seconds === 'number') {
+        const millis = ts.seconds * 1000;
+        return typeof ts.nanoseconds === 'number' ? millis + ts.nanoseconds / 1e6 : millis;
+      }
+    }
+    return 0;
+  }
+
+  function resolveWaitingCount(rec) {
+    if (!rec) return { active: false, count: 0 };
+
+    const companions = Number(rec.companions ?? rec.groupSize ?? rec.group_size ?? rec.passengers ?? 0);
+    const defaultCount = 1 + Math.max(0, Number.isFinite(companions) ? companions : 0);
+    const raw = rec.waiting ?? rec.waiting_count ?? rec.queue_size ?? rec.group_count;
+
+    const toNumber = (value) => {
+      if (typeof value === 'number') return value;
+      if (typeof value === 'string' && value.trim() !== '') {
+        const n = Number(value.trim());
+        if (!Number.isNaN(n)) return n;
+      }
+      return NaN;
+    };
+
+    if (typeof raw === 'boolean') {
+      return raw ? { active: true, count: defaultCount } : { active: false, count: 0 };
+    }
+
+    const numericWaiting = toNumber(raw);
+    if (Number.isFinite(numericWaiting)) {
+      if (numericWaiting <= 0) return { active: false, count: 0 };
+      return { active: true, count: Math.max(defaultCount, Math.round(numericWaiting)) };
+    }
+
+    if (typeof raw === 'string') {
+      const text = raw.trim().toLowerCase();
+      if (!text || ['no', 'none', 'false', '0', 'off', 'na'].includes(text)) {
+        return { active: false, count: 0 };
+      }
+    }
+
+    if (typeof rec.status === 'string') {
+      const status = rec.status.trim().toLowerCase();
+      if (['waiting', 'queued', 'queueing', 'pending', 'standby'].includes(status)) {
+        return { active: true, count: defaultCount };
+      }
+      if (['enroute', 'completed', 'done', 'inactive'].includes(status)) {
+        return { active: false, count: 0 };
+      }
+    }
+
+    if (rec.online === false) {
+      return { active: false, count: 0 };
+    }
+
+    return { active: true, count: defaultCount };
+  }
+
+  function summariseWaitingPassengers(snapshot) {
+    const counts = new Map();
+    let total = 0;
+    for (const [, rec] of Object.entries(snapshot || {})) {
+      if (!rec) continue;
+      const online = rec.online !== false;
+      if (!online) continue;
+      if (typeof rec.lat !== 'number' || typeof rec.lng !== 'number') continue;
+
+      const updatedAt = normaliseTimestamp(rec.last_update || rec.updated_at || rec.timestamp || rec.lastSeen);
+      if (updatedAt && (Date.now() - updatedAt) > PASSENGER_STALE_MS) continue;
+
+      const { active, count } = resolveWaitingCount(rec);
+      if (!active || count <= 0) continue;
+
+      const stopName = resolveStopName(rec);
+      counts.set(stopName, (counts.get(stopName) || 0) + count);
+      total += count;
+    }
+    const entries = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
+    return { total, entries };
+  }
+
+  function summarisePredictionHistory(records) {
+    const counts = new Map();
+    let total = 0;
+    let earliest = null;
+    let latest = null;
+    const daySet = new Set();
+
+    (records || []).forEach((rec) => {
+      if (!rec) return;
+      const stopName = rec.stop_name || rec.stop?.name || rec.stopName;
+      if (!stopName) return;
+      const passengersRaw = Number(rec.predicted_passengers ?? rec.passengers ?? rec.count ?? rec.total ?? 0);
+      if (!Number.isFinite(passengersRaw)) return;
+      const passengers = Math.round(passengersRaw);
+      if (passengers <= 0) return;
+      counts.set(stopName, (counts.get(stopName) || 0) + passengers);
+      total += passengers;
+
+      const rawDate = rec.prediction_date || rec.date || rec.predictionDate;
+      if (rawDate) {
+        const dt = new Date(rawDate);
+        if (!Number.isNaN(dt.getTime())) {
+          if (!earliest || dt < earliest) earliest = dt;
+          if (!latest || dt > latest) latest = dt;
+          daySet.add(dt.toISOString().slice(0, 10));
+        }
+      }
+    });
+
+    const entries = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
+    const meta = {
+      start: earliest ? earliest.toISOString().slice(0, 10) : null,
+      end: latest ? latest.toISOString().slice(0, 10) : null,
+      days: daySet.size
+    };
+    return { total, entries, meta };
+  }
+
+  async function loadHistoricalWaitingAnalytics(force = false) {
+    if (waitingHistoryLoaded && !force) {
+      if (historicalWaitingSummary) {
+        updateWaitingVisual(historicalWaitingSummary, {
+          datasetLabel: 'Predicted passengers (all data)',
+          note: historicalWaitingNote || 'Aggregated predicted passengers across stored dates.'
+        });
+      }
+      return historicalWaitingSummary;
+    }
+
+    const noteEl = document.getElementById('waitingChartNote');
+    try {
+      const API_BASE = window.API_BASE ?? 'http://127.0.0.1:5000';
+      const resp = await fetch(`${API_BASE}/api/predictions`);
+      if (!resp.ok) throw new Error(`Prediction API responded with ${resp.status}`);
+      const records = await resp.json();
+      const summary = summarisePredictionHistory(Array.isArray(records) ? records : []);
+      waitingHistoryLoaded = true;
+      historicalWaitingSummary = summary;
+      const meta = summary.meta || {};
+      if (summary.entries.length) {
+        const rangeText = meta.start && meta.end
+          ? `${meta.start} to ${meta.end}`
+          : 'all stored dates';
+        const dayText = meta.days ? ` covering ${meta.days} day${meta.days === 1 ? '' : 's'}` : '';
+        historicalWaitingNote = `Aggregated predicted passengers from ${rangeText}${dayText}.`;
+      } else {
+        historicalWaitingNote = 'No prediction data available to aggregate.';
+      }
+      updateWaitingVisual(summary, {
+        datasetLabel: 'Predicted passengers (all data)',
+        note: historicalWaitingNote
+      });
+      return summary;
+    } catch (error) {
+      waitingHistoryLoaded = false;
+      historicalWaitingSummary = null;
+      historicalWaitingNote = '';
+      console.error('Failed to load historical prediction data:', error);
+      if (noteEl) noteEl.textContent = 'Unable to load historical prediction data.';
+      return null;
+    }
+  }
+
+  function updateWaitingVisual(summary, options = {}) {
+    const badge = document.getElementById('waitingTotalBadge');
+    if (badge) {
+      const totalNumber = Number(summary.total);
+      badge.textContent = Number.isFinite(totalNumber) ? totalNumber.toLocaleString() : summary.total;
+    }
+
+    const listEl = document.getElementById('waitingStopsList');
+    if (listEl) {
+      if (!summary.entries.length) {
+        listEl.innerHTML = options.emptyHtml || '<div class="text-muted small">No data available yet.</div>';
+      } else {
+        listEl.innerHTML = summary.entries.slice(0, 10).map(([stop, count]) => `
+          <div class="waiting-stop-item d-flex align-items-center justify-content-between">
+            <span class="waiting-stop-name">${stop}</span>
+            <span class="badge bg-secondary">${count}</span>
+          </div>
+        `).join('');
+      }
+    }
+
+    const canvas = document.getElementById('waitingPassengersChart');
+    if (!canvas || typeof Chart === 'undefined') {
+      return;
+    }
+
+    const chartEntries = summary.entries.length
+      ? summary.entries.slice(0, 10)
+      : FALLBACK_STOPS.slice(0, 5).map(stop => [stop.name, 0]);
+
+    const labels = chartEntries.map(([stop]) => stop);
+    const data = chartEntries.map(([, count]) => count);
+
+    if (!waitingChart) {
+      waitingChart = new Chart(canvas, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: options.datasetLabel || 'Passengers waiting',
+            data,
+            backgroundColor: '#4ED7F1',
+            borderRadius: 6,
+            maxBarThickness: 36
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { ticks: { color: '#4b5563', maxRotation: 45 }, grid: { display: false } },
+            y: { beginAtZero: true, ticks: { color: '#4b5563', precision: 0 } }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    } else {
+      waitingChart.data.labels = labels;
+      waitingChart.data.datasets[0].label = options.datasetLabel || 'Passengers waiting';
+      waitingChart.data.datasets[0].data = data;
+      waitingChart.update();
+    }
+
+    const noteEl = document.getElementById('waitingChartNote');
+    if (noteEl) {
+      if (options.note) {
+        noteEl.textContent = options.note;
+      } else {
+        noteEl.textContent = summary.entries.length
+          ? 'Top stops shown (first 10). Distances grouped within 150 meters.'
+          : 'Live counts refresh automatically from passenger devices.';
+      }
+    }
+  }
+
+  async function initialiseWaitingAnalytics() {
+    await ensureStopCatalog();
+    if (passengerWaitingUnsubscribe) {
+      passengerWaitingUnsubscribe();
+    }
+    passengerWaitingUnsubscribe = onValue(ref(db, 'passengers_location'), (snap) => {
+      const liveSummary = summariseWaitingPassengers(snap.exists() ? snap.val() : {});
+      if (historicalWaitingSummary) {
+        const liveNote = liveSummary.entries.length
+          ? ` Live now: ${liveSummary.total} passenger${liveSummary.total === 1 ? '' : 's'} across ${liveSummary.entries.length} stop${liveSummary.entries.length === 1 ? '' : 's'}.`
+          : ' No live waiting passengers detected right now.';
+        const note = (historicalWaitingNote || 'Aggregated predicted passengers across stored dates.') + liveNote;
+        updateWaitingVisual(historicalWaitingSummary, {
+          datasetLabel: 'Predicted passengers (all data)',
+          note
+        });
+      } else {
+        const note = liveSummary.entries.length
+          ? 'Live waiting counts refresh automatically from passenger devices.'
+          : 'No live waiting data yet.';
+        updateWaitingVisual(liveSummary, {
+          datasetLabel: 'Live waiting passengers',
+          note
+        });
+      }
+    }, (error) => {
+      console.error('Failed to listen for waiting passengers:', error);
+      if (historicalWaitingSummary) {
+        updateWaitingVisual(historicalWaitingSummary, {
+          datasetLabel: 'Predicted passengers (all data)',
+          note: historicalWaitingNote || 'Showing historical totals (live data unavailable).'
+        });
+      } else {
+        const noteEl = document.getElementById('waitingChartNote');
+        if (noteEl) noteEl.textContent = 'Unable to load waiting passenger data.';
+      }
+    });
   }
 
   attachAdminBadge("#adminInfo");
@@ -998,7 +1394,6 @@ if (btnRemoveAdmin) btnRemoveAdmin.addEventListener('click', openRemoveAdminModa
 const btnConfirmRemoveAdmin = document.getElementById('btnConfirmRemoveAdmin');
 if (btnConfirmRemoveAdmin) btnConfirmRemoveAdmin.addEventListener('click', removeAdminPrivileges);
 
-
   // Normalize any mojibake placeholders to plain ASCII right away
   const setLoading = (sel, cols) => {
     const el = document.querySelector(sel);
@@ -1009,6 +1404,19 @@ if (btnConfirmRemoveAdmin) btnConfirmRemoveAdmin.addEventListener('click', remov
       </div>
     </td></tr>`;
   };
+
+  function handleDateRangeSelection(button) {
+    if (!button) return;
+    const scope = button.closest('[role="group"]') || document;
+    const buttons = scope.querySelectorAll('[data-range]');
+    buttons.forEach(btn => {
+      const isActive = btn === button;
+      btn.classList.toggle('active', isActive);
+      btn.classList.toggle('btn-secondary', isActive);
+      btn.classList.toggle('btn-outline-secondary', !isActive);
+    });
+  }
+
   setLoading('#schRows', 6);
   setLoading('#rowsDrivers', 4);
   setLoading('#rowsPassengers', 4);
@@ -1019,11 +1427,12 @@ if (btnConfirmRemoveAdmin) btnConfirmRemoveAdmin.addEventListener('click', remov
     const nodes = document.querySelectorAll('option, td, th, span, button, label, h1, h2, h3, h4, h5, h6');
     nodes.forEach(el => {
       const t = el.textContent || '';
-      if (t.indexOf('â€”') !== -1) el.textContent = t.replace(/â€”/g, ' - ');
+      if (t.indexOf('Ã¢â‚¬â€') !== -1) el.textContent = t.replace(/Ã¢â‚¬â€/g, ' - ');
     });
   }
 
   const ONLINE_WINDOW_MS = 150000; // 2.5 minutes recency window
+  const PASSENGER_STALE_MS = 5 * 60 * 1000; // ignore passenger points older than 5 minutes
 
   // Presence helpers
   function computeOnline(rec) {
@@ -1383,11 +1792,42 @@ if (btnConfirmRemoveAdmin) btnConfirmRemoveAdmin.addEventListener('click', remov
     }
   }
 
+  async function refreshAnalyticsSections({ withHistory = true, force = false } = {}) {
+    try {
+      await loadTripDrivers();
+      await loadHistoricalWaitingAnalytics(force);
+      if (!analyticsHydrated || force) {
+        await Promise.all([
+          loadDriversTable(),
+          loadPassengersTable()
+        ]);
+        if (!waitingAnalyticsSetup || force) {
+          await initialiseWaitingAnalytics();
+          waitingAnalyticsSetup = true;
+        }
+        analyticsHydrated = true;
+      }
+      if (withHistory) {
+        const startEl = document.querySelector('#histStart');
+        const endEl = document.querySelector('#histEnd');
+        if (startEl?.value && endEl?.value) {
+          await loadDispatchHistory();
+        }
+      }
+    } catch (error) {
+      console.error('Failed to refresh Data & Reports tab:', error);
+    }
+  }
+
   // Event listeners
-  $("#btnReloadDrivers").addEventListener("click", loadDriversTable);
-  $("#btnReloadPassengers").addEventListener("click", loadPassengersTable);
-  $("#btnExportDrivers").addEventListener("click", exportDrivers);
-  $("#btnExportPassengers").addEventListener("click", exportPassengers);
+  const btnReloadDrivers = $("#btnReloadDrivers");
+  if (btnReloadDrivers) btnReloadDrivers.addEventListener("click", loadDriversTable);
+  const btnReloadPassengers = $("#btnReloadPassengers");
+  if (btnReloadPassengers) btnReloadPassengers.addEventListener("click", loadPassengersTable);
+  const btnExportDrivers = $("#btnExportDrivers");
+  if (btnExportDrivers) btnExportDrivers.addEventListener("click", exportDrivers);
+  const btnExportPassengers = $("#btnExportPassengers");
+  if (btnExportPassengers) btnExportPassengers.addEventListener("click", exportPassengers);
   const btnLoadTripsEl = document.querySelector('#btnLoadTrips');
   if (btnLoadTripsEl) btnLoadTripsEl.addEventListener('click', loadTrips);
   const btnExportAll = document.querySelector('#btnExportTripAll');
@@ -1436,8 +1876,6 @@ if (btnConfirmRemoveAdmin) btnConfirmRemoveAdmin.addEventListener('click', remov
   // Kick off initial loads without blocking other listeners/UI
   // This prevents the module from stalling and speeds up perceived load
   loadDriversForSelect().catch(console.warn);
-  loadTripDrivers().catch(console.warn);
-  Promise.all([loadDriversTable(), loadPassengersTable()]).catch(console.warn);
   // Auto-load when trips tab becomes active
   const tripsTabBtn = document.querySelector('#trips-tab');
   if (tripsTabBtn) tripsTabBtn.addEventListener('shown.bs.tab', loadTrips);
@@ -1560,14 +1998,34 @@ async function loadPredictions() {
   const cards = document.getElementById('predictionsCards');
   const dateBadge = document.getElementById('ph_date_badge');
   if (dateBadge) dateBadge.textContent = date;
-  
-  statusBadge.className = 'badge bg-warning';
-  statusBadge.textContent = 'Loading...';
+  const isRetry = !predictionServiceAvailable;
+  if (isRetry) {
+    console.warn('Prediction service previously reported unavailable. Retrying fetchâ€¦');
+  }
+  statusBadge.className = isRetry ? 'badge bg-secondary' : 'badge bg-warning';
+  statusBadge.textContent = isRetry ? 'Retrying...' : 'Loading...';
   
   try {
-    const API_BASE = window.API_BASE ?? ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') && location.port !== '5000' ? 'http://localhost:5000' : '');
-    const response = await fetch(`${API_BASE}/api/predictions/${date}`);    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const API_BASE = window.API_BASE ?? 'http://127.0.0.1:5000';
+    const response = await fetch(`${API_BASE}/api/predictions/${date}`);
+    if (response.status === 404) {
+      predictionServiceAvailable = false;
+      updatePredictionKPIs([]);
+      if (cards) {
+        cards.innerHTML = '<div class="text-center text-muted py-3">Prediction API endpoint not found. Verify the backend is running and exposes /api/predictions/&lt;date&gt;.</div>';
+      }
+      statusBadge.className = 'badge bg-danger';
+      statusBadge.textContent = 'Service unavailable';
+      if (!loadPredictions._alertedUnavailable) {
+        showAlert('Prediction service is unavailable. Please ensure the Flask backend is running and the API base URL is correct.', 'warning');
+        loadPredictions._alertedUnavailable = true;
+      }
+      return;
+    }
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const predictions = await response.json();
+    predictionServiceAvailable = true;
+    loadPredictions._alertedUnavailable = false;
     // Update registered users count if container exists
     try {
       const usersSnap = await get(ref(db, 'passengers'));
@@ -1624,6 +2082,7 @@ async function loadPredictions() {
     
   } catch (error) {
     console.error('Error loading predictions:', error);
+    predictionServiceAvailable = false;
     if (cards) {
       cards.innerHTML = `<div class="text-center text-danger py-3">Error: ${error.message}</div>`;
     }
@@ -1633,31 +2092,37 @@ async function loadPredictions() {
 }
 
 function updatePredictionKPIs(predictions) {
-  const setText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
-  if (!predictions || predictions.length === 0) {
+  const setText = (id, text) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  };
+  
+  if (!Array.isArray(predictions) || predictions.length === 0) {
     setText('kpiTotal', '0');
     setText('kpiBusiest', '-');
     setText('kpiPeak', '-');
     return;
   }
   
-  // Calculate total predicted passengers
-  const total = predictions.reduce((sum, pred) => sum + (predicted_passengers || 0), 0);
-  setText('kpiTotal', total);
+  const total = predictions.reduce((sum, pred) => sum + (Number(pred.predicted_passengers) || 0), 0);
+  setText('kpiTotal', total.toLocaleString());
   
-  // Find busiest stop
-  const busiest = predictions.reduce((max, pred) => 
-    pred.predicted_passengers > max.predicted_passengers ? pred : max, predictions[0]);
+  const busiest = predictions.reduce((max, pred) => {
+    const current = Number(pred.predicted_passengers) || 0;
+    const maxVal = Number(max.predicted_passengers) || 0;
+    return current > maxVal ? pred : max;
+  }, predictions[0]);
   setText('kpiBusiest', busiest.stop_name || busiest?.stop?.name || '-');
   
-  // Find most common peak hour
   const hourCounts = {};
   predictions.forEach(pred => {
-    hourCounts[pred.peak_hour] = (hourCounts[pred.peak_hour] || 0) + 1;
+    const hour = pred.peak_hour ?? pred.peak;
+    if (hour === undefined || hour === null) return;
+    hourCounts[hour] = (hourCounts[hour] || 0) + 1;
   });
-  const peakHour = Object.keys(hourCounts).reduce((a, b) => 
-    (hourCounts[a] > hourCounts[b] ? a : b));
-  setText('kpiPeak', `${peakHour}:00`);
+  const hours = Object.keys(hourCounts);
+  const peakHour = hours.length ? hours.reduce((a, b) => (hourCounts[a] >= hourCounts[b] ? a : b)) : null;
+  setText('kpiPeak', peakHour !== null && peakHour !== undefined ? `${peakHour}:00` : '-');
 }
 
 async function generatePredictions() {
@@ -1669,7 +2134,7 @@ async function generatePredictions() {
   
   try {
     // Try multiple payload styles to match backend expectations
-    const API_BASE = window.API_BASE ?? ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') && location.port !== '5000' ? 'http://localhost:5000' : '');
+    const API_BASE = window.API_BASE ?? 'http://127.0.0.1:5000';
     const attempts = [
       { url: `${API_BASE}/api/predictions/generate`, opts: { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date }) } },
       { url: `${API_BASE}/api/predictions/generate`, opts: { method: 'POST' } },
@@ -1679,6 +2144,9 @@ async function generatePredictions() {
     for (const a of attempts) {
       try {
         const resp = await fetch(a.url, a.opts);
+        if (resp.status === 404) {
+          throw new Error('Prediction service is unavailable on this server.');
+        }
         const text = await resp.text();
         let data = {};
         try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
@@ -1693,12 +2161,19 @@ async function generatePredictions() {
         return;
       } catch (e) {
         lastErr = e;
+        if (String(e.message || '').toLowerCase().includes('unavailable')) {
+          predictionServiceAvailable = false;
+          break;
+        }
       }
     }
     if (lastErr) throw lastErr;
     
   } catch (error) {
     console.error('Error generating predictions:', error);
+    if (String(error.message || '').toLowerCase().includes('unavailable')) {
+      predictionServiceAvailable = false;
+    }
     showAlert('Failed to generate predictions: ' + error.message, 'danger');
     statusBadge.className = 'badge bg-danger';
     statusBadge.textContent = 'Generation failed';
@@ -1713,8 +2188,9 @@ async function sendPredictionsToDrivers() {
   statusBadge.textContent = 'Sending...';
   
   try {
-    const API_BASE = window.API_BASE ?? ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') && location.port !== '5000' ? 'http://localhost:5000' : '');
+    const API_BASE = window.API_BASE ?? 'http://127.0.0.1:5000';
     const resp = await fetch(`${API_BASE}/api/predictions/send`, { method: 'POST' });
+    if (resp.status === 404) throw new Error('Prediction service is unavailable on this server.');
     const text = await resp.text();
     let result = {};
     try { result = text ? JSON.parse(text) : {}; } catch { result = { raw: text }; }
@@ -1725,6 +2201,9 @@ async function sendPredictionsToDrivers() {
     
   } catch (error) {
     console.error('Error sending predictions:', error);
+    if (String(error.message || '').toLowerCase().includes('unavailable')) {
+      predictionServiceAvailable = false;
+    }
     showAlert('Failed to send predictions: ' + error.message, 'danger');
     statusBadge.className = 'badge bg-danger';
     statusBadge.textContent = 'Send failed';
@@ -1733,17 +2212,18 @@ async function sendPredictionsToDrivers() {
 // Add these to your existing event listeners section
 $('#btnReloadPredictions').addEventListener('click', loadPredictions);
 $('#btnGeneratePredictions').addEventListener('click', generatePredictions);
-$('#btnSendPredictions').addEventListener('click', sendPredictionsToDrivers);
 $('#predictionDate').addEventListener('change', loadPredictions);
-const btnSendAllPH = document.getElementById('btnSendAllPH');
-if (btnSendAllPH) btnSendAllPH.addEventListener('click', sendPredictionsToDrivers);
 
 // Initialize prediction date
-$('#predictionDate').value = new Date().toISOString().split('T')[0];
+const predictionDateInput = document.getElementById('predictionDate');
+if (predictionDateInput) {
+  predictionDateInput.value = new Date().toISOString().split('T')[0];
+  loadPredictions();
+}
 // Helper function to get predictions
 async function getPredictions(date) {
   try {
-    const API_BASE = window.API_BASE ?? ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') && location.port !== '5000' ? 'http://localhost:5000' : '');
+    const API_BASE = window.API_BASE ?? 'http://127.0.0.1:5000';
     const response = await fetch(`${API_BASE}/api/predictions/${date}`);       if (!response.ok) return null;
     return await response.json();
   } catch (error) {
@@ -1908,8 +2388,13 @@ async function getPredictions(date) {
   const histStartEl = document.querySelector('#histStart');
  
   const histEndEl = document.querySelector('#histEnd');
+  const applyDefaultRange = !(histStartEl?.value) && !(histEndEl?.value);
   if (histStartEl && !histStartEl.value) histStartEl.value = sevenAgo;
   if (histEndEl && !histEndEl.value) histEndEl.value = today;
+  if (applyDefaultRange) {
+    const defaultRangeBtn = document.querySelector('[data-range="7"]');
+    if (defaultRangeBtn) handleDateRangeSelection(defaultRangeBtn);
+  }
 
   // History listeners
   const btnLoadHistory = document.querySelector('#btnLoadHistory');
@@ -1941,13 +2426,12 @@ async function getPredictions(date) {
   const btnExportHistory = document.querySelector('#btnExportHistory');
   if (btnExportHistory) btnExportHistory.addEventListener('click', exportHistoryCSV);
 
-  // Auto-load when tab is shown
-  const historyTabBtn = document.querySelector('#history-tab');
-  if (historyTabBtn) {
-    // Load when the tab is shown via Bootstrap
-    historyTabBtn.addEventListener('shown.bs.tab', () => loadDispatchHistory());
-    // Fallback: also trigger on click in case the event doesn't fire
-    historyTabBtn.addEventListener('click', () => setTimeout(loadDispatchHistory, 0));
+  const dashboardTabBtn = document.querySelector('#tab-dashboard-tab');
+  if (dashboardTabBtn) {
+    const triggerDashboardRefresh = () => {
+      refreshAnalyticsSections({ withHistory: false }).catch(err => console.error('Dashboard analytics refresh failed:', err));
+    };
+    dashboardTabBtn.addEventListener('shown.bs.tab', triggerDashboardRefresh);
   }
 
   // Quick filter wiring for Drivers/Passengers tables
@@ -1966,55 +2450,121 @@ async function getPredictions(date) {
     input.addEventListener('input', apply);
     return () => apply();
   }
+  // Setup table filters once
   const refreshDriversFilter = setupTableFilter('#searchDrivers', '#rowsDrivers') || (()=>{});
   const refreshPassengersFilter = setupTableFilter('#searchPassengers', '#rowsPassengers') || (()=>{});
-  // Re-apply filters after each load
+  
+  // Re-apply filters after each load by wrapping original functions
   const _origLoadDriversTable = loadDriversTable;
   loadDriversTable = async function(){ await _origLoadDriversTable(); refreshDriversFilter(); };
   const _origLoadPassengersTable = loadPassengersTable;
   loadPassengersTable = async function(){ await _origLoadPassengersTable(); refreshPassengersFilter(); };
 
-  // ===== SMS PANEL =====
-  let allRecipients = [];
-  let selectedPhones = new Set();
+  refreshAnalyticsSections({ withHistory: true, force: true }).catch(err => console.error('Initial analytics load failed:', err));
 
-  // Load SMS balance
-  async function loadSMSBalance() {
+
+    let allRecipients = [];
+  const selectedPhones = new Set();
+  const manualRecipients = new Map();
+  let recipientsMap = new Map();
+
+  let balanceRefreshTimer = null;
+  async function loadSMSBalance(silent = false) {
     const balanceEl = document.getElementById('smsBalance');
     if (!balanceEl) return;
     
-    balanceEl.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
-    
+    // Clear any pending refresh
+    if (balanceRefreshTimer) {
+      clearTimeout(balanceRefreshTimer);
+      balanceRefreshTimer = null;
+    }
+
+    if (!silent) {
+      balanceEl.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+    }
+
     try {
       const result = await getSMSBalance();
-      balanceEl.textContent = result.balance || '0';
+
+      if (!result || result.success === false) {
+        balanceEl.innerHTML = '<span class="text-muted">Unavailable</span>';
+        const message = result?.error || 'SMS balance unavailable.';
+        console.warn('SMS balance unavailable:', message);
+        showAlert(message, 'info');
+        return;
+      }
+
+      const balanceValue = Number(result.balance ?? result.raw?.credit_balance ?? 0);
+      const formattedBalance = Number.isFinite(balanceValue)
+        ? balanceValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        : String(result.balance ?? '0');
+      balanceEl.textContent = formattedBalance;
+
+      if (result.stale) {
+        const waitSeconds = Number.isFinite(result.retry_after) ? Math.max(Number(result.retry_after), 5) : 5;
+        const minutesAgo = Number.isFinite(result.last_updated_seconds_ago)
+          ? Math.max(Math.round(Number(result.last_updated_seconds_ago) / 60), 1)
+          : null;
+        const ageText = minutesAgo ? ` Last updated about ${minutesAgo} minute(s) ago.` : '';
+        const infoMessage = (result.note && result.note.trim())
+          ? `${result.note.trim()}${ageText}`
+          : `Showing cached SMS balance due to rate limiting.${ageText}`;
+
+        balanceEl.textContent = `${formattedBalance} (cached)`;
+        balanceEl.setAttribute('title', infoMessage);
+
+        if (!silent) {
+          showAlert(infoMessage, 'info');
+        }
+
+        balanceRefreshTimer = setTimeout(() => loadSMSBalance(true), (waitSeconds * 1000) + 100);
+      } else {
+        if (result.localCooldown) {
+          balanceEl.setAttribute('title', 'Balance was recently refreshed. Please wait a moment before checking again.');
+        } else {
+          balanceEl.removeAttribute('title');
+        }
+      }
     } catch (error) {
-      balanceEl.innerHTML = '<span class="text-danger">Error</span>';
       console.error('Failed to load SMS balance:', error);
+      const friendly = (error && error.message) ? error.message : 'Unable to reach SMS service.';
+      const isRateLimit = /rate limit/i.test(friendly);
+      balanceEl.innerHTML = isRateLimit
+        ? '<span class="text-muted">Rate limited</span>'
+        : '<span class="text-danger">Error</span>';
+      if (!silent) {
+        showAlert(isRateLimit ? friendly : 'SMS balance unavailable. ' + friendly, isRateLimit ? 'info' : 'danger');
+      }
+
+      // If rate limited, schedule a retry even when the message has no explicit seconds
+      if (isRateLimit) {
+        const match = friendly.match(/(\d+)\s*seconds?/i);
+        const waitSeconds = match ? parseInt(match[1], 10) : 5;
+        balanceRefreshTimer = setTimeout(() => loadSMSBalance(true), (waitSeconds * 1000) + 100);
+      }
     }
   }
 
-  // Load recipients
   async function loadRecipients() {
     const tbody = document.getElementById('recipientsTableBody');
     if (!tbody) return;
-    
+
     tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-3">
       <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
       Loading recipients...
     </td></tr>`;
-    
+
     try {
       allRecipients = await getAllRecipients();
+      recipientsMap = new Map(allRecipients.map(r => [r.phone, r]));
       const roleFilter = document.querySelector('input[name="roleFilter"]:checked')?.value || 'all';
       renderRecipientsTable(allRecipients, 'recipientsTableBody', roleFilter);
-      
-      // Restore selected checkboxes
+
       selectedPhones.forEach(phone => {
         const checkbox = document.querySelector(`.recipient-checkbox[value="${phone}"]`);
         if (checkbox) checkbox.checked = true;
       });
-      
+
       updateSelectedDisplay();
     } catch (error) {
       tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger py-3">
@@ -2023,37 +2573,89 @@ async function getPredictions(date) {
     }
   }
 
-  // Update selected recipients display
+  function getRecipientInfo(phone) {
+    if (!phone) return { phone: '', name: '', role: 'manual' };
+    return manualRecipients.get(phone) || recipientsMap.get(phone) || {
+      phone,
+      name: phone,
+      role: 'manual'
+    };
+  }
+
+  function formatDisplayPhone(phone) {
+    if (!phone) return '';
+    if (phone.startsWith('+')) return phone;
+    if (phone.startsWith('63')) return `+${phone}`;
+    if (phone.startsWith('0')) return phone;
+    return phone;
+  }
+
   function updateSelectedDisplay() {
     const container = document.getElementById('selectedRecipients');
     const countEl = document.getElementById('recipientCount');
     const btnSend = document.getElementById('btnSendSMS');
-    
+
     if (!container || !countEl || !btnSend) return;
-    
+
     countEl.textContent = selectedPhones.size;
-    
+
     if (selectedPhones.size === 0) {
       container.innerHTML = '<small class="text-muted">No recipients selected</small>';
       btnSend.disabled = true;
       return;
     }
-    
-    const selectedRecipients = allRecipients.filter(r => selectedPhones.has(r.phone));
-    container.innerHTML = selectedRecipients.map(r => `
-      <span class="badge ${r.role === 'driver' ? 'bg-primary' : 'bg-info'}">
-        ${r.name}
-        <button type="button" class="btn-close btn-close-white" style="font-size: 0.6em;" 
-                onclick="this.closest('.badge').remove(); document.querySelector('.recipient-checkbox[value=\\'${r.phone}\\']').checked = false; document.querySelector('.recipient-checkbox[value=\\'${r.phone}\\']').dispatchEvent(new Event('change'));">
-        </button>
-      </span>
-    `).join('');
-    
-    const message = document.getElementById('smsMessage')?.value || '';
-    btnSend.disabled = selectedPhones.size === 0 || message.trim().length === 0;
+
+    const selectedList = Array.from(selectedPhones).map(phone => {
+      const info = getRecipientInfo(phone);
+      return {
+        phone,
+        displayName: cleanText(info.name || phone),
+        role: info.role || 'manual'
+      };
+    });
+
+    const badgeHtml = selectedList.map(({ phone, displayName, role }) => {
+      const badgeClass = role === 'driver' ? 'bg-primary' : role === 'passenger' ? 'bg-info' : 'bg-secondary';
+      const humanPhone = formatDisplayPhone(phone);
+      return `
+        <span class="badge ${badgeClass} d-inline-flex align-items-center gap-2" data-phone="${phone}">
+          <span>${displayName}</span>
+          <small class="text-white-50">${humanPhone}</small>
+          <button type="button" class="btn-close btn-close-white remove-recipient" data-phone="${phone}" aria-label="Remove"></button>
+        </span>
+      `;
+    }).join('');
+
+    container.innerHTML = badgeHtml || '<small class="text-muted">No recipients selected</small>';
+
+    const messageEl = document.getElementById('smsMessage');
+    const message = messageEl?.value || '';
+    const info = getSMSInfo(message);
+    const charCountEl = document.getElementById('charCount');
+    if (charCountEl) {
+      charCountEl.textContent = `${info.characters} / ${info.maxLength}`;
+      charCountEl.classList.toggle('text-danger', info.exceeds);
+    }
+    btnSend.disabled = selectedPhones.size === 0 || message.trim().length === 0 || info.exceeds;
   }
 
-  // Handle checkbox changes
+  const selectedRecipientsContainer = document.getElementById('selectedRecipients');
+  if (selectedRecipientsContainer) {
+    selectedRecipientsContainer.addEventListener('click', (e) => {
+      const btn = e.target.closest('.remove-recipient');
+      if (!btn) return;
+      const phone = btn.dataset.phone;
+      if (!phone) return;
+      selectedPhones.delete(phone);
+      if (manualRecipients.has(phone)) {
+        manualRecipients.delete(phone);
+      }
+      const checkbox = document.querySelector(`.recipient-checkbox[value="${phone}"]`);
+      if (checkbox) checkbox.checked = false;
+      updateSelectedDisplay();
+    });
+  }
+
   document.addEventListener('change', (e) => {
     if (e.target.classList.contains('recipient-checkbox')) {
       const phone = e.target.value;
@@ -2066,7 +2668,6 @@ async function getPredictions(date) {
     }
   });
 
-  // Character counter
   const smsMessageEl = document.getElementById('smsMessage');
   if (smsMessageEl) {
     smsMessageEl.addEventListener('input', (e) => {
@@ -2074,17 +2675,15 @@ async function getPredictions(date) {
       const charCountEl = document.getElementById('charCount');
       if (charCountEl) {
         charCountEl.textContent = `${info.characters} / ${info.maxLength}`;
-        charCountEl.className = info.remaining < 20 ? 'text-danger fw-bold' : 'text-muted';
+        charCountEl.classList.toggle('text-danger', info.exceeds);
       }
-      
       const btnSend = document.getElementById('btnSendSMS');
       if (btnSend) {
-        btnSend.disabled = !info.isValid || selectedPhones.size === 0;
+        btnSend.disabled = selectedPhones.size === 0 || e.target.value.trim().length === 0 || info.exceeds;
       }
     });
   }
 
-  // Select/Deselect All
   const btnSelectAll = document.getElementById('btnSelectAll');
   if (btnSelectAll) {
     btnSelectAll.addEventListener('click', () => {
@@ -2101,19 +2700,18 @@ async function getPredictions(date) {
     btnDeselectAll.addEventListener('click', () => {
       document.querySelectorAll('.recipient-checkbox').forEach(cb => {
         cb.checked = false;
-        selectedPhones.delete(cb.value);
       });
+      selectedPhones.clear();
+      manualRecipients.clear();
       updateSelectedDisplay();
     });
   }
 
-  // Role filter
   document.querySelectorAll('input[name="roleFilter"]').forEach(radio => {
     radio.addEventListener('change', () => {
       const roleFilter = radio.value;
       renderRecipientsTable(allRecipients, 'recipientsTableBody', roleFilter);
-      
-      // Restore selected checkboxes
+
       selectedPhones.forEach(phone => {
         const checkbox = document.querySelector(`.recipient-checkbox[value="${phone}"]`);
         if (checkbox) checkbox.checked = true;
@@ -2121,13 +2719,12 @@ async function getPredictions(date) {
     });
   });
 
-  // Search filter
   const searchRecipientsEl = document.getElementById('searchRecipients');
   if (searchRecipientsEl) {
     searchRecipientsEl.addEventListener('input', (e) => {
       const query = e.target.value.toLowerCase();
       const rows = document.querySelectorAll('#recipientsTableBody tr');
-      
+
       rows.forEach(row => {
         const text = row.textContent.toLowerCase();
         row.style.display = text.includes(query) ? '' : 'none';
@@ -2135,7 +2732,81 @@ async function getPredictions(date) {
     });
   }
 
-  // Refresh buttons
+  const manualRecipientInput = document.getElementById('manualRecipientInput');
+  const btnAddManualRecipient = document.getElementById('btnAddManualRecipient');
+
+  function addManualRecipientsFromInput() {
+    if (!manualRecipientInput) return;
+    const raw = manualRecipientInput.value.trim();
+    if (!raw) {
+      showAlert('Please enter at least one phone number.', 'warning');
+      manualRecipientInput.focus();
+      return;
+    }
+
+    const tokens = raw.split(/[\s,;]+/).filter(Boolean);
+    if (tokens.length === 0) {
+      showAlert('Please enter at least one phone number.', 'warning');
+      manualRecipientInput.focus();
+      return;
+    }
+
+    const added = [];
+    const invalid = [];
+    const duplicates = [];
+
+    tokens.forEach(token => {
+      const formatted = formatPhoneNumber(token);
+      if (!formatted || !isValidPhoneNumber(formatted)) {
+        invalid.push(token);
+        return;
+      }
+      if (selectedPhones.has(formatted)) {
+        duplicates.push(formatted);
+        return;
+      }
+      manualRecipients.set(formatted, {
+        phone: formatted,
+        name: `Manual ${formatDisplayPhone(formatted)}`,
+        role: 'manual'
+      });
+      selectedPhones.add(formatted);
+      added.push(formatted);
+    });
+
+    if (added.length) {
+      manualRecipientInput.value = '';
+      updateSelectedDisplay();
+      manualRecipientInput.focus();
+    }
+
+    let messageParts = [];
+    if (invalid.length) {
+      messageParts.push(`Invalid number(s): ${invalid.join(', ')}`);
+    }
+    if (duplicates.length) {
+      messageParts.push(`Already selected: ${duplicates.join(', ')}`);
+    }
+    if (!added.length) {
+      if (!messageParts.length) {
+        messageParts = ['No valid phone numbers to add.'];
+      }
+      showAlert(messageParts.join('<br>'), 'warning');
+    } else if (messageParts.length) {
+      showAlert(messageParts.join('<br>'), 'info');
+    }
+  }
+
+  if (manualRecipientInput && btnAddManualRecipient) {
+    btnAddManualRecipient.addEventListener('click', addManualRecipientsFromInput);
+    manualRecipientInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addManualRecipientsFromInput();
+      }
+    });
+  }
+
   const btnRefreshBalance = document.getElementById('btnRefreshBalance');
   if (btnRefreshBalance) {
     btnRefreshBalance.addEventListener('click', loadSMSBalance);
@@ -2146,153 +2817,132 @@ async function getPredictions(date) {
     btnRefreshRecipients.addEventListener('click', loadRecipients);
   }
 
-  // Copy from predictions
   const btnCopyFromPredictions = document.getElementById('btnCopyFromPredictions');
-if (btnCopyFromPredictions) {
-  btnCopyFromPredictions.addEventListener('click', async () => {
-    try {
-      const date = document.getElementById('predictionDate')?.value || new Date().toISOString().split('T')[0];
-      
-      // Fetch predictions
-      const predictions = await getPredictions(date);
-      
-      if (!predictions || predictions.length === 0) {
-        showAlert('No predictions found. Please generate predictions first in the Peak Hours tab.', 'warning');
-        // Switch to predictions tab
-        const predictionsTab = document.getElementById('predictions-tab');
-        if (predictionsTab) predictionsTab.click();
-        return;
-      }
-      
-      // Format all predictions into SMS-friendly messages
-      const messages = predictions.map((p, index) => {
-        const stopName = p.stop_name || p.stop?.name || 'Unknown';
-        const peakHour = p.peak_hour || p.peak || 0;
-        const passengers = p.predicted_passengers || 0;
-        
-        // Format hour (12-hour format)
-        const hour12 = peakHour === 0 ? 12 : (peakHour > 12 ? peakHour - 12 : peakHour);
-        const ampm = peakHour < 12 ? 'AM' : 'PM';
-        
-        return `${stopName}: ${hour12}:00 ${ampm}, ${passengers} pax expected`;
-      });
-      
-      // Take first 3-4 predictions to stay under 160 chars
-      let compiledMessage = '';
-      let count = 0;
-      
-      for (const msg of messages) {
-        const testMessage = compiledMessage ? `${compiledMessage}. ${msg}` : msg;
-        if (testMessage.length <= 160) {
-          compiledMessage = testMessage;
-          count++;
-        } else {
-          break;
-        }
-      }
-      
-      if (compiledMessage) {
-        // Paste into SMS message field
-        const smsMessageEl = document.getElementById('smsMessage');
-        if (smsMessageEl) {
-          smsMessageEl.value = compiledMessage;
-          smsMessageEl.dispatchEvent(new Event('input')); // Trigger character counter
-          
-          showAlert(`Copied ${count} prediction(s) to message field (${compiledMessage.length}/160 chars)`, 'success');
-          
-          // Scroll to message field
-          smsMessageEl.focus();
-          smsMessageEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      } else {
-        showAlert('Could not format predictions within 160 character limit.', 'warning');
-      }
-      
-    } catch (error) {
-      console.error('Error copying predictions:', error);
-      showAlert('Failed to copy predictions: ' + error.message, 'danger');
-    }
-  });
-}
+  if (btnCopyFromPredictions) {
+    btnCopyFromPredictions.addEventListener('click', async () => {
+      try {
+        const date = document.getElementById('predictionDate')?.value || new Date().toISOString().split('T')[0];
+        const predictions = await getPredictions(date);
 
-  // Send SMS form
+        if (!predictions || predictions.length === 0) {
+          showAlert('No predictions found. Please generate predictions first in the Peak Hours tab.', 'warning');
+          const peakTabBtn = document.getElementById('tab-peak-tab');
+          if (peakTabBtn) peakTabBtn.click();
+          return;
+        }
+
+        const messages = predictions.map((p) => {
+          const stopName = p.stop_name || p.stop?.name || 'Unknown';
+          const peakHour = p.peak_hour || p.peak || 0;
+          const passengers = p.predicted_passengers || 0;
+          const hour12 = peakHour === 0 ? 12 : (peakHour > 12 ? peakHour - 12 : peakHour);
+          const ampm = peakHour < 12 ? 'AM' : 'PM';
+          return `${stopName}: ${hour12}:00 ${ampm}, ${passengers} pax expected`;
+        });
+
+        let compiledMessage = '';
+        let count = 0;
+
+        for (const msg of messages) {
+          const testMessage = compiledMessage ? `${compiledMessage}. ${msg}` : msg;
+          if (testMessage.length <= 160) {
+            compiledMessage = testMessage;
+            count++;
+          } else {
+            break;
+          }
+        }
+
+        if (compiledMessage) {
+          const smsMessage = document.getElementById('smsMessage');
+          if (smsMessage) {
+            smsMessage.value = compiledMessage;
+            smsMessage.dispatchEvent(new Event('input'));
+            showAlert(`Copied ${count} prediction(s) to message field (${compiledMessage.length}/160 chars)`, 'success');
+            smsMessage.focus();
+            smsMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        } else {
+          showAlert('Could not format predictions within 160 character limit.', 'warning');
+        }
+      } catch (error) {
+        console.error('Error copying predictions:', error);
+        showAlert('Failed to copy predictions: ' + error.message, 'danger');
+      }
+    });
+  }
+
   const formSMS = document.getElementById('formSMS');
   if (formSMS) {
     formSMS.addEventListener('submit', async (e) => {
       e.preventDefault();
-      
+
       const message = document.getElementById('smsMessage').value.trim();
       const senderName = document.getElementById('smsSenderName').value.trim() || 'JEEPNI';
       const btnSend = document.getElementById('btnSendSMS');
-      
-      // Validation checks
+
       if (selectedPhones.size === 0) {
         showAlert('Please select at least one recipient.', 'warning');
         return;
       }
-      
+
       if (message.length === 0) {
         showAlert('Please enter a message.', 'warning');
         return;
       }
-      
+
       if (message.length > 160) {
         showAlert(`Message exceeds 160 characters (${message.length}/160). Please shorten your message.`, 'danger');
         return;
       }
 
-      // Check if message starts with TEST (Semaphore silently ignores these)
       if (message.toUpperCase().startsWith('TEST')) {
         showAlert('Messages cannot start with "TEST" - Semaphore will ignore them. Please modify your message.', 'warning');
         return;
       }
-      
-      // Rate limiting check
+
       if (!smsRateLimiter.canMakeRequest()) {
         const remaining = Math.ceil(smsRateLimiter.getTimeUntilReset() / 1000);
         showAlert(`Rate limit exceeded. Please wait ${remaining} seconds before sending again.`, 'warning');
         return;
       }
-      
-      // Confirm before sending
+
       const phoneArray = Array.from(selectedPhones);
       const costEstimate = phoneArray.length;
       const confirmMsg = `Send SMS to ${phoneArray.length} recipient(s)?\n\nEstimated cost: ${costEstimate} credit(s)\nMessage: "${message.substring(0, 50)}${message.length > 50 ? '...' : ''}"`;
-      
+
       if (!confirm(confirmMsg)) return;
-      
-      // Disable button and show loading
+
       btnSend.disabled = true;
       btnSend.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Sending...';
-      
+
       try {
-        // Record this request for rate limiting
         smsRateLimiter.recordRequest();
-        
         const result = await sendSMS(phoneArray, message, senderName);
-        
+
         if (result.success) {
-          const successMsg = `SMS sent successfully!\n• Sent: ${result.successful || phoneArray.length}\n• Failed: ${result.failed || 0}\n• Total cost: ~${result.successful || phoneArray.length} credits`;
-          showAlert(successMsg.replace(/\n/g, '<br>'), 'success');
-          
-          // Clear form
+          const sentCount = result.successful ?? result.accepted ?? phoneArray.length;
+          const failCount = result.failed ?? 0;
+          const successMsg = `SMS sent successfully!\n- Sent: ${sentCount}\n- Failed: ${failCount}\n- Total cost: ~${sentCount} credit(s)`;
+          const extraNote = result.note ? `<br><em>${result.note}</em>` : '';
+          showAlert((successMsg.replace(/\n/g, '<br>')) + extraNote, 'success');
+
           document.getElementById('smsMessage').value = '';
           document.getElementById('charCount').textContent = '0 / 160';
           selectedPhones.clear();
+          manualRecipients.clear();
           document.querySelectorAll('.recipient-checkbox').forEach(cb => cb.checked = false);
           updateSelectedDisplay();
-          
-          // Refresh balance
+
           await loadSMSBalance();
         } else {
           throw new Error(result.error || 'Failed to send SMS');
         }
-        
+
       } catch (error) {
         console.error('SMS send error:', error);
         let errorMsg = 'Failed to send SMS: ' + error.message;
-        
-        // Provide helpful error messages
+
         if (error.message.includes('TEST')) {
           errorMsg = 'Message rejected: Cannot start with "TEST". Please modify your message.';
         } else if (error.message.includes('160')) {
@@ -2302,33 +2952,186 @@ if (btnCopyFromPredictions) {
         } else if (error.message.includes('API key')) {
           errorMsg = 'SMS service not configured. Please contact administrator.';
         }
-        
+
         showAlert(errorMsg, 'danger');
-        
+
       } finally {
         btnSend.disabled = false;
         btnSend.innerHTML = '<i class="bi bi-send"></i> Send SMS';
-        
-        // Show rate limit status
+
         const remaining = smsRateLimiter.getRemainingRequests();
         if (remaining < 5) {
-          showAlert(`Rate limit: ${remaining} requests remaining in this minute`, 'info');
+          showAlert(`Rate limit: ${remaining} request${remaining === 1 ? '' : 's'} remaining in this minute`, 'info');
         }
       }
     });
   }
 
-  // Auto-load when SMS tab is shown
+  let mapLoadPromise = null;
+  const dashboardMarkers = { drivers: new Map(), passengers: new Map() };
+  let dashboardMap = null;
+  const defaultMapCenter = [16.043, 120.333];
+  const defaultMapZoom = 14;
+  const driverMarkerIcon = L.icon({
+    iconUrl: '/icons/18 Driver Button.png',
+    iconSize: [46, 46],
+    iconAnchor: [23, 40],
+    popupAnchor: [0, -36],
+    className: 'map-icon map-icon--driver'
+  });
+  const passengerMarkerIcon = L.icon({
+    iconUrl: '/icons/17 Passenger Button.png',
+    iconSize: [46, 46],
+    iconAnchor: [23, 40],
+    popupAnchor: [0, -36],
+    className: 'map-icon map-icon--passenger'
+  });
+
+  function updateDashboardMapViewport() {
+    if (!dashboardMap) return;
+    const markers = [
+      ...dashboardMarkers.drivers.values(),
+      ...dashboardMarkers.passengers.values()
+    ].filter(Boolean);
+    if (!markers.length) {
+      dashboardMap.setView(defaultMapCenter, defaultMapZoom);
+      return;
+    }
+    const group = L.featureGroup(markers);
+    const bounds = group.getBounds();
+    if (!bounds.isValid()) {
+      dashboardMap.setView(defaultMapCenter, defaultMapZoom);
+      return;
+    }
+    dashboardMap.fitBounds(bounds.pad(0.2), { maxZoom: 17 });
+  }
+
+  function ensureMapLoaded() {
+    if (mapLoadPromise) return mapLoadPromise;
+    mapLoadPromise = new Promise((resolve, reject) => {
+      if (window.L) {
+        resolve();
+        return;
+      }
+
+      const linkEl = document.createElement('link');
+      linkEl.rel = 'stylesheet';
+      linkEl.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      document.head.appendChild(linkEl);
+
+      const scriptEl = document.createElement('script');
+      scriptEl.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      scriptEl.onload = () => resolve();
+      scriptEl.onerror = (err) => reject(new Error('Failed to load map library: ' + err.message));
+      document.head.appendChild(scriptEl);
+    });
+    return mapLoadPromise;
+  }
+
+  function getRouteColor(route) {
+    const colors = {
+      gueset: '#2196F3',
+      boquig: '#F44336',
+      longos: '#4CAF50',
+      binloc: '#FFC107',
+      tondaligan: '#9C27B0'
+    };
+    return colors[String(route || '').toLowerCase()] || '#757575';
+  }
+
+  function initialiseDashboardMap() {
+    const mapTarget = document.getElementById('dashboardMap');
+    if (!mapTarget) return;
+
+    ensureMapLoaded().then(() => {
+      if (!dashboardMap) {
+        dashboardMap = L.map('dashboardMap', {
+          preferCanvas: true,
+          zoomControl: true
+        }).setView(defaultMapCenter, defaultMapZoom);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(dashboardMap);
+      } else {
+        dashboardMap.invalidateSize();
+      }
+
+      onValue(ref(db, 'drivers_location'), async (snap) => {
+        const drivers = snap.val() || {};
+        dashboardMarkers.drivers.forEach(marker => marker.remove());
+        dashboardMarkers.drivers.clear();
+
+        for (const [uid, data] of Object.entries(drivers)) {
+          if (!data || data.lat == null || data.lng == null) continue;
+          const lat = Number(data.lat);
+          const lng = Number(data.lng);
+          if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+          try {
+            const driverSnap = await get(ref(db, `drivers/${uid}`));
+            const driver = driverSnap.exists() ? driverSnap.val() : {};
+            const marker = L.marker([lat, lng], { icon: driverMarkerIcon })
+              .bindPopup(`
+                <strong>${driver.name || 'Driver'}</strong><br>
+                Route: ${data.route || driver.route || 'Unknown'}<br>
+                Status: ${data.status || driver.status || 'Unknown'}
+              `);
+            marker.addTo(dashboardMap);
+            dashboardMarkers.drivers.set(uid, marker);
+          } catch (err) {
+            console.warn('Error loading driver details:', err);
+          }
+        }
+        updateDashboardMapViewport();
+      });
+
+      onValue(ref(db, 'passengers_location'), (snap) => {
+        const passengers = snap.val() || {};
+        dashboardMarkers.passengers.forEach(marker => marker.remove());
+        dashboardMarkers.passengers.clear();
+
+        for (const [uid, data] of Object.entries(passengers)) {
+          if (!data || data.lat == null || data.lng == null || !data.online) continue;
+          const lat = Number(data.lat);
+          const lng = Number(data.lng);
+          if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+          const waitingText = data.waiting != null ? String(data.waiting) : 'Unknown';
+          const marker = L.marker([lat, lng], { icon: passengerMarkerIcon })
+            .bindPopup(`Passenger<br>Waiting: ${waitingText}`);
+          marker.addTo(dashboardMap);
+          dashboardMarkers.passengers.set(uid, marker);
+        }
+        updateDashboardMapViewport();
+      });
+    }).catch((error) => console.error('Dashboard map failed:', error));
+  }
+
+  initialiseDashboardMap();
+
   const smsTabBtn = document.querySelector('#tab-sms-tab');
   if (smsTabBtn) {
     smsTabBtn.addEventListener('shown.bs.tab', () => {
       loadSMSBalance();
       loadRecipients();
     });
+    const smsTabPane = document.querySelector('#tab-sms');
+    if (smsTabPane && smsTabPane.classList.contains('show') && smsTabPane.classList.contains('active')) {
+      loadSMSBalance();
+      loadRecipients();
+    }
   }
+
+  const peakTabBtn = document.querySelector('#tab-peak-tab');
+  if (peakTabBtn) {
+    peakTabBtn.addEventListener('shown.bs.tab', () => {
+      loadPredictions();
+    });
+  }
+
   // Quick range buttons for History
   document.querySelectorAll('[data-range]').forEach(btn => {
     btn.addEventListener('click', () => {
+      handleDateRangeSelection(btn);
       const type = btn.getAttribute('data-range');
       const today = new Date();
       const fmt = (d)=> dateKeyLocal(d);
@@ -2351,121 +3154,24 @@ if (btnCopyFromPredictions) {
   });
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script type="module">
-  // ADD THESE IMPORTS AT THE TOP
-  import { db, ref, get, onValue } from "./js/authentication.js";
-  import { smsRateLimiter } from './js/rate-limiter.js';
-
-  document.title = 'JeepNi - Admin Dashboard';
-
-  let mapLoaded = false;
-  async function ensureMapLoaded() {
-    if (mapLoaded) return;
-    try {
-      await import('./js/map-tracker.js');
-      mapLoaded = true;
-      setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
-    } catch (error) {
-      console.warn('Failed to load live map viewer', error);
-      throw error;
-    }
-  }
-
-  let markers = {
-    drivers: new Map(),
-    passengers: new Map()
-  };
-
-  const dashboardMapEl = document.getElementById('dashboardMap');
-  if (dashboardMapEl) {
-    ensureMapLoaded().then(() => {
-      // Initialize map with Dagupan center coordinates
-      const map = L.map('dashboardMap').setView([16.043, 120.333], 14);
-      
-      // Add OpenStreetMap tiles
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(map);
-
-      // Track drivers
-      const driversRef = ref(db, 'drivers_location');
-      onValue(driversRef, async (snap) => {
-        const drivers = snap.val() || {};
-        
-        // Clear old markers
-        markers.drivers.forEach(m => m.remove());
-        markers.drivers.clear();
-        
-        // Add new markers
-        for (const [uid, data] of Object.entries(drivers)) {
-          if (!data.lat || !data.lng) continue;
-          
-          try {
-            const driverSnap = await get(ref(db, `drivers/${uid}`));
-            const driver = driverSnap.val() || {};
-            
-            const icon = L.divIcon({
-              className: '',
-              html: `<div style="font-size:24px;color:${getRouteColor(data.route)}">🚌</div>`
-            });
-            
-            const marker = L.marker([data.lat, data.lng], {icon})
-              .bindPopup(`
-                <strong>${driver.name || 'Driver'}</strong><br>
-                Route: ${data.route || 'Unknown'}<br>
-                Status: ${data.status || 'Unknown'}
-              `);
-            
-            marker.addTo(map);
-            markers.drivers.set(uid, marker);
-          } catch (err) {
-            console.warn('Error loading driver details:', err);
-          }
-        }
-      });
-
-      // Track passengers
-      const passengersRef = ref(db, 'passengers_location');
-      onValue(passengersRef, (snap) => {
-        const passengers = snap.val() || {};
-        
-        // Clear old markers
-        markers.passengers.forEach(m => m.remove());
-        markers.passengers.clear();
-        
-        // Add new markers
-        Object.entries(passengers).forEach(([uid, data]) => {
-          if (!data.lat || !data.lng || !data.online) return;
-          
-          const icon = L.divIcon({
-            className: '',
-            html: '<div style="font-size:24px;color:#2196F3">👤</div>'
-          });
-          
-          const marker = L.marker([data.lat, data.lng], {icon})
-            .bindPopup(`Passenger<br>Waiting: ${data.waiting || false}`);
-            
-          marker.addTo(map);
-          markers.passengers.set(uid, marker);
-        });
-      });
-
-    }).catch(console.error);
-  }
-
-  // Route color helper
-  function getRouteColor(route) {
-    const colors = {
-      gueset: '#2196F3',    // Blue
-      boquig: '#F44336',    // Red
-      longos: '#4CAF50',    // Green
-      binloc: '#FFC107',    // Yellow
-      tondaligan: '#9C27B0' // Purple
-    };
-    return colors[route?.toLowerCase()] || '#757575';
-  }
-</script>
-</body>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>\r\n</body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

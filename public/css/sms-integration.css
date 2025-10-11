@@ -1,0 +1,43 @@
+/* SMS Notifications Tab Styles */
+.sms-notifications {
+  padding: 1rem 0 2rem;
+}
+
+.sms-balance-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+}
+
+.selected-recipients {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  min-height: 40px;
+}
+
+.selected-recipients .badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 2px;
+  padding: 0.4rem 0.6rem;
+}
+
+.sms-notifications .table thead th {
+  background: var(--card-bg);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.sms-message-textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+@media (max-width: 767.98px) {
+  .sms-notifications .btn-group {
+    flex-wrap: wrap;
+  }
+}

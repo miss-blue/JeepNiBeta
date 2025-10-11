@@ -1,248 +1,458 @@
 // public/js/sms-integration.js
-// Consolidated SMS Integration Module for Semaphore API
+// Backend-mediated Semaphore SMS integration helpers
 
 import { db, ref, get } from "./authentication.js";
+import { ENV_CONFIG } from "./env-config.js";
 
-/**
- * Get all recipients (drivers and passengers) from Firebase RTDB
- * @returns {Promise<Array>} Array of recipients with name, role, phone, and email
- */
+const SINGLE_SEGMENT_LIMIT = 160;
+const CONCAT_SEGMENT_SIZE = 153;
+
+const DEFAULT_SMS_ENDPOINT = "http://127.0.0.1:5000/api/send-sms";
+const DEFAULT_SMS_BALANCE_ENDPOINT = "http://127.0.0.1:5000/api/get-sms-balance";
+
+function sanitiseConfigString(value) {
+  if (typeof value !== "string") return "";
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  if (/^SET[_A-Z]*YOUR/i.test(trimmed)) return "";
+  return trimmed;
+}
+
+function resolveConfigValue(localValue, windowKey, fallback = "") {
+  const local = sanitiseConfigString(localValue);
+  if (local) return local;
+  if (typeof window !== "undefined" && window[windowKey]) {
+    const fromWindow = sanitiseConfigString(String(window[windowKey]));
+    if (fromWindow) return fromWindow;
+  }
+  return fallback;
+}
+
+const ENV_SENDER = sanitiseConfigString(ENV_CONFIG?.SEMAPHORE_SENDER ?? "");
+const ENV_SMS_ENDPOINT = sanitiseConfigString(ENV_CONFIG?.BACKEND_SMS_URL ?? "");
+const ENV_SMS_BALANCE_ENDPOINT = sanitiseConfigString(
+  ENV_CONFIG?.BACKEND_SMS_BALANCE_URL ?? ""
+);
+
+const DEFAULT_SENDER = resolveConfigValue(
+  "",
+  "SEMAPHORE_SENDER",
+  ENV_SENDER || "JEEPNI"
+);
+const BACKEND_SMS_URL = resolveConfigValue(
+  "",
+  "BACKEND_SMS_URL",
+  ENV_SMS_ENDPOINT || DEFAULT_SMS_ENDPOINT
+);
+const BACKEND_SMS_BALANCE_URL = resolveConfigValue(
+  "",
+  "BACKEND_SMS_BALANCE_URL",
+  ENV_SMS_BALANCE_ENDPOINT || DEFAULT_SMS_BALANCE_ENDPOINT
+);
+
+function extractSemaphoreError(payload) {
+  if (!payload) return "";
+
+  if (typeof payload === "string") return payload;
+
+  if (Array.isArray(payload)) {
+    for (const entry of payload) {
+      const nested = extractSemaphoreError(entry);
+      if (nested) return nested;
+    }
+    return "";
+  }
+
+  const candidates =
+    payload.error ||
+    payload.errors ||
+    payload.message ||
+    payload.error_message ||
+    payload.meta?.error;
+
+  if (!candidates) return "";
+
+  if (Array.isArray(candidates)) {
+    return candidates
+      .map((item) => extractSemaphoreError(item) || String(item))
+      .filter(Boolean)
+      .join("; ");
+  }
+
+  if (typeof candidates === "object") {
+    return Object.entries(candidates)
+      .map(([key, value]) => {
+        if (Array.isArray(value)) {
+          return `${key}: ${value.join(", ")}`;
+        }
+        return `${key}: ${value}`;
+      })
+      .join("; ");
+  }
+
+  return String(candidates);
+}
+
+function resolveSenderName(senderName) {
+  const candidate = sanitiseConfigString(
+    typeof senderName === "string" ? senderName : ""
+  );
+  if (candidate && candidate !== "JEEPNI") return candidate.substring(0, 11);
+  const fallback = (DEFAULT_SENDER || "JEEPNI").substring(0, 11);
+  return fallback;
+}
+
 export async function getAllRecipients() {
   try {
     const [driversSnap, passengersSnap] = await Promise.all([
-      get(ref(db, 'drivers')),
-      get(ref(db, 'passengers'))
+      get(ref(db, "drivers")),
+      get(ref(db, "passengers")),
     ]);
 
     const recipients = [];
 
-    // Process drivers
     if (driversSnap.exists()) {
       const drivers = driversSnap.val();
-      Object.keys(drivers).forEach(uid => {
+      Object.keys(drivers).forEach((uid) => {
         const driver = drivers[uid];
-        if (driver.phone) {
+        if (driver?.phone) {
           recipients.push({
-            uid: uid,
-            name: driver.name || driver.email || 'Unknown Driver',
-            role: 'driver',
+            uid,
+            name: driver.name || driver.email || "Unknown Driver",
+            role: "driver",
             phone: formatPhoneNumber(driver.phone),
-            email: driver.email || '',
-            route: driver.route || 'N/A'
+            email: driver.email || "",
+            route: driver.route || "N/A",
           });
         }
       });
     }
 
-    // Process passengers
     if (passengersSnap.exists()) {
       const passengers = passengersSnap.val();
-      Object.keys(passengers).forEach(uid => {
+      Object.keys(passengers).forEach((uid) => {
         const passenger = passengers[uid];
-        if (passenger.phone) {
+        if (passenger?.phone) {
           recipients.push({
-            uid: uid,
-            name: passenger.name || passenger.email || 'Unknown Passenger',
-            role: 'passenger',
+            uid,
+            name: passenger.name || passenger.email || "Unknown Passenger",
+            role: "passenger",
             phone: formatPhoneNumber(passenger.phone),
-            email: passenger.email || ''
+            email: passenger.email || "",
           });
         }
       });
     }
 
-    // Sort by role first (drivers, then passengers), then by name
     recipients.sort((a, b) => {
-      if (a.role !== b.role) {
-        return a.role === 'driver' ? -1 : 1;
-      }
+      if (a.role !== b.role) return a.role === "driver" ? -1 : 1;
       return a.name.localeCompare(b.name);
     });
 
     return recipients;
   } catch (error) {
-    console.error('Error fetching recipients:', error);
-    throw new Error('Failed to fetch recipients: ' + error.message);
+    console.error("Error fetching recipients:", error);
+    throw new Error(`Failed to fetch recipients: ${error.message}`);
   }
 }
 
-/**
- * Format phone number to Philippine format (639XXXXXXXXX)
- * Handles multiple input formats
- * @param {string} phone - Phone number in various formats
- * @returns {string} Formatted phone number
- */
 export function formatPhoneNumber(phone) {
-  if (!phone) return '';
-  
-  // Remove all non-digit characters
-  let cleaned = phone.replace(/\D/g, '');
-  
-  // Handle different formats
-  if (cleaned.startsWith('639')) {
-    // Already in correct format: 639XXXXXXXXX
-    return cleaned;
-  } else if (cleaned.startsWith('09')) {
-    // Convert 09XXXXXXXXX to 639XXXXXXXXX
-    return '63' + cleaned.substring(1);
-  } else if (cleaned.startsWith('9') && cleaned.length === 10) {
-    // Convert 9XXXXXXXXX to 639XXXXXXXXX
-    return '63' + cleaned;
-  } else if (cleaned.startsWith('63') && !cleaned.startsWith('639')) {
-    // Handle 63XXXXXXXXXX (missing 9)
-    return cleaned;
-  } else if (cleaned.startsWith('+639')) {
-    // Handle +639XXXXXXXXX
-    return cleaned.substring(1);
-  } else if (cleaned.startsWith('+63')) {
-    // Handle +63XXXXXXXXXX
-    return cleaned.substring(1);
-  }
-  
-  // If format is unclear, return as-is
+  if (!phone) return "";
+  let cleaned = phone.replace(/\D/g, "");
+  if (cleaned.startsWith("639")) return cleaned;
+  if (cleaned.startsWith("09")) return "63" + cleaned.substring(1);
+  if (cleaned.startsWith("9") && cleaned.length === 10) return "63" + cleaned;
+  if (cleaned.startsWith("+639")) return cleaned.substring(1);
+  if (cleaned.startsWith("+63")) return cleaned.substring(1);
   return cleaned;
 }
 
-/**
- * Validate Philippine phone number format
- * @param {string} phone - Phone number to validate
- * @returns {boolean} True if valid Philippine mobile number
- */
 export function isValidPhoneNumber(phone) {
-  const cleaned = phone.replace(/\D/g, '');
-  // Philippine mobile numbers: 639XXXXXXXXX (12 digits total)
-  // 63 (country code) + 9 (mobile prefix) + 9 digits
+  if (!phone) return false;
+  const cleaned = phone.replace(/\D/g, "");
   return /^639\d{9}$/.test(cleaned);
 }
 
-/**
- * Send SMS via backend proxy (routes.py)
- * @param {Array<string>} phoneNumbers - Array of phone numbers
- * @param {string} message - Message content (max 160 chars)
- * @param {string} senderName - Sender name (default: JEEPNI)
- * @returns {Promise<Object>} Response from API
- */
-export async function sendSMS(phoneNumbers, message, senderName = 'JEEPNI') {
+function normaliseRecipients(phoneNumbers) {
+  if (!Array.isArray(phoneNumbers)) return [];
+  const formatted = phoneNumbers
+    .map(formatPhoneNumber)
+    .filter(Boolean)
+    .filter((value, index, self) => self.indexOf(value) === index);
+  const invalid = formatted.filter((num) => !isValidPhoneNumber(num));
+  if (invalid.length) {
+    throw new Error(`Invalid phone number(s): ${invalid.join(", ")}`);
+  }
+  if (!formatted.length) {
+    throw new Error("No valid phone numbers were provided");
+  }
+  return formatted;
+}
+
+export async function sendSMS(
+  phoneNumbers,
+  message,
+  senderName = DEFAULT_SENDER
+) {
   try {
-    // Validate inputs
-    if (!phoneNumbers || phoneNumbers.length === 0) {
-      throw new Error('At least one phone number is required');
+    const trimmedMessage = typeof message === "string" ? message.trim() : "";
+
+    if (!phoneNumbers || !phoneNumbers.length) {
+      throw new Error("Please provide at least one recipient.");
+    }
+    if (!trimmedMessage) {
+      throw new Error("Message cannot be empty.");
+    }
+    if (trimmedMessage.length > SINGLE_SEGMENT_LIMIT) {
+      throw new Error(
+        `Message exceeds ${SINGLE_SEGMENT_LIMIT} characters (current: ${trimmedMessage.length}).`
+      );
+    }
+    if (trimmedMessage.toUpperCase().startsWith("TEST")) {
+      throw new Error(
+        'Messages cannot start with "TEST" - Semaphore will ignore them.'
+      );
     }
 
-    if (!message || message.trim().length === 0) {
-      throw new Error('Message cannot be empty');
-    }
+    const recipients = normaliseRecipients(phoneNumbers);
+    const payload = {
+      number: recipients.join(","),
+      message: trimmedMessage,
+      sender: resolveSenderName(senderName),
+    };
 
-    // Validate message doesn't start with TEST (Semaphore restriction)
-    if (message.trim().toUpperCase().startsWith('TEST')) {
-      throw new Error('Messages cannot start with "TEST" - Semaphore will silently ignore them');
-    }
-
-    // Validate message length (160 characters max for single SMS)
-    if (message.trim().length > 160) {
-      throw new Error(`Message exceeds 160 characters (current: ${message.trim().length})`);
-    }
-
-    // Format all phone numbers
-    const formattedNumbers = phoneNumbers.map(formatPhoneNumber);
-
-    // Validate all phone numbers
-    const invalidNumbers = formattedNumbers.filter(num => !isValidPhoneNumber(num));
-    if (invalidNumbers.length > 0) {
-      throw new Error(`Invalid phone number(s): ${invalidNumbers.join(', ')}`);
-    }
-
-    // Determine API base URL
-    const API_BASE = window.API_BASE ?? (
-      (location.hostname === 'localhost' || location.hostname === '127.0.0.1') && 
-      location.port !== '5000' ? 'http://localhost:5000' : ''
-    );
-
-    // Call backend proxy endpoint
-    const response = await fetch(`${API_BASE}/api/sms/send`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        numbers: formattedNumbers,
-        message: message.trim(),
-        sender_name: senderName
-      })
+    const response = await fetch(BACKEND_SMS_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      mode: "cors",
+      cache: "no-store",
     });
 
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || `HTTP ${response.status}`);
+    const text = await response.text();
+    let result;
+    try {
+      result = text ? JSON.parse(text) : {};
+    } catch (err) {
+      console.warn("SMS send response was not JSON:", text);
+      result = text;
     }
 
-    return result;
+    console.log("=== SEMAPHORE RESPONSE DEBUG ===");
+    console.log("Status:", response.status);
+    console.log("Response:", JSON.stringify(result, null, 2));
+    console.log("Messages array:", result);
+    console.log("================================");
+
+    if (!response.ok) {
+      const errorDetail = extractSemaphoreError(result) || result?.error || text;
+      throw new Error(errorDetail || `Failed to send SMS: HTTP ${response.status}`);
+    }
+
+    const messages = Array.isArray(result)
+      ? result
+      : Array.isArray(result?.messages)
+      ? result.messages
+      : [];
+
+    let successful = 0;
+    let failed = 0;
+    const failureDetails = [];
+    const statusSummaries = [];
+
+    if (messages.length) {
+      messages.forEach((item) => {
+        const status = String(item?.status || "").toUpperCase();
+        const recipient = item?.recipient || item?.number || "UNKNOWN";
+        if (["QUEUED", "PENDING", "SENT"].includes(status)) {
+          successful += 1;
+        } else {
+          failed += 1;
+          const reason =
+            item?.error ||
+            item?.error_message ||
+            item?.status_description ||
+            item?.message ||
+            status ||
+            "Unknown error";
+
+          failureDetails.push({
+            recipient,
+            reason,
+            status,
+            carrier: item?.network || "unknown",
+            raw: item,
+          });
+        }
+        statusSummaries.push(`${recipient}: ${status}`);
+      });
+    } else {
+      successful = recipients.length;
+    }
+
+    if (failed && !successful) {
+      const formatted = failureDetails
+        .map((item) => `${item.recipient}: ${item.reason}`)
+        .join("; ");
+      throw new Error(
+        formatted || "All messages failed. Check the Semaphore dashboard for details."
+      );
+    }
+
+    let note = failureDetails
+      .map((item) => `${item.recipient}: ${item.reason}`)
+      .join("; ");
+
+    if (!note && statusSummaries.length) {
+      note = `${statusSummaries.join("; ")}. Delivery updates may take a few seconds in Semaphore.`;
+    }
+
+    return {
+      success: true,
+      accepted: messages.length || recipients.length,
+      successful,
+      failed,
+      results: messages.length ? messages : result,
+      failureDetails,
+      note,
+      statusSummary: statusSummaries.join("; "),
+    };
   } catch (error) {
-    console.error('Error sending SMS:', error);
+    console.error("Error sending SMS:", error);
     throw error;
   }
 }
 
-/**
- * Get SMS account balance from Semaphore
- * @returns {Promise<Object>} Balance information
- */
-export async function getSMSBalance() {
+export async function getSMSBalance(options = {}) {
+  const { ignoreCooldown = false, forceRefresh = false } = options;
   try {
-    const API_BASE = window.API_BASE ?? (
-      (location.hostname === 'localhost' || location.hostname === '127.0.0.1') && 
-      location.port !== '5000' ? 'http://localhost:5000' : ''
-    );
+    const query = forceRefresh ? "?force=1" : "";
+    const url = `${BACKEND_SMS_BALANCE_URL}${query}`;
+    const response = await fetch(url, {
+      method: "GET",
+      cache: "no-store",
+      mode: "cors",
+      headers: { Accept: "application/json" },
+    });
 
-    const response = await fetch(`${API_BASE}/api/sms/balance`);
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || `HTTP ${response.status}`);
+    const text = await response.text();
+    let data = {};
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch (err) {
+      console.warn("SMS balance response was not JSON:", text);
+      data = text;
     }
 
-    return result;
+    const dataSuccessFalse =
+      data && typeof data === "object" && data.success === false;
+
+    if (!response.ok || dataSuccessFalse) {
+      let friendly =
+        extractSemaphoreError(data) ||
+        (typeof data === "string" ? data : data?.error) ||
+        `Failed to fetch SMS balance: HTTP ${response.status}`;
+
+      let retryAfterSeconds = Number(data?.retry_after);
+      if (!Number.isFinite(retryAfterSeconds) || retryAfterSeconds <= 0) {
+        const headerRetry = Number(response.headers.get("Retry-After"));
+        if (Number.isFinite(headerRetry) && headerRetry > 0) {
+          retryAfterSeconds = headerRetry;
+        }
+      }
+      if (!Number.isFinite(retryAfterSeconds) || retryAfterSeconds <= 0) {
+        retryAfterSeconds = 30;
+      }
+
+      if (response.status === 429 || dataSuccessFalse) {
+        const waitSeconds = Math.max(5, Math.ceil(retryAfterSeconds));
+        friendly = `Semaphore rate limit reached. Please wait ${waitSeconds} seconds before refreshing the balance.`;
+      }
+
+      const error = new Error(friendly);
+      error.retryAfter = Math.max(5, Math.ceil(retryAfterSeconds));
+      error.payload = data;
+      throw error;
+    }
+
+    if (!data || (typeof data !== "object" && !Array.isArray(data))) {
+      throw new Error("SMS balance response was empty.");
+    }
+
+    const accountData = Array.isArray(data) ? data[0] : data.account || data;
+    if (!accountData) {
+      throw new Error("SMS balance response did not include account information.");
+    }
+
+    const balanceRaw =
+      accountData.balance ??
+      accountData.credit_balance ??
+      accountData.credits ??
+      "0";
+    const balanceValue = Number.parseFloat(balanceRaw);
+
+    return {
+      success: true,
+      balance: Number.isFinite(balanceValue) ? balanceValue : 0,
+      account: {
+        id: accountData.account_id ?? accountData.id ?? null,
+        name: accountData.account_name ?? accountData.name ?? "",
+        status: accountData.status ?? accountData.account_status ?? "unknown",
+        email: accountData.email ?? "",
+        sender:
+          accountData.sendername ??
+          accountData.sender_name ??
+          resolveSenderName(DEFAULT_SENDER),
+      },
+      raw: data,
+      stale: Boolean(data?.stale),
+      note: data?.note || "",
+      retry_after: Number.isFinite(Number(data?.retry_after))
+        ? Number(data.retry_after)
+        : null,
+      last_updated_seconds_ago: Number.isFinite(
+        Number(data?.last_updated_seconds_ago)
+      )
+        ? Number(data.last_updated_seconds_ago)
+        : null,
+      retrieved_at: data?.retrieved_at || null,
+      localCooldown: ignoreCooldown,
+    };
   } catch (error) {
-    console.error('Error fetching SMS balance:', error);
+    console.error("Error fetching SMS balance:", error);
     throw error;
   }
 }
 
-/**
- * Get SMS character count and message info
- * @param {string} message - Message content
- * @returns {Object} Character count information
- */
 export function getSMSInfo(message) {
-  const length = message.length;
-  const remaining = 160 - length;
-  
+  const text = typeof message === "string" ? message : "";
+  const length = text.length;
+  const segments = length === 0 ? 0 : Math.ceil(length / CONCAT_SEGMENT_SIZE);
   return {
     characters: length,
-    remaining: remaining,
-    maxLength: 160,
-    isValid: length > 0 && length <= 160,
-    exceeds: length > 160
+    remaining: SINGLE_SEGMENT_LIMIT - length,
+    maxLength: SINGLE_SEGMENT_LIMIT,
+    perSegment: CONCAT_SEGMENT_SIZE,
+    segments,
+    isValid: length > 0 && length <= SINGLE_SEGMENT_LIMIT,
+    exceeds: length > SINGLE_SEGMENT_LIMIT,
   };
 }
 
-/**
- * Render recipients table with checkboxes
- * @param {Array} recipients - Array of recipient objects
- * @param {string} containerId - Table body element ID
- * @param {string} filterRole - Filter by role ('all', 'driver', 'passenger')
- */
-export function renderRecipientsTable(recipients, containerId, filterRole = 'all') {
+export function renderRecipientsTable(
+  recipients,
+  containerId,
+  filterRole = "all"
+) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
-  // Filter recipients by role
-  const filtered = filterRole === 'all' 
-    ? recipients 
-    : recipients.filter(r => r.role === filterRole);
+  const filtered =
+    filterRole === "all"
+      ? recipients
+      : recipients.filter((r) => r.role === filterRole);
 
-  if (filtered.length === 0) {
+  if (!filtered.length) {
     container.innerHTML = `
       <tr>
         <td colspan="4" class="text-center text-muted py-3">
@@ -253,53 +463,47 @@ export function renderRecipientsTable(recipients, containerId, filterRole = 'all
     return;
   }
 
-  container.innerHTML = filtered.map(recipient => `
-    <tr>
-      <td>
-        <div class="form-check">
-          <input 
-            class="form-check-input recipient-checkbox" 
-            type="checkbox" 
-            value="${recipient.phone}"
-            data-uid="${recipient.uid}"
-            data-name="${recipient.name}"
-            data-role="${recipient.role}"
-            id="recipient-${recipient.uid}"
-          >
-          <label class="form-check-label" for="recipient-${recipient.uid}">
-            ${recipient.name}
-          </label>
-        </div>
-      </td>
-      <td>
-        <span class="badge ${recipient.role === 'driver' ? 'bg-primary' : 'bg-info'}">
-          ${recipient.role}
-        </span>
-      </td>
-      <td><small>${recipient.phone}</small></td>
-      <td class="text-muted small">${recipient.email}</td>
-    </tr>
-  `).join('');
+  container.innerHTML = filtered
+    .map(
+      (recipient) => `
+        <tr>
+          <td>
+            <div class="form-check">
+              <input
+                class="form-check-input recipient-checkbox"
+                type="checkbox"
+                value="${recipient.phone}"
+                data-uid="${recipient.uid}"
+                data-name="${recipient.name}"
+                data-role="${recipient.role}"
+                id="recipient-${recipient.uid}"
+              >
+              <label class="form-check-label" for="recipient-${recipient.uid}">
+                ${recipient.name}
+              </label>
+            </div>
+          </td>
+          <td>
+            <span class="badge ${
+              recipient.role === "driver" ? "bg-primary" : "bg-info"
+            }">
+              ${recipient.role}
+            </span>
+          </td>
+          <td><small>${recipient.phone}</small></td>
+          <td class="text-muted small">${recipient.email}</td>
+        </tr>
+      `
+    )
+    .join("");
 }
 
-/**
- * Format prediction message for SMS (ensure 160 char limit)
- * @param {Object} prediction - Prediction object from API
- * @returns {string} Formatted message
- */
 export function formatPredictionForSMS(prediction) {
-  const message = prediction.message || '';
-  
-  // Truncate if necessary, keeping important info
-  if (message.length <= 160) {
-    return message;
-  }
-  
-  // Truncate and add ellipsis
-  return message.substring(0, 157) + '...';
+  const message = prediction?.message || "";
+  if (message.length <= SINGLE_SEGMENT_LIMIT) return message;
+  return `${message.substring(0, SINGLE_SEGMENT_LIMIT - 3)}...`;
 }
 
-// Export all functions
 export default {
   getAllRecipients,
   formatPhoneNumber,
@@ -308,5 +512,8 @@ export default {
   getSMSBalance,
   getSMSInfo,
   renderRecipientsTable,
-  formatPredictionForSMS
+  formatPredictionForSMS,
+  DEFAULT_SENDER,
+  BACKEND_SMS_URL,
+  BACKEND_SMS_BALANCE_URL,
 };
