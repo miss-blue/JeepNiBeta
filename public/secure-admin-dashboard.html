@@ -40,715 +40,717 @@
   </div>
 </nav>
 
+
 <main class="dashboard-main container-fluid py-4">
   <div id="alerts" class="mb-3"></div>
 
   <div class="dashboard-shell row gx-4 gy-3">
-    <nav class="dashboard-sidebar col-12 col-lg-3 col-xl-2 nav flex-column nav-pills" id="adminFeatureTabs" role="tablist" aria-orientation="vertical">
-      <button class="nav-link active" id="tab-dashboard-tab" data-bs-toggle="tab" data-bs-target="#tab-dashboard" type="button" role="tab" aria-controls="tab-dashboard" aria-selected="true">
-        <i class="bi bi-grid-1x2"></i> Dashboard
-      </button>
-      <button class="nav-link" id="tab-scheduling-tab" data-bs-toggle="tab" data-bs-target="#tab-scheduling" type="button" role="tab" aria-controls="tab-scheduling" aria-selected="false">
-        <i class="bi bi-calendar-check"></i> Scheduling
-      </button>
-      <button class="nav-link" id="tab-peak-tab" data-bs-toggle="tab" data-bs-target="#tab-peak" type="button" role="tab" aria-controls="tab-peak" aria-selected="false">
-        <i class="bi bi-bar-chart-line"></i> Peak Hours
-      </button>
-      <button class="nav-link" id="tab-sms-tab" data-bs-toggle="tab" data-bs-target="#tab-sms" type="button" role="tab" aria-controls="tab-sms" aria-selected="false">
-        <i class="bi bi-chat-dots"></i> SMS Notifications
-      </button>
-    </nav>
-    <div class="dashboard-content col-12 col-lg-9 col-xl-10 tab-content" id="adminTabContent">
-  <!-- ===== Pane: Dashboard ===== -->
-  <div class="tab-pane fade show active" id="tab-dashboard" role="tabpanel" aria-labelledby="tab-dashboard-tab" tabindex="0">
-  <!-- Row: Driver Codes -->
-  <div class="row g-3">
-    <div class="col-md-4">
-      <div class="card shadow-sm h-100">
-        <div class="card-body text-center">
-          <h5 class="card-title">Driver Codes</h5>
-          <p class="card-text">Create and manage invite codes for new driver registrations.</p>
-          <a href="manage-driver-codes.html" class="btn btn-primary">Manage Codes</a>
-        </div>
-      </div>
+    <div class="dashboard-nav-wrapper col-12">
+      <nav class="dashboard-topnav nav nav-pills flex-row flex-wrap align-items-stretch gap-2" id="adminFeatureTabs" role="tablist" aria-orientation="horizontal">
+        <button class="nav-link active" id="tab-dashboard-tab" data-bs-toggle="tab" data-bs-target="#tab-dashboard" type="button" role="tab" aria-controls="tab-dashboard" aria-selected="true">
+          <i class="bi bi-grid-1x2"></i> Dashboard
+        </button>
+        <button class="nav-link" id="tab-scheduling-tab" data-bs-toggle="tab" data-bs-target="#tab-scheduling" type="button" role="tab" aria-controls="tab-scheduling" aria-selected="false">
+          <i class="bi bi-calendar-check"></i> Scheduling
+        </button>
+        <button class="nav-link" id="tab-peak-tab" data-bs-toggle="tab" data-bs-target="#tab-peak" type="button" role="tab" aria-controls="tab-peak" aria-selected="false">
+          <i class="bi bi-bar-chart-line"></i> Peak Hours
+        </button>
+        <button class="nav-link" id="tab-sms-tab" data-bs-toggle="tab" data-bs-target="#tab-sms" type="button" role="tab" aria-controls="tab-sms" aria-selected="false">
+          <i class="bi bi-chat-dots"></i> SMS Notifications
+        </button>
+      </nav>
     </div>
-  </div>
-
-  <!-- Row: Quick Actions + Live Map -->
-  <div class="row g-3 mt-1 align-items-stretch">
-    <div class="col-md-4 d-flex">
-      <div class="card shadow-sm w-100">
-        <div class="card-body">
-          <h5 class="card-title d-flex align-items-center gap-2"><i class="bi bi-lightning-charge"></i> Quick Actions</h5>
-          <div class="d-grid gap-2">
-            <a class="btn btn-primary" href="add-driver.html">Add Driver</a>
-            <a class="btn btn-primary" href="add-passenger.html">Add Passenger</a>
-            <button id="btnAddAdmin" class="btn btn-warning">Add Admin</button>
-            <button id="btnRemoveAdmin" class="btn btn-outline-danger">Remove Admin</button>
-            <button id="btnExportDrivers" class="btn btn-outline-secondary">Export Drivers (CSV)</button>
-            <button id="btnExportPassengers" class="btn btn-outline-secondary">Export Passengers (CSV)</button>
+    <div class="dashboard-content col-12 tab-content" id="adminTabContent">
+    <!-- ===== Pane: Dashboard ===== -->
+    <div class="tab-pane fade show active" id="tab-dashboard" role="tabpanel" aria-labelledby="tab-dashboard-tab" tabindex="0">
+    <!-- Row: Driver Codes -->
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-body text-center">
+            <h5 class="card-title">Driver Codes</h5>
+            <p class="card-text">Create and manage invite codes for new driver registrations.</p>
+            <a href="manage-driver-codes.html" class="btn btn-primary">Manage Codes</a>
           </div>
         </div>
       </div>
     </div>
-    <div class="col-md-8 d-flex">
-      <div class="card shadow-sm h-100 w-100">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <h5 class="card-title mb-0">Live Map</h5>
-            <span class="text-muted small">Drivers & passengers</span>
-          </div>
-          <div id="dashboardMap" style="height: 520px;" role="region" aria-label="Live driver and passenger map"></div>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Row: Waiting Analytics -->
-  <div class="row g-3 mt-1">
-    <div class="col-12">
-      <div class="card shadow-sm h-100">
-        <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
-          <h5 class="card-title mb-0"><i class="bi bi-graph-up-arrow me-2"></i>Waiting Passengers by Stop</h5>
-          <span class="badge bg-primary" id="waitingTotalBadge">0</span>
-        </div>
-        <div class="card-body">
-          <div class="row g-3">
-            <div class="col-lg-7">
-              <div style="height: 280px;">
-                <canvas id="waitingPassengersChart" role="img" aria-label="Waiting passengers per stop"></canvas>
-              </div>
-            </div>
-            <div class="col-lg-5">
-              <div class="waiting-stops-list" id="waitingStopsList">
-                <div class="text-muted small">No live waiting data yet.</div>
-              </div>
-            </div>
-          </div>
-          <div class="small text-muted mt-3" id="waitingChartNote">Live counts refresh automatically from passenger devices.</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Row: Trip Monitoring -->
-  <div class="row g-3 mt-1">
-    <div class="col-12">
-      <div class="card shadow-sm h-100">
-        <div class="card-header">
-          <h5 class="card-title mb-0"><i class="bi bi-geo-alt me-2"></i>Trip Monitoring</h5>
-        </div>
-        <div class="card-body">
-          <div class="row g-2 align-items-end">
-            <div class="col-md-3">
-              <label class="form-label">Date</label>
-              <input id="tripDate" type="date" class="form-control form-control-sm">
-            </div>
-            <div class="col-md-5">
-              <label class="form-label">Driver</label>
-              <select id="tripDriver" class="form-select form-select-sm">
-                <option value="">Select a driver</option>
-              </select>
-            </div>
-            <div class="col-md-4 d-flex align-items-end gap-2">
-              <button id="btnLoadTrips" class="btn btn-outline-secondary btn-sm">Load Trips</button>
-              <button id="btnExportTripCSV" class="btn btn-outline-primary btn-sm" disabled>Export CSV</button>
-              <button id="btnExportTripAll" class="btn btn-outline-success btn-sm" disabled>Export All</button>
-            </div>
-          </div>
-          <div class="table-responsive mt-3">
-            <table class="table table-striped table-hover table-sm align-middle">
-              <thead>
-                <tr>
-                  <th>Trip ID</th>
-                  <th>Start</th>
-                  <th>End</th>
-                  <th>Duration</th>
-                  <th>Samples</th>
-                </tr>
-              </thead>
-              <tbody id="tripRows">
-                <tr><td colspan="5" class="text-center text-muted py-3">No trips loaded.</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  </div><!-- /tab-dashboard -->
-
-  <!-- ===== Pane: Scheduling ===== -->
-  <div class="tab-pane fade" id="tab-scheduling" role="tabpanel" aria-labelledby="tab-scheduling-tab" tabindex="0">
-  <!-- Row: Create Dispatch + Today's Dispatches -->
-  <div class="row g-3 mt-1">
-    <!-- Create Dispatch -->
-    <div class="col-md-4">
-      <div class="card shadow-sm h-100">
-        <div class="card-body">
-          <h5 class="card-title d-flex align-items-center gap-2"><i class="bi bi-truck"></i> Create Dispatch</h5>
-          <form id="formDispatch" class="small">
-            <div class="mb-2">
-              <label class="form-label">Date</label>
-              <input id="schDate" type="date" class="form-control form-control-sm">
-            </div>
-            <div class="mb-2">
-              <label class="form-label">Departure Time</label>
-              <input id="schTime" type="time" class="form-control form-control-sm" required>
-            </div>
-            <div class="mb-2">
-              <label class="form-label">Route</label>
-              <select id="schRoute" class="form-select form-select-sm" required>
-                <option value="gueset">Gueset</option>
-                <option value="boquig">Boquig</option>
-                <option value="longos">Longos</option>
-                <option value="binloc">Binloc</option>
-                <option value="tondaligan">Tondaligan</option>
-              </select>
-            </div>
-            <div class="mb-2">
-              <label class="form-label">Jeep / Plate</label>
-              <input id="schJeep" class="form-control form-control-sm" placeholder="e.g., ABC-1234">
-            </div>
-            <div class="mb-2">
-              <label class="form-label">Assign Driver</label>
-              <select id="schDriver" class="form-select form-select-sm">
-                <option value="">(Unassigned)</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Notes (optional)</label>
-              <input id="schNotes" class="form-control form-control-sm">
-            </div>
-            <div class="d-grid">
-              <button class="btn btn-primary btn-sm" type="submit">Create</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <!-- Today's Dispatches -->
-    <div class="col-md-8">
-      <div class="card shadow-sm h-100">
-        <div class="card-body">
-          <h5 class="card-title d-flex align-items-center justify-content-between">
-            Today's Dispatches
-            <div class="d-flex gap-2 align-items-center">
-              <input id="listDate" type="date" class="form-control form-control-sm" style="width:auto">
-              <button id="btnReloadSch" class="btn btn-outline-secondary btn-sm">Reload</button>
-            </div>
-          </h5>
-          <div class="table-responsive mt-2">
-            <table class="table table-striped table-hover table-sm align-middle">
-              <thead>
-                <tr>
-                  <th>Time</th>
-                  <th>Route</th>
-                  <th>Jeep</th>
-                  <th>Driver</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="schRows">
-                <tr><td colspan="6" class="text-center text-muted py-3">
-                  <div class="d-flex align-items-center justify-content-center gap-2">
-                    <div class="spinner-border spinner-border-sm text-info" role="status"></div>
-                    Loading schedule...
-                  </div>
-                </td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Row: Dispatch History -->
-  <div class="row g-3 mt-1">
-    <div class="col-12">
-      <div class="card shadow-sm h-100">
-        <div class="card-header">
-          <h5 class="card-title mb-0"><i class="bi bi-clock-history me-2"></i>Dispatch History</h5>
-        </div>
-        <div class="card-body">
-          <div class="row g-2 align-items-end">
-            <div class="col-sm-4">
-              <label class="form-label">Start Date</label>
-              <input id="histStart" type="date" class="form-control form-control-sm">
-            </div>
-            <div class="col-sm-4">
-              <label class="form-label">End Date</label>
-              <input id="histEnd" type="date" class="form-control form-control-sm">
-            </div>
-            <div class="col-sm-4 d-flex gap-2">
-              <div class="flex-grow-1">
-                <label class="form-label">Sort</label>
-                <select id="histSort" class="form-select form-select-sm">
-                  <option value="desc">Newest first</option>
-                  <option value="asc">Oldest first</option>
-                </select>
-              </div>
-              <div class="d-flex align-items-end gap-2">
-                <button id="btnLoadHistory" class="btn btn-outline-secondary btn-sm">Load</button>
-                <button id="btnExportHistory" class="btn btn-outline-primary btn-sm" disabled>Export CSV</button>
-              </div>
-            </div>
-            <div class="col-12">
-              <div class="btn-group btn-group-sm" role="group" aria-label="Quick ranges">
-                <button type="button" class="btn btn-outline-secondary" data-range="today">Today</button>
-                <button type="button" class="btn btn-outline-secondary" data-range="7">Last 7 days</button>
-                <button type="button" class="btn btn-outline-secondary" data-range="30">Last 30 days</button>
-                <button type="button" class="btn btn-outline-secondary" data-range="month">This month</button>
-              </div>
-            </div>
-          </div>
-          <div class="table-responsive mt-3">
-            <table class="table table-striped table-hover table-sm align-middle">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Time</th>
-                  <th>Route</th>
-                  <th>Jeep</th>
-                  <th>Driver</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody id="historyRows">
-                <tr><td colspan="6" class="text-center text-muted py-3">Choose a range and click Load</td></tr>
-              </tbody>
-            </table>
-            <div class="small text-muted mt-1" id="histSummary"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  </div>
-</div><!-- /tab-scheduling -->
-
-  <!-- ===== Pane: Peak Hours ===== -->
-  <div class="tab-pane fade" id="tab-peak" role="tabpanel" aria-labelledby="tab-peak-tab" tabindex="0">
-    <div class="row g-3 peak-toolbar">
-      <div class="col-12">
-        <div class="card shadow-sm">
+    <!-- Row: Quick Actions + Live Map -->
+    <div class="row g-3 mt-1 align-items-stretch">
+      <div class="col-md-4 d-flex">
+        <div class="card shadow-sm w-100">
           <div class="card-body">
-            <div class="d-flex flex-wrap gap-2 align-items-center">
-              <div class="d-flex align-items-center gap-2">
-                <label class="form-label mb-0" for="predictionDate">Date</label>
-                <input id="predictionDate" type="date" class="form-control form-control-sm" style="width:auto">
-              </div>
-              <div class="d-flex flex-wrap gap-2">
-                <button id="btnReloadPredictions" class="btn btn-outline-secondary btn-sm">
-                  <i class="bi bi-arrow-clockwise"></i> Reload
-                </button>
-                <button id="btnGeneratePredictions" class="btn btn-primary btn-sm">
-                  <i class="bi bi-lightning-charge"></i> Generate
-                </button>
-              </div>
-              <div class="ms-auto">
-                <span class="badge bg-info" id="predictionStatus">No predictions</span>
-              </div>
+            <h5 class="card-title d-flex align-items-center gap-2"><i class="bi bi-lightning-charge"></i> Quick Actions</h5>
+            <div class="d-grid gap-2">
+              <a class="btn btn-primary" href="add-driver.html">Add Driver</a>
+              <a class="btn btn-primary" href="add-passenger.html">Add Passenger</a>
+              <button id="btnAddAdmin" class="btn btn-warning">Add Admin</button>
+              <button id="btnRemoveAdmin" class="btn btn-outline-danger">Remove Admin</button>
+              <button id="btnExportDrivers" class="btn btn-outline-secondary">Export Drivers (CSV)</button>
+              <button id="btnExportPassengers" class="btn btn-outline-secondary">Export Passengers (CSV)</button>
             </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-8 d-flex">
+        <div class="card shadow-sm h-100 w-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h5 class="card-title mb-0">Live Map</h5>
+              <span class="text-muted small">Drivers & passengers</span>
+            </div>
+            <div id="dashboardMap" style="height: 520px;" role="region" aria-label="Live driver and passenger map"></div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="row g-3 align-items-stretch peak-metrics">
-      <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card shadow-sm peak-metric-card bg-primary text-white">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start gap-2">
-              <div>
-                <h6 class="card-title text-white mb-2">Today's Predictions</h6>
-                <h3 class="text-white mb-0" id="ph_count">0</h3>
-              </div>
-              <i class="bi bi-graph-up"></i>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card shadow-sm peak-metric-card bg-success text-white">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start gap-2">
-              <div>
-                <h6 class="card-title text-white mb-2">Registered Users</h6>
-                <h3 class="text-white mb-0" id="ph_users">-</h3>
-              </div>
-              <i class="bi bi-people"></i>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card shadow-sm peak-metric-card bg-info text-white">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start gap-2">
-              <div>
-                <h6 class="card-title text-white mb-2">Messages Sent</h6>
-                <h3 class="text-white mb-0" id="ph_sent">0</h3>
-              </div>
-              <i class="bi bi-send"></i>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card shadow-sm peak-metric-card bg-warning text-dark">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start gap-2">
-              <div>
-                <h6 class="card-title mb-2">Total Stops</h6>
-                <h3 class="mb-0" id="ph_stops">-</h3>
-              </div>
-              <i class="bi bi-geo-alt"></i>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="row g-3 peak-kpis">
-      <div class="col-12">
-        <div class="card shadow-sm">
-          <div class="card-body py-4">
-            <div class="row g-3 text-center">
-              <div class="col-md-4">
-                <div class="kpi">
-                  <h6 class="text-muted text-uppercase small mb-1">Total Predicted Riders</h6>
-                  <h3 class="mb-0" id="kpiTotal">0</h3>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="kpi">
-                  <h6 class="text-muted text-uppercase small mb-1">Busiest Stop</h6>
-                  <h3 class="mb-0" id="kpiBusiest">-</h3>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="kpi">
-                  <h6 class="text-muted text-uppercase small mb-1">Busiest Hour</h6>
-                  <h3 class="mb-0" id="kpiPeak">-</h3>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="row g-3 peak-predictions">
+    <!-- Row: Waiting Analytics -->
+    <div class="row g-3 mt-1">
       <div class="col-12">
         <div class="card shadow-sm h-100">
           <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <h6 class="mb-0"><i class="bi bi-eye me-2"></i>Today's Peak Hours Preview</h6>
-            <span class="badge bg-primary" id="ph_date_badge">-</span>
+            <h5 class="card-title mb-0"><i class="bi bi-graph-up-arrow me-2"></i>Waiting Passengers by Stop</h5>
+            <span class="badge bg-primary" id="waitingTotalBadge">0</span>
           </div>
           <div class="card-body">
-            <div id="predictionsCards" class="row g-3">
-              <div class="text-center text-muted py-3">No predictions available</div>
+            <div class="row g-3">
+              <div class="col-lg-7">
+                <div style="height: 280px;">
+                  <canvas id="waitingPassengersChart" role="img" aria-label="Waiting passengers per stop"></canvas>
+                </div>
+              </div>
+              <div class="col-lg-5">
+                <div class="waiting-stops-list" id="waitingStopsList">
+                  <div class="text-muted small">No live waiting data yet.</div>
+                </div>
+              </div>
+            </div>
+            <div class="small text-muted mt-3" id="waitingChartNote">Live counts refresh automatically from passenger devices.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row: Trip Monitoring -->
+    <div class="row g-3 mt-1">
+      <div class="col-12">
+        <div class="card shadow-sm h-100">
+          <div class="card-header">
+            <h5 class="card-title mb-0"><i class="bi bi-geo-alt me-2"></i>Trip Monitoring</h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-2 align-items-end">
+              <div class="col-md-3">
+                <label class="form-label">Date</label>
+                <input id="tripDate" type="date" class="form-control form-control-sm">
+              </div>
+              <div class="col-md-5">
+                <label class="form-label">Driver</label>
+                <select id="tripDriver" class="form-select form-select-sm">
+                  <option value="">Select a driver</option>
+                </select>
+              </div>
+              <div class="col-md-4 d-flex align-items-end gap-2">
+                <button id="btnLoadTrips" class="btn btn-outline-secondary btn-sm">Load Trips</button>
+                <button id="btnExportTripCSV" class="btn btn-outline-primary btn-sm" disabled>Export CSV</button>
+                <button id="btnExportTripAll" class="btn btn-outline-success btn-sm" disabled>Export All</button>
+              </div>
+            </div>
+            <div class="table-responsive mt-3">
+              <table class="table table-striped table-hover table-sm align-middle">
+                <thead>
+                  <tr>
+                    <th>Trip ID</th>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Duration</th>
+                  </tr>
+                </thead>
+                <tbody id="tripRows">
+                  <tr><td colspan="4" class="text-center text-muted py-3">No trips loaded.</td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </div><!-- /tab-peak -->
 
-  <!-- ===== Pane: Data & Reports ===== -->
-  <!-- ===== Pane: SMS Notifications ===== -->
-  <div class="tab-pane fade" id="tab-sms" role="tabpanel" aria-labelledby="tab-sms-tab" tabindex="0">
-    <div class="row g-3 sms-layout align-items-start">
-      <div class="col-12 col-lg-7 order-1 order-lg-2">
-        <div class="sms-right-column d-flex flex-column gap-3 gap-lg-4">
-          <!-- SMS Balance Card -->
-          <div class="card shadow-sm">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center">
-                <div>
-                  <h5 class="card-title mb-1"><i class="bi bi-wallet2 me-2"></i>SMS Balance</h5>
-                  <p class="text-muted small mb-0">Semaphore API Account Status</p>
-                </div>
-                <div class="text-end">
-                  <h3 class="mb-0" id="smsBalance">
-                    <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
-                  </h3>
-                  <small class="text-muted">credits remaining</small>
-                </div>
-                <button id="btnRefreshBalance" class="btn btn-outline-primary btn-sm">
-                  <i class="bi bi-arrow-clockwise"></i> Refresh
-                </button>
-              </div>
-            </div>
-          </div>
+    </div><!-- /tab-dashboard -->
 
-          <!-- Recipients List -->
-          <div class="card shadow-sm h-100">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="card-title mb-0">
-                  <i class="bi bi-people"></i> Recipients
-                </h5>
-                <div class="d-flex gap-2 flex-wrap">
-                  <div class="btn-group btn-group-sm" role="group">
-                    <input type="radio" class="btn-check" name="roleFilter" id="filterAll" value="all" checked autocomplete="off">
-                    <label class="btn btn-outline-primary" for="filterAll">All</label>
-                    
-                    <input type="radio" class="btn-check" name="roleFilter" id="filterDrivers" value="driver" autocomplete="off">
-                    <label class="btn btn-outline-primary" for="filterDrivers">Drivers</label>
-                    
-                    <input type="radio" class="btn-check" name="roleFilter" id="filterPassengers" value="passenger" autocomplete="off">
-                    <label class="btn btn-outline-primary" for="filterPassengers">Passengers</label>
-                  </div>
-                  <button id="btnRefreshRecipients" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-arrow-clockwise"></i>
-                  </button>
-                </div>
-              </div>
-
-              <div class="mb-3">
-                <div class="input-group input-group-sm">
-                  <span class="input-group-text bg-transparent">
-                    <i class="bi bi-search"></i>
-                  </span>
-                  <input 
-                    id="searchRecipients" 
-                    type="text" 
-                    class="form-control" 
-                    placeholder="Search by name or phone..."
-                  >
-                </div>
-              </div>
-
-              <div class="d-flex gap-2 mb-2 flex-wrap">
-                <button id="btnSelectAll" class="btn btn-sm btn-outline-primary">
-                  <i class="bi bi-check-square"></i> Select All
-                </button>
-                <button id="btnDeselectAll" class="btn btn-sm btn-outline-secondary">
-                  <i class="bi bi-square"></i> Deselect All
-                </button>
-              </div>
-
-              <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                <table class="table table-hover table-sm align-middle">
-                  <thead class="sticky-top bg-white">
-                    <tr>
-                      <th>Name</th>
-                      <th>Role</th>
-                      <th>Phone</th>
-                      <th>Email</th>
-                    </tr>
-                  </thead>
-                  <tbody id="recipientsTableBody">
-                    <tr>
-                      <td colspan="4" class="text-center text-muted py-3">
-                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                        Loading recipients...
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div class="mt-3 small text-muted">
-                <p class="mb-1">
-                  <i class="bi bi-info-circle me-1"></i> Selecting a recipient automatically updates the count in the composer.
-                </p>
-                <p class="mb-0">
-                  <i class="bi bi-shield-check me-1"></i> Phone numbers are validated and formatted before sending.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Message Composer -->
-      <div class="col-12 col-lg-5 order-2 order-lg-1">
+    <!-- ===== Pane: Scheduling ===== -->
+    <div class="tab-pane fade" id="tab-scheduling" role="tabpanel" aria-labelledby="tab-scheduling-tab" tabindex="0">
+    <!-- Row: Create Dispatch + Today's Dispatches -->
+    <div class="row g-3 mt-1">
+      <!-- Create Dispatch -->
+      <div class="col-md-4">
         <div class="card shadow-sm h-100">
           <div class="card-body">
-            <h5 class="card-title d-flex align-items-center gap-2">
-              <i class="bi bi-chat-text"></i> Compose Message
-            </h5>
-            
-            <form id="formSMS">
+            <h5 class="card-title d-flex align-items-center gap-2"><i class="bi bi-truck"></i> Create Dispatch</h5>
+            <form id="formDispatch" class="small">
+              <div class="mb-2">
+                <label class="form-label">Date</label>
+                <input id="schDate" type="date" class="form-control form-control-sm">
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Departure Time</label>
+                <input id="schTime" type="time" class="form-control form-control-sm" required>
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Route</label>
+                <select id="schRoute" class="form-select form-select-sm" required>
+                  <option value="gueset">Gueset</option>
+                  <option value="boquig">Boquig</option>
+                  <option value="longos">Longos</option>
+                  <option value="binloc">Binloc</option>
+                  <option value="tondaligan">Tondaligan</option>
+                </select>
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Jeep / Plate</label>
+                <input id="schJeep" class="form-control form-control-sm" placeholder="e.g., ABC-1234">
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Assign Driver</label>
+                <select id="schDriver" class="form-select form-select-sm">
+                  <option value="">(Unassigned)</option>
+                </select>
+              </div>
               <div class="mb-3">
-                <label class="form-label">Message <span class="text-danger">*</span></label>
-                <textarea 
-                  id="smsMessage" 
-                  class="form-control" 
-                  rows="5" 
-                  maxlength="160" 
-                  placeholder="Type your message here (max 160 characters)..."
-                  required
-                ></textarea>
-                <div class="d-flex justify-content-between mt-1">
-                  <small class="text-muted">
-                    <i class="bi bi-info-circle"></i> Do not start with "TEST"
-                  </small>
-                  <small id="charCount" class="text-muted">0 / 160</small>
-                </div>
+                <label class="form-label">Notes (optional)</label>
+                <input id="schNotes" class="form-control form-control-sm">
               </div>
-
-              <div class="mb-3">
-                <label class="form-label">Sender Name</label>
-                <input 
-                  id="smsSenderName" 
-                  type="text" 
-                  class="form-control" 
-                  value="SEMAPHORE" 
-                  maxlength="11"
-                  placeholder="e.g., JEEPNI"
-                >
-                <small class="text-muted">Max 11 characters (optional)</small>
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label">Add Recipient by Number</label>
-                <div class="input-group">
-                  <input 
-                    id="manualRecipientInput" 
-                    type="text" 
-                    class="form-control" 
-                    placeholder="Enter phone number (e.g., 09171234567, +639171234567)" 
-                    autocomplete="off"
-                  >
-                  <button type="button" class="btn btn-outline-primary" id="btnAddManualRecipient">
-                    <i class="bi bi-person-plus"></i> Add Number
-                  </button>
-                </div>
-                <small class="text-muted">Separate multiple numbers with commas or spaces. Numbers are normalised to 63XXXXXXXXXX.</small>
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label">Selected Recipients</label>
-                <div class="border rounded p-2" style="min-height: 60px; max-height: 120px; overflow-y: auto;">
-                  <div id="selectedRecipients" class="d-flex flex-wrap gap-1">
-                    <small class="text-muted">No recipients selected</small>
-                  </div>
-                </div>
-                <small class="text-muted">
-                  <span id="recipientCount">0</span> recipient(s) selected
-                </small>
-              </div>
-
-              <div class="alert alert-warning small" role="alert">
-                <i class="bi bi-exclamation-triangle me-2"></i>
-                <strong>Note:</strong> Each SMS costs 1 credit per 160 characters.
-              </div>
-
-              <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-success" id="btnSendSMS" disabled>
-                  <i class="bi bi-send"></i> Send SMS
-                </button>
-                <button type="button" class="btn btn-outline-secondary" id="btnCopyFromPredictions">
-                  <i class="bi bi-clipboard"></i> Copy from Peak Hours
-                </button>
+              <div class="d-grid">
+                <button class="btn btn-primary btn-sm" type="submit">Create</button>
               </div>
             </form>
           </div>
         </div>
       </div>
-    </div>
-  </div><!-- /tab-sms -->
-    </div><!-- /dashboard-content -->
-  </div><!-- /dashboard-shell -->
-</main>
 
-<!-- Add Admin Modal -->
-<div class="modal" id="modalAddAdmin" tabindex="-1" role="dialog" aria-labelledby="modalAddAdminTitle">
-  <div class="modal-dialog modal-dialog-centered" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="modalAddAdminTitle"><i class="bi bi-person-gear me-2"></i>Add Admin</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      <!-- Today's Dispatches -->
+      <div class="col-md-8">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <h5 class="card-title d-flex align-items-center justify-content-between">
+              Today's Dispatches
+              <div class="d-flex gap-2 align-items-center">
+                <input id="listDate" type="date" class="form-control form-control-sm" style="width:auto">
+                <button id="btnReloadSch" class="btn btn-outline-secondary btn-sm">Reload</button>
+              </div>
+            </h5>
+            <div class="table-responsive mt-2">
+              <table class="table table-striped table-hover table-sm align-middle">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Route</th>
+                    <th>Jeep</th>
+                    <th>Driver</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="schRows">
+                  <tr><td colspan="6" class="text-center text-muted py-3">
+                    <div class="d-flex align-items-center justify-content-center gap-2">
+                      <div class="spinner-border spinner-border-sm text-info" role="status"></div>
+                      Loading schedule...
+                    </div>
+                  </td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="modal-body">
-        <div class="alert alert-info small">
-          Only <strong>admin</strong> can promote users to admin.
+    </div>
+
+    <!-- Row: Dispatch History -->
+    <div class="row g-3 mt-1">
+      <div class="col-12">
+        <div class="card shadow-sm h-100">
+          <div class="card-header">
+            <h5 class="card-title mb-0"><i class="bi bi-clock-history me-2"></i>Dispatch History</h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-2 align-items-end">
+              <div class="col-sm-4">
+                <label class="form-label">Start Date</label>
+                <input id="histStart" type="date" class="form-control form-control-sm">
+              </div>
+              <div class="col-sm-4">
+                <label class="form-label">End Date</label>
+                <input id="histEnd" type="date" class="form-control form-control-sm">
+              </div>
+              <div class="col-sm-4 d-flex gap-2">
+                <div class="flex-grow-1">
+                  <label class="form-label">Sort</label>
+                  <select id="histSort" class="form-select form-select-sm">
+                    <option value="desc">Newest first</option>
+                    <option value="asc">Oldest first</option>
+                  </select>
+                </div>
+                <div class="d-flex align-items-end gap-2">
+                  <button id="btnLoadHistory" class="btn btn-outline-secondary btn-sm">Load</button>
+                  <button id="btnExportHistory" class="btn btn-outline-primary btn-sm" disabled>Export CSV</button>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="btn-group btn-group-sm" role="group" aria-label="Quick ranges">
+                  <button type="button" class="btn btn-outline-secondary" data-range="today">Today</button>
+                  <button type="button" class="btn btn-outline-secondary" data-range="7">Last 7 days</button>
+                  <button type="button" class="btn btn-outline-secondary" data-range="30">Last 30 days</button>
+                  <button type="button" class="btn btn-outline-secondary" data-range="month">This month</button>
+                </div>
+              </div>
+            </div>
+            <div class="table-responsive mt-3">
+              <table class="table table-striped table-hover table-sm align-middle">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Route</th>
+                    <th>Jeep</th>
+                    <th>Driver</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="historyRows">
+                  <tr><td colspan="6" class="text-center text-muted py-3">Choose a range and click Load</td></tr>
+                </tbody>
+              </table>
+              <div class="small text-muted mt-1" id="histSummary"></div>
+            </div>
+          </div>
         </div>
-        <div class="mb-2">
-          <label class="form-label" for="adminIdType">Identifier Type</label>
-          <select id="adminIdType" class="form-select form-select-sm">
-            <option value="email" selected>Email</option>
-            <option value="uid">UID</option>
-          </select>
-        </div>
-        <div class="mb-2">
-          <label class="form-label" for="adminIdentifier">Email or UID</label>
-          <input id="adminIdentifier" class="form-control" placeholder="user@example.com or Firebase UID">
-        </div>
-        <div class="form-text">User must already exist in <code>all_users</code>.</div>
-        <div class="text-danger small mt-2 d-none" id="addAdminError"></div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-primary" id="btnConfirmAddAdmin">Promote to Admin</button>
+    </div>
+
+    </div>
+  </div><!-- /tab-scheduling -->
+
+    <!-- ===== Pane: Peak Hours ===== -->
+    <div class="tab-pane fade" id="tab-peak" role="tabpanel" aria-labelledby="tab-peak-tab" tabindex="0">
+      <div class="row g-3 peak-toolbar">
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <div class="d-flex flex-wrap gap-2 align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                  <label class="form-label mb-0" for="predictionDate">Date</label>
+                  <input id="predictionDate" type="date" class="form-control form-control-sm" style="width:auto">
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                  <button id="btnReloadPredictions" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-clockwise"></i> Reload
+                  </button>
+                  <button id="btnGeneratePredictions" class="btn btn-primary btn-sm">
+                    <i class="bi bi-lightning-charge"></i> Generate
+                  </button>
+                </div>
+                <div class="ms-auto">
+                  <span class="badge bg-info" id="predictionStatus">No predictions</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3 align-items-stretch peak-metrics">
+        <div class="col-12 col-sm-6 col-xl-3">
+          <div class="card shadow-sm peak-metric-card bg-primary text-white">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start gap-2">
+                <div>
+                  <h6 class="card-title text-white mb-2">Today's Predictions</h6>
+                  <h3 class="text-white mb-0" id="ph_count">0</h3>
+                </div>
+                <i class="bi bi-graph-up"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+          <div class="card shadow-sm peak-metric-card bg-success text-white">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start gap-2">
+                <div>
+                  <h6 class="card-title text-white mb-2">Registered Users</h6>
+                  <h3 class="text-white mb-0" id="ph_users">-</h3>
+                </div>
+                <i class="bi bi-people"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+          <div class="card shadow-sm peak-metric-card bg-info text-white">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start gap-2">
+                <div>
+                  <h6 class="card-title text-white mb-2">Messages Sent</h6>
+                  <h3 class="text-white mb-0" id="ph_sent">0</h3>
+                </div>
+                <i class="bi bi-send"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+          <div class="card shadow-sm peak-metric-card bg-warning text-dark">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start gap-2">
+                <div>
+                  <h6 class="card-title mb-2">Total Stops</h6>
+                  <h3 class="mb-0" id="ph_stops">-</h3>
+                </div>
+                <i class="bi bi-geo-alt"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3 peak-kpis">
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-body py-4">
+              <div class="row g-3 text-center">
+                <div class="col-md-4">
+                  <div class="kpi">
+                    <h6 class="text-muted text-uppercase small mb-1">Total Predicted Riders</h6>
+                    <h3 class="mb-0" id="kpiTotal">0</h3>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="kpi">
+                    <h6 class="text-muted text-uppercase small mb-1">Busiest Stop</h6>
+                    <h3 class="mb-0" id="kpiBusiest">-</h3>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="kpi">
+                    <h6 class="text-muted text-uppercase small mb-1">Busiest Hour</h6>
+                    <h3 class="mb-0" id="kpiPeak">-</h3>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3 peak-predictions">
+        <div class="col-12">
+          <div class="card shadow-sm h-100">
+            <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+              <h6 class="mb-0"><i class="bi bi-eye me-2"></i>Today's Peak Hours Preview</h6>
+              <span class="badge bg-primary" id="ph_date_badge">-</span>
+            </div>
+            <div class="card-body">
+              <div id="predictionsCards" class="row g-3">
+                <div class="text-center text-muted py-3">No predictions available</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /tab-peak -->
+
+    <!-- ===== Pane: Data & Reports ===== -->
+    <!-- ===== Pane: SMS Notifications ===== -->
+    <div class="tab-pane fade" id="tab-sms" role="tabpanel" aria-labelledby="tab-sms-tab" tabindex="0">
+      <div class="row g-3 sms-layout align-items-start">
+        <div class="col-12 col-lg-7 order-1 order-lg-2">
+          <div class="sms-right-column d-flex flex-column gap-3 gap-lg-4">
+            <!-- SMS Balance Card -->
+            <div class="card shadow-sm">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <h5 class="card-title mb-1"><i class="bi bi-wallet2 me-2"></i>SMS Balance</h5>
+                    <p class="text-muted small mb-0">Semaphore API Account Status</p>
+                  </div>
+                  <div class="text-end">
+                    <h3 class="mb-0" id="smsBalance">
+                      <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+                    </h3>
+                    <small class="text-muted">credits remaining</small>
+                  </div>
+                  <button id="btnRefreshBalance" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recipients List -->
+            <div class="card shadow-sm h-100">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h5 class="card-title mb-0">
+                    <i class="bi bi-people"></i> Recipients
+                  </h5>
+                  <div class="d-flex gap-2 flex-wrap">
+                    <div class="btn-group btn-group-sm" role="group">
+                      <input type="radio" class="btn-check" name="roleFilter" id="filterAll" value="all" checked autocomplete="off">
+                      <label class="btn btn-outline-primary" for="filterAll">All</label>
+                      
+                      <input type="radio" class="btn-check" name="roleFilter" id="filterDrivers" value="driver" autocomplete="off">
+                      <label class="btn btn-outline-primary" for="filterDrivers">Drivers</label>
+                      
+                      <input type="radio" class="btn-check" name="roleFilter" id="filterPassengers" value="passenger" autocomplete="off">
+                      <label class="btn btn-outline-primary" for="filterPassengers">Passengers</label>
+                    </div>
+                    <button id="btnRefreshRecipients" class="btn btn-outline-secondary btn-sm">
+                      <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-transparent">
+                      <i class="bi bi-search"></i>
+                    </span>
+                    <input 
+                      id="searchRecipients" 
+                      type="text" 
+                      class="form-control" 
+                      placeholder="Search by name or phone..."
+                    >
+                  </div>
+                </div>
+
+                <div class="d-flex gap-2 mb-2 flex-wrap">
+                  <button id="btnSelectAll" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-check-square"></i> Select All
+                  </button>
+                  <button id="btnDeselectAll" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-square"></i> Deselect All
+                  </button>
+                </div>
+
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                  <table class="table table-hover table-sm align-middle">
+                    <thead class="sticky-top bg-white">
+                      <tr>
+                        <th>Name</th>
+                        <th>Role</th>
+                        <th>Phone</th>
+                        <th>Email</th>
+                      </tr>
+                    </thead>
+                    <tbody id="recipientsTableBody">
+                      <tr>
+                        <td colspan="4" class="text-center text-muted py-3">
+                          <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                          Loading recipients...
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div class="mt-3 small text-muted">
+                  <p class="mb-1">
+                    <i class="bi bi-info-circle me-1"></i> Selecting a recipient automatically updates the count in the composer.
+                  </p>
+                  <p class="mb-0">
+                    <i class="bi bi-shield-check me-1"></i> Phone numbers are validated and formatted before sending.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Message Composer -->
+        <div class="col-12 col-lg-5 order-2 order-lg-1">
+          <div class="card shadow-sm h-100">
+            <div class="card-body">
+              <h5 class="card-title d-flex align-items-center gap-2">
+                <i class="bi bi-chat-text"></i> Compose Message
+              </h5>
+              
+              <form id="formSMS">
+                <div class="mb-3">
+                  <label class="form-label">Message <span class="text-danger">*</span></label>
+                  <textarea 
+                    id="smsMessage" 
+                    class="form-control" 
+                    rows="5" 
+                    maxlength="160" 
+                    placeholder="Type your message here (max 160 characters)..."
+                    required
+                  ></textarea>
+                  <div class="d-flex justify-content-between mt-1">
+                    <small class="text-muted">
+                      <i class="bi bi-info-circle"></i> Do not start with "TEST"
+                    </small>
+                    <small id="charCount" class="text-muted">0 / 160</small>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Sender Name</label>
+                  <input 
+                    id="smsSenderName" 
+                    type="text" 
+                    class="form-control" 
+                    value="SEMAPHORE" 
+                    maxlength="11"
+                    placeholder="e.g., JEEPNI"
+                  >
+                  <small class="text-muted">Max 11 characters (optional)</small>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Add Recipient by Number</label>
+                  <div class="input-group">
+                    <input 
+                      id="manualRecipientInput" 
+                      type="text" 
+                      class="form-control" 
+                      placeholder="Enter phone number (e.g., 09171234567, +639171234567)" 
+                      autocomplete="off"
+                    >
+                    <button type="button" class="btn btn-outline-primary" id="btnAddManualRecipient">
+                      <i class="bi bi-person-plus"></i> Add Number
+                    </button>
+                  </div>
+                  <small class="text-muted">Separate multiple numbers with commas or spaces. Numbers are normalised to 63XXXXXXXXXX.</small>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Selected Recipients</label>
+                  <div class="border rounded p-2" style="min-height: 60px; max-height: 120px; overflow-y: auto;">
+                    <div id="selectedRecipients" class="d-flex flex-wrap gap-1">
+                      <small class="text-muted">No recipients selected</small>
+                    </div>
+                  </div>
+                  <small class="text-muted">
+                    <span id="recipientCount">0</span> recipient(s) selected
+                  </small>
+                </div>
+
+                <div class="alert alert-warning small" role="alert">
+                  <i class="bi bi-exclamation-triangle me-2"></i>
+                  <strong>Note:</strong> Each SMS costs 1 credit per 160 characters.
+                </div>
+
+                <div class="d-grid gap-2">
+                  <button type="submit" class="btn btn-success" id="btnSendSMS" disabled>
+                    <i class="bi bi-send"></i> Send SMS
+                  </button>
+                  <button type="button" class="btn btn-outline-secondary" id="btnCopyFromPredictions">
+                    <i class="bi bi-clipboard"></i> Copy from Peak Hours
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /tab-sms -->
+      </div><!-- /dashboard-content -->
+    </div><!-- /dashboard-shell -->
+  </main>
+
+  <!-- Add Admin Modal -->
+  <div class="modal" id="modalAddAdmin" tabindex="-1" role="dialog" aria-labelledby="modalAddAdminTitle">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalAddAdminTitle"><i class="bi bi-person-gear me-2"></i>Add Admin</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-info small">
+            Only <strong>admin</strong> can promote users to admin.
+          </div>
+          <div class="mb-2">
+            <label class="form-label" for="adminIdType">Identifier Type</label>
+            <select id="adminIdType" class="form-select form-select-sm">
+              <option value="email" selected>Email</option>
+              <option value="uid">UID</option>
+            </select>
+          </div>
+          <div class="mb-2">
+            <label class="form-label" for="adminIdentifier">Email or UID</label>
+            <input id="adminIdentifier" class="form-control" placeholder="user@example.com or Firebase UID">
+          </div>
+          <div class="form-text">User must already exist in <code>all_users</code>.</div>
+          <div class="text-danger small mt-2 d-none" id="addAdminError"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="btnConfirmAddAdmin">Promote to Admin</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Remove Admin Modal -->
-<div class="modal" id="modalRemoveAdmin" tabindex="-1" role="dialog" aria-labelledby="modalRemoveAdminTitle">
-  <div class="modal-dialog modal-dialog-centered" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="modalRemoveAdminTitle"><i class="bi bi-person-x me-2"></i>Remove Admin</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <div class="alert alert-warning small">
-          <i class="bi bi-exclamation-triangle me-2"></i>
-          Only <strong>admin</strong> can remove admin privileges.
+  <!-- Remove Admin Modal -->
+  <div class="modal" id="modalRemoveAdmin" tabindex="-1" role="dialog" aria-labelledby="modalRemoveAdminTitle">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalRemoveAdminTitle"><i class="bi bi-person-x me-2"></i>Remove Admin</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="mb-2">
-          <label class="form-label" for="removeAdminIdType">Identifier Type</label>
-          <select id="removeAdminIdType" class="form-select form-select-sm">
-            <option value="email" selected>Email</option>
-            <option value="uid">UID</option>
-          </select>
-        </div>
-        <div class="mb-2">
-          <label class="form-label" for="removeAdminIdentifier">Email or UID</label>
-          <input id="removeAdminIdentifier" class="form-control" placeholder="user@example.com or Firebase UID">
-        </div>
-        <div class="mb-3">
-          <label class="form-label">New Role</label>
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="newRole" id="roleUser" value="user" checked>
-            <label class="form-check-label" for="roleUser">
-              Regular User
-            </label>
+        <div class="modal-body">
+          <div class="alert alert-warning small">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            Only <strong>admin</strong> can remove admin privileges.
           </div>
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="newRole" id="roleDriver" value="driver">
-            <label class="form-check-label" for="roleDriver">
-              Driver
-            </label>
+          <div class="mb-2">
+            <label class="form-label" for="removeAdminIdType">Identifier Type</label>
+            <select id="removeAdminIdType" class="form-select form-select-sm">
+              <option value="email" selected>Email</option>
+              <option value="uid">UID</option>
+            </select>
           </div>
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="newRole" id="rolePassenger" value="passenger">
-            <label class="form-check-label" for="rolePassenger">
-              Passenger
-            </label>
+          <div class="mb-2">
+            <label class="form-label" for="removeAdminIdentifier">Email or UID</label>
+            <input id="removeAdminIdentifier" class="form-control" placeholder="user@example.com or Firebase UID">
           </div>
+          <div class="mb-3">
+            <label class="form-label">New Role</label>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="newRole" id="roleUser" value="user" checked>
+              <label class="form-check-label" for="roleUser">
+                Regular User
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="newRole" id="roleDriver" value="driver">
+              <label class="form-check-label" for="roleDriver">
+                Driver
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="newRole" id="rolePassenger" value="passenger">
+              <label class="form-check-label" for="rolePassenger">
+                Passenger
+              </label>
+            </div>
+          </div>
+          <div class="form-text text-danger">This will remove admin privileges and set the selected role.</div>
+          <div class="text-danger small mt-2 d-none" id="removeAdminError"></div>
         </div>
-        <div class="form-text text-danger">This will remove admin privileges and set the selected role.</div>
-        <div class="text-danger small mt-2 d-none" id="removeAdminError"></div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-danger" id="btnConfirmRemoveAdmin">Remove Admin</button>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" id="btnConfirmRemoveAdmin">Remove Admin</button>
+        </div>
       </div>
     </div>
-  </div>
 </div>
 <script type="module">
   import { 
@@ -1661,11 +1663,11 @@ if (btnConfirmRemoveAdmin) btnConfirmRemoveAdmin.addEventListener('click', remov
     const tbody = document.querySelector('#tripRows');
     const btnCSV = document.querySelector('#btnExportTripCSV');
     if (!uid) {
-      if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3">Please select a driver.</td></tr>`;
+      if (tbody) tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-3">Please select a driver.</td></tr>`;
       if (btnCSV) btnCSV.disabled = true;
       return;
     }
-    if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3">Loading...</td></tr>`;
+    if (tbody) tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-3">Loading...</td></tr>`;
     if (btnCSV) btnCSV.disabled = true;
     try {
       let rows = [];
@@ -1682,8 +1684,7 @@ if (btnConfirmRemoveAdmin) btnConfirmRemoveAdmin.addEventListener('click', remov
             } catch {}
             const s = tsToDate(v?.start?.ts);
             const e = tsToDate(v?.end?.ts);
-            const samples = v?.locations ? Object.keys(v.locations).length : (v?.samples || 0);
-            return { id, start: s, end: e, duration: dur(s,e), samples };
+            return { id, start: s, end: e, duration: dur(s,e) };
           }));
         }
       } catch (inner) {
@@ -1710,8 +1711,7 @@ if (btnConfirmRemoveAdmin) btnConfirmRemoveAdmin.addEventListener('click', remov
               .map(v => {
                 const s = tsToDate(v?.start?.ts);
                 const e = tsToDate(v?.end?.ts);
-                const samples = v?.locations ? Object.keys(v.locations).length : (v?.samples || 0);
-                return { id: v.id, start: s, end: e, duration: dur(s,e), samples };
+                return { id: v.id, start: s, end: e, duration: dur(s,e) };
               });
           }
         } catch (perm) {
@@ -1726,9 +1726,8 @@ if (btnConfirmRemoveAdmin) btnConfirmRemoveAdmin.addEventListener('click', remov
           <td>${fmt(r.start)}</td>
           <td>${fmt(r.end)}</td>
           <td>${r.duration}</td>
-          <td>${r.samples}</td>
         </tr>
-      `).join('') : `<tr><td colspan="5" class="text-center text-muted py-3">No trips loaded.</td></tr>`;
+      `).join('') : `<tr><td colspan="4" class="text-center text-muted py-3">No trips loaded.</td></tr>`;
       if (btnCSV) {
         btnCSV.disabled = rows.length === 0;
         btnCSV.onclick = () => exportTripCSV(rows, date, uid);
@@ -1736,15 +1735,15 @@ if (btnConfirmRemoveAdmin) btnConfirmRemoveAdmin.addEventListener('click', remov
     } catch (err) {
       console.error('loadTrips failed', err);
       const msg = /Permission denied/i.test(err?.message||'') ? 'No permission to read trips for this date.' : ('Failed: ' + (err?.message||'Unknown error'));
-      if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-3">${msg}</td></tr>`;
+      if (tbody) tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger py-3">${msg}</td></tr>`;
     }
   }
 
   function exportTripCSV(rows, date, uid) {
-    const headers = ['Trip ID','Start','End','Duration','Samples','Driver UID','Date'];
+    const headers = ['Trip ID','Start','End','Duration','Driver UID','Date'];
     const csv = [headers.join(',')];
     rows.forEach(r => {
-      const cells = [r.id, fmt(r.start), fmt(r.end), r.duration, r.samples, uid, date].map(v => {
+      const cells = [r.id, fmt(r.start), fmt(r.end), r.duration, uid, date].map(v => {
         const s = String(v ?? '');
         const guard = (/^[=+\-@]/.test(s)) ? "'" : "";
         return `"${(guard + s).replace(/"/g,'""')}"`;
@@ -1769,13 +1768,12 @@ if (btnConfirmRemoveAdmin) btnConfirmRemoveAdmin.addEventListener('click', remov
           const s = tsToDate(v?.start?.ts);
           const e = tsToDate(v?.end?.ts);
           const date = v.date || (s ? `${s.getFullYear()}-${String(s.getMonth()+1).padStart(2,'0')}-${String(s.getDate()).padStart(2,'0')}` : '');
-          const samples = v?.locations ? Object.keys(v.locations).length : (v?.samples || 0);
-          return { id: v.id, date, start: s, end: e, duration: dur(s,e), samples };
+          return { id: v.id, date, start: s, end: e, duration: dur(s,e) };
         });
-      const headers = ['Trip ID','Date','Start','End','Duration','Samples','Driver UID'];
+      const headers = ['Trip ID','Date','Start','End','Duration','Driver UID'];
       const csv = [headers.join(',')];
       rows.forEach(r => {
-        const cells = [r.id, r.date, fmt(r.start), fmt(r.end), r.duration, r.samples, uid].map(v => {
+        const cells = [r.id, r.date, fmt(r.start), fmt(r.end), r.duration, uid].map(v => {
           const s = String(v ?? '');
           const guard = (/^[=+\-@]/.test(s)) ? "'" : "";
           return `"${(guard + s).replace(/"/g,'""')}"`;
@@ -2970,22 +2968,123 @@ async function getPredictions(date) {
   let mapLoadPromise = null;
   const dashboardMarkers = { drivers: new Map(), passengers: new Map() };
   let dashboardMap = null;
+  let lastMarkerSignature = null;
+  let lastMarkerCount = 0;
+  let hasAutoFitted = false;
+  let latestDriversSnapshot = {};
+  let latestPassengersSnapshot = {};
   const defaultMapCenter = [16.043, 120.333];
   const defaultMapZoom = 14;
-  const driverMarkerIcon = L.icon({
-    iconUrl: '/icons/18 Driver Button.png',
-    iconSize: [46, 46],
-    iconAnchor: [23, 40],
-    popupAnchor: [0, -36],
-    className: 'map-icon map-icon--driver'
-  });
+
+  function normRouteName(route) {
+    if (!route || typeof route !== "string") return "Gueset";
+    const s = route.trim().toLowerCase();
+    if (s.startsWith("gue") || s === "gueset" || s === "guest") return "Gueset";
+    if (s.startsWith("boq")) return "Boquig";
+    if (s.startsWith("lon")) return "Longos";
+    if (s.startsWith("bin")) return "Binloc";
+    if (s.startsWith("ton")) return "Tondaligan";
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
+  function routeAssetBase(route) {
+    const n = normRouteName(route);
+    if (n === "Gueset") return "Gueset";
+    if (n === "Boquig") return "Boquig";
+    if (n === "Longos") return "Longos";
+    if (n === "Binloc") return "Binloc";
+    if (n === "Tondaligan") return "Tondaligan";
+    return "Gueset";
+  }
+
+  const ADMIN_DRIVER_STALE_MS = 45_000;
+  function isDriverOnline(record) {
+    if (!computeOnline(record)) return false;
+    const last = Number(record?.last_update ?? record?.timestamp ?? record?.lastSeen ?? 0);
+    if (Number.isFinite(last) && last > 0) {
+      return (Date.now() - last) <= ADMIN_DRIVER_STALE_MS;
+    }
+    return true;
+  }
+
+  function isPassengerOnline(record) {
+    if (!computeOnline(record)) return false;
+    const updatedAt = Number(record?.last_update ?? record?.updated_at ?? record?.timestamp ?? record?.lastSeen ?? 0);
+    if (Number.isFinite(updatedAt) && updatedAt > 0) {
+      return (Date.now() - updatedAt) <= PASSENGER_STALE_MS;
+    }
+    return true;
+  }
+
+  const driverIconCache = new Map();
+  function getDriverIcon(route) {
+    const key = routeAssetBase(route || "Gueset");
+    if (!driverIconCache.has(key)) {
+      driverIconCache.set(key, L.icon({
+        iconUrl: `/icons/${key}.png`,
+        iconSize: [40, 40],
+        iconAnchor: [20, 40],
+        popupAnchor: [0, -38]
+      }));
+    }
+    return driverIconCache.get(key);
+  }
+
   const passengerMarkerIcon = L.icon({
-    iconUrl: '/icons/17 Passenger Button.png',
-    iconSize: [46, 46],
-    iconAnchor: [23, 40],
-    popupAnchor: [0, -36],
-    className: 'map-icon map-icon--passenger'
+    iconUrl: '/icons/passenger.png',
+    iconSize: [40, 40],
+    iconAnchor: [20, 40],
+    popupAnchor: [0, -38]
   });
+
+  function renderDriverMarkers(drivers = latestDriversSnapshot) {
+    if (!dashboardMap) return;
+    latestDriversSnapshot = drivers || {};
+    dashboardMarkers.drivers.forEach(marker => marker.remove());
+    dashboardMarkers.drivers.clear();
+
+    for (const [uid, data] of Object.entries(latestDriversSnapshot)) {
+      if (!data || data.lat == null || data.lng == null) continue;
+      if (!isDriverOnline(data)) continue;
+      const lat = Number(data.lat);
+      const lng = Number(data.lng);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+      try {
+        const driver = data._meta || {};
+        const routeName = data.route || driver.route || 'Gueset';
+        const marker = L.marker([lat, lng], { icon: getDriverIcon(routeName) })
+          .bindPopup(`
+            <strong>${driver.name || data.name || 'Driver'}</strong><br>
+            Route: ${normRouteName(routeName)}<br>
+            Status: ${data.status || driver.status || 'Unknown'}
+          `);
+        marker.addTo(dashboardMap);
+        dashboardMarkers.drivers.set(uid, marker);
+      } catch (err) {
+        console.warn('Admin map driver render failed:', err);
+      }
+    }
+  }
+
+  function renderPassengerMarkers(passengers = latestPassengersSnapshot) {
+    if (!dashboardMap) return;
+    latestPassengersSnapshot = passengers || {};
+    dashboardMarkers.passengers.forEach(marker => marker.remove());
+    dashboardMarkers.passengers.clear();
+
+    for (const [uid, data] of Object.entries(latestPassengersSnapshot)) {
+      if (!data || data.lat == null || data.lng == null) continue;
+      if (!isPassengerOnline(data)) continue;
+      const lat = Number(data.lat);
+      const lng = Number(data.lng);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+      const waitingText = data.waiting != null ? String(data.waiting) : 'Unknown';
+      const marker = L.marker([lat, lng], { icon: passengerMarkerIcon })
+        .bindPopup(`Passenger<br>Waiting: ${waitingText}`);
+      marker.addTo(dashboardMap);
+      dashboardMarkers.passengers.set(uid, marker);
+    }
+  }
 
   function updateDashboardMapViewport() {
     if (!dashboardMap) return;
@@ -2993,10 +3092,25 @@ async function getPredictions(date) {
       ...dashboardMarkers.drivers.values(),
       ...dashboardMarkers.passengers.values()
     ].filter(Boolean);
-    if (!markers.length) {
+    const count = markers.length;
+    if (!count) {
+      lastMarkerSignature = null;
+      lastMarkerCount = 0;
+      hasAutoFitted = false;
       dashboardMap.setView(defaultMapCenter, defaultMapZoom);
       return;
     }
+    const signature = markers
+      .map(marker => marker.getLatLng())
+      .map(({ lat, lng }) => `${lat.toFixed(5)},${lng.toFixed(5)}`)
+      .sort()
+      .join('|');
+    if (signature === lastMarkerSignature && count === lastMarkerCount && hasAutoFitted) return;
+
+    lastMarkerSignature = signature;
+    lastMarkerCount = count;
+    hasAutoFitted = true;
+
     const group = L.featureGroup(markers);
     const bounds = group.getBounds();
     if (!bounds.isValid()) {
@@ -3028,17 +3142,6 @@ async function getPredictions(date) {
     return mapLoadPromise;
   }
 
-  function getRouteColor(route) {
-    const colors = {
-      gueset: '#2196F3',
-      boquig: '#F44336',
-      longos: '#4CAF50',
-      binloc: '#FFC107',
-      tondaligan: '#9C27B0'
-    };
-    return colors[String(route || '').toLowerCase()] || '#757575';
-  }
-
   function initialiseDashboardMap() {
     const mapTarget = document.getElementById('dashboardMap');
     if (!mapTarget) return;
@@ -3059,50 +3162,46 @@ async function getPredictions(date) {
 
       onValue(ref(db, 'drivers_location'), async (snap) => {
         const drivers = snap.val() || {};
-        dashboardMarkers.drivers.forEach(marker => marker.remove());
-        dashboardMarkers.drivers.clear();
-
-        for (const [uid, data] of Object.entries(drivers)) {
-          if (!data || data.lat == null || data.lng == null) continue;
-          const lat = Number(data.lat);
-          const lng = Number(data.lng);
-          if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-          try {
-            const driverSnap = await get(ref(db, `drivers/${uid}`));
-            const driver = driverSnap.exists() ? driverSnap.val() : {};
-            const marker = L.marker([lat, lng], { icon: driverMarkerIcon })
-              .bindPopup(`
-                <strong>${driver.name || 'Driver'}</strong><br>
-                Route: ${data.route || driver.route || 'Unknown'}<br>
-                Status: ${data.status || driver.status || 'Unknown'}
-              `);
-            marker.addTo(dashboardMap);
-            dashboardMarkers.drivers.set(uid, marker);
-          } catch (err) {
-            console.warn('Error loading driver details:', err);
+        const enriched = {};
+        await Promise.all(Object.entries(drivers).map(async ([uid, data]) => {
+          if (!data) return;
+          const entry = { ...data };
+          if (isDriverOnline(entry)) {
+            try {
+              const metaSnap = await get(ref(db, `drivers/${uid}`));
+              if (metaSnap.exists()) {
+                const meta = metaSnap.val() || {};
+                entry._meta = {
+                  name: meta.name || entry.name,
+                  status: meta.status,
+                  route: meta.route
+                };
+              }
+            } catch (err) {
+              console.warn('Error loading driver details:', err);
+            }
           }
-        }
+          enriched[uid] = entry;
+        }));
+        renderDriverMarkers(enriched);
         updateDashboardMapViewport();
       });
 
       onValue(ref(db, 'passengers_location'), (snap) => {
         const passengers = snap.val() || {};
-        dashboardMarkers.passengers.forEach(marker => marker.remove());
-        dashboardMarkers.passengers.clear();
-
-        for (const [uid, data] of Object.entries(passengers)) {
-          if (!data || data.lat == null || data.lng == null || !data.online) continue;
-          const lat = Number(data.lat);
-          const lng = Number(data.lng);
-          if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-          const waitingText = data.waiting != null ? String(data.waiting) : 'Unknown';
-          const marker = L.marker([lat, lng], { icon: passengerMarkerIcon })
-            .bindPopup(`Passenger<br>Waiting: ${waitingText}`);
-          marker.addTo(dashboardMap);
-          dashboardMarkers.passengers.set(uid, marker);
-        }
+        renderPassengerMarkers(passengers);
         updateDashboardMapViewport();
       });
+
+      const baseWindow = (typeof ONLINE_WINDOW_MS === 'number') ? ONLINE_WINDOW_MS : ADMIN_DRIVER_STALE_MS;
+      const refreshEvery = Math.max(Math.min(ADMIN_DRIVER_STALE_MS, baseWindow), 15000);
+      if (!window.__adminMapRefreshTimer) {
+        window.__adminMapRefreshTimer = setInterval(() => {
+          renderDriverMarkers();
+          renderPassengerMarkers();
+          updateDashboardMapViewport();
+        }, refreshEvery);
+      }
     }).catch((error) => console.error('Dashboard map failed:', error));
   }
 
@@ -3156,22 +3255,3 @@ async function getPredictions(date) {
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>\r\n</body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

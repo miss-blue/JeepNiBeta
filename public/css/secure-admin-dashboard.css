@@ -171,20 +171,6 @@
 #dashboardMap {
   z-index: 1;
 }
-.leaflet-marker-icon.map-icon{
-  border-radius: 50%;
-  border: 2px solid rgba(0,0,0,.1);
-  box-shadow: 0 6px 14px rgba(0,0,0,.2);
-  background-color: #fff;
-  padding: 2px;
-  cursor: pointer;
-}
-.leaflet-marker-icon.map-icon--driver{
-  border-color: var(--brand);
-}
-.leaflet-marker-icon.map-icon--passenger{
-  border-color: var(--accent);
-}
 
 /* Admin layout shell */
 .dashboard-main{
@@ -197,70 +183,100 @@
   width: 100%;
   max-width: 1440px;
 }
-.dashboard-shell{
-  --bs-gutter-x: 0;
-  --bs-gutter-y: 0;
-  display: grid;
-  grid-template-columns: 100%;
-  gap: 1.5rem;
+.dashboard-shell {
+  --bs-gutter-x: 1.5rem;
+  --bs-gutter-y: 1.5rem;
   margin: 0;
+  min-height: calc(100vh - var(--nav-height) - 2rem);
 }
 .dashboard-shell::before,
 .dashboard-shell::after{
   display: none;
 }
-.dashboard-sidebar{
+.dashboard-nav-wrapper{
+  width: 100%;
+}
+.dashboard-topnav{
   background: var(--card-bg);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 1rem;
+  padding: .75rem;
   display: flex;
-  flex-direction: column;
-  gap: .5rem;
-  width: 100%;
-  min-width: 0;
+  flex-wrap: wrap;
+  gap: .75rem;
+  align-items: stretch;
 }
-.dashboard-sidebar .nav-link{
-  display: flex;
+.dashboard-topnav .nav-link{
+  display: inline-flex;
   align-items: center;
+  justify-content: flex-start;
   gap: .65rem;
-  text-align: left;
-  padding: .75rem 1rem;
-  border-radius: .75rem;
+  padding: .75rem 1.25rem;
+  border-radius: 1rem;
   font-weight: 600;
   color: var(--text);
+  background: transparent;
+  border: none;
   white-space: nowrap;
-  word-break: keep-all;
+  flex: 1 1 160px;
+  min-height: 3rem;
+  transition: background-color .2s ease, color .2s ease, box-shadow .2s ease, transform .15s ease;
+}
+.dashboard-topnav .nav-link .bi{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: .75rem;
+  background-color: rgba(78,215,241,.08);
+  color: var(--muted);
+  font-size: 1.15rem;
   transition: background-color .2s ease, color .2s ease;
 }
-.dashboard-sidebar .nav-link .bi{
-  font-size: 1.15rem;
-}
-.dashboard-sidebar .nav-link:hover,
-.dashboard-sidebar .nav-link:focus{
+.dashboard-topnav .nav-link:hover,
+.dashboard-topnav .nav-link:focus{
   background-color: rgba(78,215,241,.12);
   color: var(--text);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px rgba(0,0,0,.08);
 }
-.dashboard-sidebar .nav-link.active{
-  background: var(--brand);
+.dashboard-topnav .nav-link:hover .bi,
+.dashboard-topnav .nav-link:focus .bi{
+  background-color: rgba(78,215,241,.18);
+  color: var(--brand);
+}
+.dashboard-topnav .nav-link.active{
+  background: linear-gradient(135deg, rgba(78,215,241,.9), rgba(126,233,255,.9));
+  color: #0b1220;
+  box-shadow: 0 10px 24px rgba(78,215,241,.28);
+  transform: translateY(-1px);
+}
+.dashboard-topnav .nav-link.active .bi{
+  background: rgba(11,18,32,.12);
   color: #0b1220;
 }
-.dashboard-content{
-  min-width: 0;
-  width: 100%;
-  overflow-x: auto;
+.dashboard-topnav .nav-link.active:focus,
+.dashboard-topnav .nav-link.active:hover{
+  color: #0b1220;
+  box-shadow: 0 12px 28px rgba(78,215,241,.32);
 }
+.dashboard-content{
+  width: 100%;
+  min-width: 0; /* Prevent content overflow */
+  overflow-x: hidden;
+  padding: 1rem;
+  position: relative;
+}
+
 .dashboard-content .tab-pane {
-  display: none !important;
+  display: none;
   padding-bottom: 2rem;
 }
 
-.dashboard-content .tab-pane.active {
-  display: block !important;
-}
-
+.dashboard-content .tab-pane.active,
 .dashboard-content .tab-pane.show {
-  display: block !important;
+  display: block;
 }
 
 /* Peak hours */
@@ -333,12 +349,12 @@
 }
 
 @media (max-width: 991.98px){
-  .dashboard-sidebar{
-    position: static;
-    max-height: none;
-    overflow: visible;
+  .dashboard-topnav{
+    gap: .5rem;
   }
-  .dashboard-sidebar .nav-link{
+  .dashboard-topnav .nav-link{
+    flex: 1 1 100%;
+    justify-content: flex-start;
     white-space: normal;
   }
 }
@@ -348,49 +364,11 @@
     padding-left: 2rem;
     padding-right: 2rem;
   }
-  .dashboard-shell{
-    grid-template-columns: minmax(240px, var(--sidebar-width)) minmax(0, 1fr);
-    align-items: start;
-  }
-  .dashboard-sidebar{
-    position: sticky;
-    top: calc(var(--nav-height) + 1rem);
-    max-height: calc(100vh - (var(--nav-height) + 2rem));
-    overflow-y: auto;
-    width: auto;
-    min-width: var(--sidebar-width);
-    scrollbar-width: thin;
-    scrollbar-color: rgba(0,0,0,.3) transparent;
-  }
-  .dashboard-sidebar::-webkit-scrollbar{
-    width: 6px;
-  }
-  .dashboard-sidebar::-webkit-scrollbar-thumb{
-    background-color: rgba(0,0,0,.2);
-    border-radius: 3px;
-  }
   .dashboard-content{
     width: auto;
   }
-}
-
-@media (max-width: 1199.98px) and (min-width: 992px){
-  :root{
-    --sidebar-width: 240px;
-  }
-}
-
-@media (min-width: 1400px){
-  :root{
-    --sidebar-width: 280px;
-  }
-}
-@media (min-width: 992px){
-  .theme-dark .dashboard-sidebar{
-    scrollbar-color: rgba(255,255,255,.35) transparent;
-  }
-  .theme-dark .dashboard-sidebar::-webkit-scrollbar-thumb{
-    background-color: rgba(255,255,255,.35);
+  .dashboard-topnav .nav-link{
+    flex: 0 0 auto;
   }
 }
 
@@ -399,13 +377,9 @@
   box-shadow: 0 10px 30px rgba(0,0,0,.6);
 }
 .theme-dark .card,
-.theme-dark .dashboard-sidebar{
+.theme-dark .dashboard-topnav{
   background: var(--card-bg);
   box-shadow: 0 8px 24px rgba(0,0,0,.35);
-}
-.theme-dark .leaflet-marker-icon.map-icon{
-  background-color: #0f172a;
-  box-shadow: 0 8px 24px rgba(0,0,0,.55);
 }
 .theme-dark .peak-metric-card{
   box-shadow: 0 12px 28px rgba(0,0,0,.45);
@@ -416,12 +390,30 @@
 .theme-dark .prediction-card:hover{
   box-shadow: 0 18px 32px rgba(0,0,0,.65);
 }
-.theme-dark .dashboard-sidebar .nav-link{
+.theme-dark .dashboard-topnav .nav-link{
   color: var(--text);
 }
-.theme-dark .dashboard-sidebar .nav-link:hover,
-.theme-dark .dashboard-sidebar .nav-link:focus{
+.theme-dark .dashboard-topnav .nav-link .bi{
+  background-color: rgba(34,211,238,.16);
+  color: rgba(229,231,235,.85);
+}
+.theme-dark .dashboard-topnav .nav-link:hover,
+.theme-dark .dashboard-topnav .nav-link:focus{
   background-color: rgba(34,211,238,.2);
+}
+.theme-dark .dashboard-topnav .nav-link:hover .bi,
+.theme-dark .dashboard-topnav .nav-link:focus .bi{
+  background-color: rgba(34,211,238,.28);
+  color: var(--brand);
+}
+.theme-dark .dashboard-topnav .nav-link.active{
+  background: linear-gradient(135deg, rgba(34,211,238,.95), rgba(126,233,255,.95));
+  color: #0b1220;
+  box-shadow: 0 12px 32px rgba(34,211,238,.32);
+}
+.theme-dark .dashboard-topnav .nav-link.active .bi{
+  background: rgba(11,18,32,.25);
+  color: #0b1220;
 }
 body.theme-dark::before{
   opacity: .04;
@@ -448,38 +440,73 @@ body.theme-dark::before{
   opacity: .6;
 }
 /* Ensure proper tab isolation */
-.tab-content .tab-pane {
+.tab-content > .tab-pane {
   display: none;
 }
 
-.tab-content .tab-pane.active {
+.tab-content > .active,
+.tab-content > .show {
   display: block;
 }
 
-.tab-content .tab-pane.show {
-  display: block;
+/* Panel positioning for Peak Hours and SMS */
+.peak-hours-panel,
+.sms-panel {
+  max-width: 1200px;
+  margin: 0;
 }
 
-/* Prevent content leakage */
+@media (min-width: 992px) {
+  .peak-hours-panel,
+  .sms-panel {
+    padding-left: 0;
+  }
+}
+
+/* Panel positioning for Peak Hours and SMS */
+.peak-toolbar,
+.peak-metrics,
+.peak-kpis,
+.peak-predictions {
+  margin-bottom: 1.5rem;
+}
+
+#tab-peak > .row:first-child,
+#tab-sms > .row:first-child {
+  margin-top: 0 !important;
+}
+
+/* Ensure peak hours and SMS tabs don't overflow */
+#tab-peak,
+#tab-sms {
+  max-width: 100%;
+}
+
+/* Update dashboard shell and content layout */
+.dashboard-shell {
+  --bs-gutter-x: 1.5rem;
+  --bs-gutter-y: 1.5rem;
+  margin: 0;
+  min-height: calc(100vh - var(--nav-height) - 2rem);
+}
+
 .dashboard-content {
-  position: relative;
-  overflow: hidden;
+  width: 100%;
+  min-width: 0;
+  padding: 1rem;
 }
 
-.tab-pane {
-  animation: fadeIn 0.3s ease-in;
+/* Ensure proper content positioning */
+#tab-peak,
+#tab-sms {
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-/* Ensure proper stacking */
-.tab-pane:not(.active):not(.show) {
-  position: absolute !important;
-  top: -9999px !important;
-  left: -9999px !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
+/* Adjust media queries for responsive layout */
+@media (max-width: 991.98px) {
+  .dashboard-nav-wrapper {
+    padding: 0;
+  }
 }
