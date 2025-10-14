@@ -128,3 +128,112 @@ The backend serves admin/API endpoints, writes to a local SQLite DB, and uses Fi
 
 Internal/academic project. Add a license if you plan to distribute.
 
+# JeepNiBeta Project Structure
+
+## Root Directory Files
+- `.env` - Environment configuration file
+- `.firebaserc` - Firebase project configuration
+- `firebase.json` - Firebase hosting and services configuration
+- `inspect_segment.py` - Utility script for code inspection
+- `JeepNiSQLVersion.sql` - SQL database schema
+- `main.py` - Main Python entry point for backend services
+- `map-tracker.js` - Core mapping and location tracking functionality
+- `requirements.txt` - Python dependencies list
+- `composer.json` - PHP dependencies configuration
+
+## Public Directory (`/public`)
+### Core Pages
+```
+├── login.html - User authentication page
+├── logincode.html - Login processing page
+├── secure-admin-dashboard.html - Main admin control panel
+├── driver-dashboard.html - Driver's main interface
+├── passenger-dashboard.html - Passenger's main interface
+```
+
+### Admin Management Pages
+```
+├── add-driver.html - Admin interface for adding new drivers
+├── add-passenger.html - Admin interface for adding new passengers
+├── driver-list.html - List and manage all drivers
+├── passenger-list.html - List and manage all passengers
+├── manage-driver-codes.html - Manage driver invitation codes
+├── driver-edit.html - Edit driver information
+```
+
+### User Features
+```
+├── destination.html - Set and manage travel destinations
+├── code.html - Code verification/redemption page
+├── my-profile.html - User profile management
+```
+
+### Common Components
+```
+includes/
+├── footer.php - Common footer template
+├── header.php - Common header template
+├── navbar.php - Navigation bar template
+```
+
+### Static Assets
+```
+css/
+├── secure-admin-dashboard.css - Admin dashboard styling
+├── sms-integration.css - SMS feature styling
+
+js/
+├── admin_auth.js - Admin authentication utilities
+├── authentication.js - Core authentication logic
+├── map-tracker.js - Location tracking implementation
+├── rate-limiter.js - API rate limiting
+├── scheduling.js - Trip scheduling functionality
+├── sms-integration.js - SMS messaging features
+```
+
+## Key Features
+
+### Authentication & Authorization
+- Role-based access control (Admin, Driver, Passenger)
+- Secure login/logout flow
+- Session management
+
+### Admin Dashboard
+- Real-time driver and passenger tracking
+- User management (add/edit/remove)
+- Trip scheduling and dispatch
+- Analytics and reporting
+- SMS notifications system
+
+### Driver Features
+- Live location sharing
+- Trip management
+- Route navigation
+- Status updates
+
+### Passenger Features
+- Location sharing
+- Destination selection
+- Wait time indicators
+- Trip history
+
+### Backend Services
+- User data management
+- Trip logging
+- Analytics processing
+- SMS integration
+- Location data processing
+
+### Database
+- Firebase Realtime Database for real-time features
+- SQLite for persistent storage
+- Structured data models for users, trips, and analytics
+
+## Technology Stack
+- Frontend: HTML, CSS, JavaScript
+- Backend: Python (Flask)
+- Database: Firebase Realtime Database, SQLite
+- Authentication: Firebase Auth
+- Maps: Leaflet.js
+- UI Framework: Bootstrap 5
+- Icons: Bootstrap Icons

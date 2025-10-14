@@ -371,9 +371,9 @@
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
     const phone = document.getElementById("phone").value.trim();
-    const license = document.getElementById("license").value.trim(); // Add this line
+    const license = document.getElementById("license").value.trim();
 
-    if (!name || !email || !password || !license) { // Add license check
+    if (!name || !email || !password || !license) {
       showAlert("Please complete name, email, password, and license number.", "danger");
       return;
     }

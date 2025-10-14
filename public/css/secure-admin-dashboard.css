@@ -119,8 +119,219 @@
       border-radius: 12px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
-    .table thead th { position: sticky; top: 0; z-index: 5; background: var(--card-bg); }
-    .table-hover tbody tr:hover{ background-color: rgba(78,215,241,.08); }
+    .leaflet-tooltip.full-badge{
+      background:#dc3545;
+      color:#fff;
+      border:none;
+      border-radius:6px;
+      padding:2px 8px;
+      font-weight:700;
+      letter-spacing:.5px;
+      box-shadow:0 1px 3px rgba(0,0,0,.2);
+    }
+    .leaflet-tooltip.available-badge{
+      background:#28a745;
+      color:#fff;
+      border:none;
+      border-radius:6px;
+      padding:2px 8px;
+      font-weight:700;
+      letter-spacing:.5px;
+      box-shadow:0 1px 3px rgba(0,0,0,.2);
+    }
+.table thead th { position: sticky; top: 0; z-index: 5; background: var(--card-bg); }
+.table-hover tbody tr:hover{ background-color: rgba(78,215,241,.08); }
+
+/* Scrollable tables - Dashboard tab */
+#rowsDrivers,
+#rowsPassengers {
+  display: block;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+#rowsDrivers tr,
+#rowsPassengers tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+/* Trip monitoring table */
+#tripRows {
+  display: block;
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+#tripRows tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+/* Scheduling tab tables */
+#schRows {
+  display: block;
+  max-height: 450px;
+  overflow-y: auto;
+}
+
+#schRows tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+/* Dispatch history table */
+#historyRows {
+  display: block;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+#historyRows tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+/* Peak Hours - predictions cards container */
+#predictionsCards {
+  max-height: 600px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+/* Custom scrollbar for predictions cards */
+#predictionsCards::-webkit-scrollbar {
+  width: 8px;
+}
+
+#predictionsCards::-webkit-scrollbar-track {
+  background: rgba(0,0,0,.05);
+  border-radius: 4px;
+}
+
+#predictionsCards::-webkit-scrollbar-thumb {
+  background: var(--brand);
+  border-radius: 4px;
+}
+
+#predictionsCards::-webkit-scrollbar-thumb:hover {
+  background: #3cc5e0;
+}
+
+/* SMS Recipients table - already has inline max-height, enhance it */
+#recipientsTableBody {
+  display: block;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+#recipientsTableBody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+/* Waiting stops list */
+.waiting-stops-list {
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.waiting-stops-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.waiting-stops-list::-webkit-scrollbar-track {
+  background: rgba(0,0,0,.05);
+  border-radius: 3px;
+}
+
+.waiting-stops-list::-webkit-scrollbar-thumb {
+  background: var(--muted);
+  border-radius: 3px;
+}
+
+.waiting-stops-list::-webkit-scrollbar-thumb:hover {
+  background: var(--brand);
+}
+
+/* Ensure parent tables use full width */
+.table:has(#rowsDrivers) thead,
+.table:has(#rowsPassengers) thead,
+.table:has(#tripRows) thead,
+.table:has(#schRows) thead,
+.table:has(#historyRows) thead,
+.table:has(#recipientsTableBody) thead {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+/* General scrollbar styling for all table bodies */
+#rowsDrivers::-webkit-scrollbar,
+#rowsPassengers::-webkit-scrollbar,
+#tripRows::-webkit-scrollbar,
+#schRows::-webkit-scrollbar,
+#historyRows::-webkit-scrollbar,
+#recipientsTableBody::-webkit-scrollbar {
+  width: 8px;
+}
+
+#rowsDrivers::-webkit-scrollbar-track,
+#rowsPassengers::-webkit-scrollbar-track,
+#tripRows::-webkit-scrollbar-track,
+#schRows::-webkit-scrollbar-track,
+#historyRows::-webkit-scrollbar-track,
+#recipientsTableBody::-webkit-scrollbar-track {
+  background: rgba(0,0,0,.05);
+  border-radius: 4px;
+}
+
+#rowsDrivers::-webkit-scrollbar-thumb,
+#rowsPassengers::-webkit-scrollbar-thumb,
+#tripRows::-webkit-scrollbar-thumb,
+#schRows::-webkit-scrollbar-thumb,
+#historyRows::-webkit-scrollbar-thumb,
+#recipientsTableBody::-webkit-scrollbar-thumb {
+  background: var(--brand);
+  border-radius: 4px;
+}
+
+#rowsDrivers::-webkit
+/* Scrollable tables for drivers and passengers on dashboard */
+#rowsDrivers,
+#rowsPassengers {
+  display: block;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+#rowsDrivers tr,
+#rowsPassengers tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+/* Ensure the parent table uses full width */
+#rowsDrivers:not(:only-child),
+#rowsPassengers:not(:only-child) {
+  width: 100%;
+}
+
+/* Make thead match tbody width when scrolling */
+.table:has(#rowsDrivers) thead,
+.table:has(#rowsPassengers) thead {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
     .badge.bg-success {
       background-color: var(--accent) !important;
       color: #111;
@@ -177,7 +388,7 @@
   padding-left: 1rem;
   padding-right: 1rem;
   padding-top: 1rem;
-  padding-bottom: 2.5rem;
+  padding-bottom: 1.5rem;
   margin-left: auto;
   margin-right: auto;
   width: 100%;
@@ -271,7 +482,7 @@
 
 .dashboard-content .tab-pane {
   display: none;
-  padding-bottom: 2rem;
+  padding-bottom: 1rem;
 }
 
 .dashboard-content .tab-pane.active,
@@ -487,7 +698,7 @@ body.theme-dark::before{
   --bs-gutter-x: 1.5rem;
   --bs-gutter-y: 1.5rem;
   margin: 0;
-  min-height: calc(100vh - var(--nav-height) - 2rem);
+  min-height: auto;
 }
 
 .dashboard-content {

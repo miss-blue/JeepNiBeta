@@ -134,6 +134,80 @@
       </div>
     </div>
 
+<!-- Row: Drivers Table -->
+    <div class="row g-3 mt-1">
+      <div class="col-12">
+        <div class="card shadow-sm h-100">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <h5 class="card-title mb-0"><i class="bi bi-people me-2"></i>Active Drivers</h5>
+            <div class="d-flex gap-2">
+              <input id="searchDrivers" type="text" class="form-control form-control-sm" placeholder="Search drivers..." style="width: auto;">
+              <button id="btnReloadDrivers" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-clockwise"></i> Reload
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-striped table-hover table-sm align-middle">
+                <thead>
+                  <tr>
+                    <th>Driver</th>
+                    <th>Route</th>
+                    <th>Status</th>
+                    <th>Last Update</th>
+                  </tr>
+                </thead>
+                <tbody id="rowsDrivers">
+                  <tr><td colspan="4" class="text-center text-muted py-3">
+                    <div class="spinner-border spinner-border-sm text-info" role="status"></div>
+                    Loading drivers...
+                  </td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row: Passengers Table -->
+    <div class="row g-3 mt-1">
+      <div class="col-12">
+        <div class="card shadow-sm h-100">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <h5 class="card-title mb-0"><i class="bi bi-people me-2"></i>Passengers</h5>
+            <div class="d-flex gap-2">
+              <input id="searchPassengers" type="text" class="form-control form-control-sm" placeholder="Search passengers..." style="width: auto;">
+              <button id="btnReloadPassengers" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-clockwise"></i> Reload
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-striped table-hover table-sm align-middle">
+                <thead>
+                  <tr>
+                    <th>Passenger</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Joined</th>
+                  </tr>
+                </thead>
+                <tbody id="rowsPassengers">
+                  <tr><td colspan="4" class="text-center text-muted py-3">
+                    <div class="spinner-border spinner-border-sm text-info" role="status"></div>
+                    Loading passengers...
+                  </td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Row: Trip Monitoring -->
     <div class="row g-3 mt-1">
       <div class="col-12">

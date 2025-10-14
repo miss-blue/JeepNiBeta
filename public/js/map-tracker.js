@@ -32,7 +32,7 @@ let myRole = "norole";
 let passengerTrackingActive = false;
 let companionCount = 0;
 let _lastBearing = 0;
-let _lastAccuracy = null; // Add this line
+let _lastAccuracy = null;
 
 let _manualMode = false;
 let _manualClickHandler = null;
@@ -444,7 +444,7 @@ function updateCapacityBubble(lat, lng) {
   }).addTo(map);
 }
 
-// -------- Geofence Circle for Passengers --------
+// -------- Geofence Circle Bubble for Passengers Passenger Bubble --------
 function updateGeofenceCircle(lat, lng) {
   if (!map || myRole !== "passenger") return;
 

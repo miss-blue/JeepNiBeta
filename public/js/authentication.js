@@ -1,8 +1,11 @@
+// Import Firebase core modules and configuration
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { firebaseConfig } from "./firebaseConfig.js";
 
+// Initialize Firebase if not already initialized
 if (!getApps().length) initializeApp(firebaseConfig);
 
+// Import required Firebase authentication and database modules
 import {
   getAuth, onAuthStateChanged, signOut as fbSignOut
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
@@ -11,8 +14,10 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 import { query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
+// Export Firebase query functions for use in other modules
 export { query, orderByChild, equalTo, onAuthStateChanged };
 
+// Initialize Firebase Authentication and Realtime Database instances
 const auth = getAuth();
 const db   = getDatabase();
 

@@ -1,90 +1,440 @@
-    body {
-      background: #AFDDFF;
-      font-family: 'Nunito', sans-serif;
-    }
-    .navbar {
-      background: #4ED7F1 !important;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    .navbar-brand {
-      color: #fff !important;
-      font-weight: 700;
-    }
-    .card {
-      border-radius: 16px;
-      border: none;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-    }
-    .btn-primary {
-      background-color: #FFD63A;
-      border-color: #FFD63A;
-      color: #333;
-      font-weight: 600;
-    }
-    .btn-primary:hover {
-      background-color: #ffc800;
-      border-color: #ffc800;
-      color: #333;
-    }
-    .btn-outline-primary {
-      color: #4ED7F1;
-      border-color: #4ED7F1;
-    }
-    .btn-outline-primary:hover {
-      background-color: #4ED7F1;
-      border-color: #4ED7F1;
-      color: white;
-    }
-    .btn-outline-secondary {
-      color: #6c757d;
-      border-color: #6c757d;
-    }
-    .btn-outline-secondary:hover {
-      background-color: #6c757d;
-      border-color: #6c757d;
-      color: white;
-    }
-    .btn-outline-danger {
-      color: #dc3545;
-      border-color: #dc3545;
-    }
-    .btn-outline-danger:hover {
-      background-color: #dc3545;
-      border-color: #dc3545;
-      color: white;
-    }
-    .btn-outline-success {
-      color: #28a745;
-      border-color: #28a745;
-    }
-    .btn-outline-success:hover {
-      background-color: #28a745;
-      border-color: #28a745;
-      color: white;
-    }
-    .card-title {
-      color: #4ED7F1;
-      font-weight: 700;
-    }
-    #map {
-      height: 400px;
-      width: 100%;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-    .table th {
-      background-color: #4ED7F1;
-      color: white;
-    }
-    body{ position: relative; }
-    body::before{ content:""; position: fixed; inset:0; background: url('/icons/Background2.png') center bottom / cover no-repeat; opacity:.12; pointer-events:none; z-index:-1; }
+:root {
+  --bg: #AFDDFF;
+  --panel-bg: rgba(255, 255, 255, 0.95);
+  --text: #1f2937;
+  --text-muted: #6b7280;
+  --brand: #4ED7F1;
+  --accent: #FFD63A;
+  --success: #28a745;
+  --danger: #dc3545;
+  --warning: #ffc107;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
 
-    #btnStopTracking {
-      transition: opacity 0.3s ease;
-    }
+* {
+  box-sizing: border-box;
+}
 
-    #btnStopTracking:not(.d-none) {
-      display: inline-flex !important;
-      align-items: center;
-      gap: 0.5rem;
-    }
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  color: var(--text);
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: url('/icons/Background2.png') center bottom / cover no-repeat;
+  opacity: 0.12;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Navbar */
+.navbar {
+  background: linear-gradient(90deg, var(--brand), #7ee9ff) !important;
+  box-shadow: var(--shadow);
+  padding: 0.75rem 0;
+}
+
+.navbar-brand {
+  color: #fff !important;
+  font-weight: 700;
+  font-size: 1.25rem;
+  letter-spacing: 0.3px;
+}
+
+.navbar .btn {
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 0.4rem 0.9rem;
+}
+
+/* Main Layout */
+.driver-shell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Alerts */
+#alerts {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  max-width: 90%;
+  width: 500px;
+}
+
+#alerts .alert {
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+  font-weight: 600;
+  border: none;
+}
+
+/* Map Container */
+.map-container {
+  flex: 1;
+  position: relative;
+  min-height: 300px;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* Driver Control Panel */
+.driver-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--panel-bg);
+  backdrop-filter: blur(16px);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  max-height: 50vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.driver-panel__inner {
+  padding: 1rem 1.25rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.driver-panel__inner::-webkit-scrollbar {
+  width: 6px;
+}
+
+.driver-panel__inner::-webkit-scrollbar-thumb {
+  background: rgba(78, 215, 241, 0.4);
+  border-radius: 999px;
+}
+
+/* Control Section */
+.control-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.section-label {
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+/* Assignment Display */
+.assignment-display {
+  background: rgba(78, 215, 241, 0.1);
+  border: 1px solid rgba(78, 215, 241, 0.3);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  font-size: 0.95rem;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.assignment-display strong {
+  color: var(--brand);
+  font-weight: 700;
+}
+
+/* Trip Actions */
+.trip-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 80px;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.action-btn:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.action-btn svg {
+  opacity: 0.9;
+}
+
+.action-btn--accept {
+  background: linear-gradient(135deg, #4ED7F1, #7ee9ff);
+  color: #fff;
+}
+
+.action-btn--start {
+  background: linear-gradient(135deg, #FFD63A, #ffb347);
+  color: #2b2210;
+}
+
+.action-btn--complete {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: #fff;
+}
+
+/* Capacity Control */
+.capacity-control {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.capacity-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.capacity-badge--available {
+  background: var(--success);
+  color: #fff;
+}
+
+.capacity-badge--full {
+  background: var(--danger);
+  color: #fff;
+}
+
+.capacity-badge--offline {
+  background: #6c757d;
+  color: #fff;
+}
+
+.capacity-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 50px;
+  border: 2px solid var(--danger);
+  background: transparent;
+  border-radius: var(--radius-md);
+  color: var(--danger);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.capacity-btn:hover {
+  background: var(--danger);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.capacity-btn--active {
+  background: var(--danger);
+  color: #fff;
+}
+
+/* Navigation Controls */
+.destination-select {
+  width: 100%;
+  min-height: 50px;
+  border: 2px solid rgba(78, 215, 241, 0.3);
+  background: #fff;
+  border-radius: var(--radius-md);
+  padding: 0 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.destination-select:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(78, 215, 241, 0.1);
+}
+
+.navigate-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 54px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--brand), #7ee9ff);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 6px 16px rgba(78, 215, 241, 0.3);
+}
+
+.navigate-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.navigate-btn:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(78, 215, 241, 0.4);
+}
+
+/* Stop Tracking Button */
+.stop-tracking-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 54px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, #ff6b6b, #ff4f81);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 6px 16px rgba(255, 92, 120, 0.35);
+}
+
+.stop-tracking-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 92, 120, 0.45);
+}
+
+.stop-tracking-btn.d-none {
+  display: none !important;
+}
+
+/* Responsive Adjustments */
+@media (min-width: 768px) {
+  .driver-panel {
+    right: auto;
+    left: auto;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    max-width: 400px;
+    max-height: calc(100vh - 140px);
+    border-radius: var(--radius-lg);
+  }
+
+  #alerts {
+    top: 90px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .driver-panel {
+    max-width: 450px;
+  }
+
+  .trip-actions {
+    gap: 1rem;
+  }
+
+  .action-btn {
+    min-height: 90px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .driver-panel__inner {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .trip-actions {
+    gap: 0.5rem;
+  }
+
+  .action-btn {
+    min-height: 70px;
+    font-size: 0.75rem;
+    gap: 0.35rem;
+  }
+
+  .action-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .section-label {
+    font-size: 0.65rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .driver-panel {
+    max-height: 45vh;
+  }
+
+  .driver-panel__inner {
+    padding: 0.875rem 1rem;
+    gap: 0.875rem;
+  }
+}
+
+/* High Contrast Mode for Driving Safety */
+@media (prefers-contrast: high) {
+  .action-btn,
+  .navigate-btn,
+  .stop-tracking-btn {
+    border: 2px solid rgba(0, 0, 0, 0.2);
+  }
+
+  .capacity-badge {
+    border: 2px solid rgba(0, 0, 0, 0.3);
+  }
+}

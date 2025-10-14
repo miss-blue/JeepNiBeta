@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css">
   <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
-  <link rel="stylesheet" href="css/driver-dashboard.css"/>
+  <link rel="stylesheet" href="css/driver-dashboard.css" />
 
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 </head>
@@ -28,102 +28,104 @@
   </div>
 </nav>
 
-<main class="driver-shell">
+<main class="container my-4">
   <div id="alerts"></div>
-  <!-- Map Container -->
-  <div class="map-container">
-    <div id="map"></div>
+    <!-- NEW: Driver assignment -->
+  <div class="card shadow-sm mb-3">
+    <div class="card-body">
+      <h5 class="card-title d-flex align-items-center justify-content-between">
+        Today’s Assignment
+        <div class="d-flex gap-2">
+          <button id="btnAccept"   class="btn btn-sm btn-outline-primary">Accept</button>
+          <button id="btnEnroute"  class="btn btn-sm btn-outline-success">Start (En-route)</button>
+          <button id="btnComplete" class="btn btn-sm btn-outline-secondary">Complete</button>
+        </div>
+      </h5>
+      <div id="assignBox" class="small text-muted">Loading…</div>
+    </div>
   </div>
 
-  <!-- Driver Control Panel -->
-  <div class="driver-panel">
-    <div class="driver-panel__inner">
-      
-      <!-- Assignment Info -->
-      <div class="control-section">
-        <div class="section-label">Today's Assignment</div>
-        <div id="assignBox" class="assignment-display">Loading…</div>
-      </div>
-
-      <!-- Trip Controls -->
-      <div class="control-section">
-        <div class="section-label">Trip Status</div>
-        <div class="trip-actions">
-          <button id="btnAccept" class="action-btn action-btn--accept">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            <span>Accept</span>
-          </button>
-          <button id="btnEnroute" class="action-btn action-btn--start">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polygon points="5 3 19 12 5 21 5 3"></polygon>
-            </svg>
-            <span>Start Trip</span>
-          </button>
-          <button id="btnComplete" class="action-btn action-btn--complete">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-              <polyline points="22 4 12 14.01 9 11.01"></polyline>
-            </svg>
-            <span>Complete</span>
-          </button>
+  <div class="row g-3">
+    <div class="col-lg-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Profile</h5>
+          <div id="profileBox">Loading…</div>
+          <hr>
+          <button id="btnEdit" class="btn btn-outline-primary btn-sm">Edit Profile</button>
         </div>
       </div>
 
-      <!-- Capacity Control -->
-      <div class="control-section">
-        <div class="section-label">Capacity</div>
-        <div class="capacity-control">
-          <span id="capBadge" class="capacity-badge capacity-badge--available">Available</span>
-          <button id="btnToggleFull" class="capacity-btn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="15" y1="9" x2="9" y2="15"></line>
-              <line x1="9" y1="9" x2="15" y2="15"></line>
-            </svg>
-            <span>Mark FULL</span>
-          </button>
+      <div class="card shadow-sm mt-3">
+        <div class="card-body">
+          <h5 class="card-title">Trip Logs</h5>
+          <button id="btnExportTrips" class="btn btn-sm btn-outline-secondary">Export My Trips</button>
         </div>
       </div>
+    </div>
 
-      <!-- Navigation -->
-      <div class="control-section">
-        <div class="section-label">Navigation</div>
-        <select id="destinationSelect" class="destination-select">
-          <option value="">Choose destination...</option>
-          <option value="16.0754843,120.3546182">Saint Gabriel Parish</option>
-          <option value="16.073742,120.351614">Alip, Boquig Waiting Shed</option>
-          <option value="16.076286,120.3557308">Bonuan Boquig Barangay Hall</option>
-          <option value="16.066106,120.353298">Sagor, Longos</option>
-          <option value="16.070591,120.359635">Centro, Longos</option>
-          <option value="16.044321,120.343607">SM Center Dagupan</option>
-          <option value="16.043786,120.344272">DBP</option>
-          <option value="16.042842,120.344109">Victory Bus Terminal</option>
-        </select>
-        <button id="btnNavigate" class="navigate-btn" disabled>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
-          </svg>
-          <span>Start Navigation</span>
-        </button>
+            <!-- Destinations Panel -->
+                  <div class="card shadow-sm mt-3">
+                    <div class="card-body">
+                      <h5 class="card-title">Navigation</h5>
+                      <div class="mb-3">
+                        <label class="form-label small">Select Destination</label>
+                        <select id="destinationSelect" class="form-select form-select-sm">
+                          <option value="">Choose a stop...</option>
+                          <option value="16.0754843,120.3546182">Saint Gabriel Parish</option>
+                          <option value="16.073742,120.351614">Alip, Boquig Waiting Shed</option>
+                          <option value="16.076286,120.3557308">Bonuan Boquig Barangay Hall</option>
+                          <option value="16.066106,120.353298">Sagor, Longos</option>
+                          <option value="16.070591,120.359635">Centro, Longos</option>
+                          <option value="16.044321,120.343607">SM Center Dagupan</option>
+                          <option value="16.043786,120.344272">DBP</option>
+                          <option value="16.042842,120.344109">Victory Bus Terminal</option>
+                        </select>
+                      </div>
+                      <button id="btnNavigate" class="btn btn-primary btn-sm w-100" disabled>
+                        <i class="bi bi-compass"></i> Start Navigation
+                      </button>
+                    </div>
+                  </div>
+                <div class="d-flex align-items-center gap-2">
+                  <span id="capBadge" class="badge bg-success">Available</span>
+                  <button id="btnToggleFull" class="btn btn-sm btn-outline-danger">Mark FULL</button>
+                  <button id="btnStopTracking" class="btn btn-sm btn-outline-warning d-none">Stop Sharing</button>
+                </div>
+              </h5>
+              <div id="map"></div>
+            </div>
+          </div>
+        <div class="card-body">
+          <h5 class="card-title d-flex justify-content-between align-items-center mb-0">
+            My Recent Trips
+            <button id="btnReload" class="btn btn-sm btn-outline-secondary">Reload</button>
+          </h5>
+          <div class="table-responsive mt-3">
+            <table class="table table-striped table-hover table-sm">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Route</th>
+                  <th>Start</th>
+                  <th>End</th>
+                  <th>Duration</th>
+                </tr>
+              </thead>
+              <tbody id="tripRows">
+                <tr><td colspan="5" class="text-center text-muted py-4">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+          
+        </div>
       </div>
-
-      <!-- Stop Tracking (shown when active) -->
-      <button id="btnStopTracking" class="stop-tracking-btn d-none">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"></circle>
-          <rect x="9" y="9" width="6" height="6"></rect>
-        </svg>
-        <span>Stop Sharing Location</span>
-      </button>
-
     </div>
   </div>
 </main>
 <script type="module">
   /* Imports */
-  import { requireRole, signOutAndRedirect, auth, db, ref, get, update, onValue, serverTimestamp, set } from "./js/authentication.js";
+  import { requireRole, signOutAndRedirect, auth, db, ref, get, update, onValue, serverTimestamp } from "./js/authentication.js";
   import { query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
   import { startTrip } from "./js/create-trip.js";
   import { updateLocation, endTrip } from "./js/trip-tracking.js";
@@ -142,6 +144,46 @@ const alertBox = document.getElementById("alerts");
   const { user } = await requireRole(['driver'], { onDeny: () => alert('Access denied. Drivers only.') });
   document.getElementById("driverInfo").textContent = user.email;
 
+  /* Profile */
+  async function loadProfile() {
+    const snap = await get(ref(db, `drivers/${user.uid}`));
+    if (!snap.exists()) { showAlert("Profile not found.", "danger"); return; }
+    const d = snap.val();
+    document.getElementById("profileBox").innerHTML = `
+      <div><strong>Name:</strong> ${d.name || ""}</div>
+      <div><strong>Email:</strong> ${d.email || ""}</div>
+    `;
+  }
+
+  /* Trips (query by driver_uid to satisfy your rules) */
+  async function fetchMyTrips() {
+    const q = query(ref(db, "trip_logs"), orderByChild("driver_uid"), equalTo(auth.currentUser.uid));
+    const snap = await get(q);
+    if (!snap.exists()) return [];
+    // trip_logs/<tripId> => { ...fields }
+    return Object.entries(snap.val() || {}).map(([id, t]) => ({ id, ...t }));
+  }
+
+  async function loadTrips() {
+    const tbody = document.getElementById("tripRows");
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Loading…</td></tr>`;
+
+    const trips = await fetchMyTrips();
+    if (trips.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No trips yet</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = trips.map(t => `
+      <tr>
+        <td>${t.date || ""}</td>
+        <td>${t.route || ""}</td>
+        <td>${t.start?.ts ? new Date(t.start.ts).toLocaleString() : ""}</td>
+        <td>${t.end?.ts ? new Date(t.end.ts).toLocaleString() : ""}</td>
+        <td>${t.duration || ""}</td>
+      </tr>
+    `).join("");
+  }
 /* ===== ROUTING FOR DRIVERS ===== */
   const destinationSelect = document.getElementById('destinationSelect');
   const btnNavigate = document.getElementById('btnNavigate');
@@ -177,6 +219,7 @@ const alertBox = document.getElementById("alerts");
           if (window.JeepNiTracker && window.JeepNiTracker.isSharing() && window.JeepNiTracker.routeTo) {
             window.JeepNiTracker.routeTo(lat, lng);
             currentRouteTarget = { lat, lng, name };
+            btnClearRoute.disabled = false;
             showAlert(`Navigation started to ${name}`, 'success');
           } else {
             showAlert('Start your trip first (click "Start En-route")', 'warning');
@@ -187,6 +230,28 @@ const alertBox = document.getElementById("alerts");
         }
       }
     });
+  }
+
+  /* Export trips as CSV using same query */
+  async function exportTripsCsv() {
+    const trips = await fetchMyTrips();
+    if (trips.length === 0) { showAlert("No trips to export.", "info"); return; }
+    const rows = [["Date", "Route", "Start", "End", "Duration"]];
+    for (const t of trips) {
+      rows.push([
+        t.date || "",
+        t.route || "",
+        t.start?.ts ? new Date(t.start.ts).toISOString() : "",
+        t.end?.ts ? new Date(t.end.ts).toISOString() : "",
+        t.duration || ""
+      ]);
+    }
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "my_trips.csv"; a.click();
+    URL.revokeObjectURL(url);
   }
 
   /* Button references */
@@ -204,9 +269,10 @@ const alertBox = document.getElementById("alerts");
         return;
       }
 
-      await update(ref(db, `drivers/${user.uid}`), {
-        status: newStatus,
-        last_status_update: serverTimestamp()
+      await setStatus({
+        date: currentDispatch.date,
+        dispatchId: currentDispatch.id,
+        status: newStatus
       });
       
       // Show/hide stop tracking button based on status
@@ -215,6 +281,11 @@ const alertBox = document.getElementById("alerts");
       } else {
         btnStopTracking.classList.add('d-none');
       }
+
+      // Update button states
+      btnAccept.disabled = newStatus !== 'available';
+      btnEnroute.disabled = newStatus !== 'accepted';
+      btnComplete.disabled = newStatus !== 'enroute';
       
       // Handle location sharing based on status
         if (newStatus === 'enroute') {
@@ -236,16 +307,10 @@ const alertBox = document.getElementById("alerts");
   }
 
   /* Wire buttons */
-  const btnLogout = document.getElementById("btnLogout");  if (btnLogout) {
-      btnLogout.addEventListener("click", async () => {
-          try {
-              await signOutAndRedirect("login.html");
-          } catch (error) {
-              console.error('Logout failed:', error);
-              showAlert('Failed to logout: ' + error.message, 'danger');
-          }
-      });
-  }
+  document.getElementById("btnReload").addEventListener("click", loadTrips);
+  document.getElementById("btnEdit").addEventListener("click", () => location.href = "driver-edit.html");
+  document.getElementById("btnExportTrips").addEventListener("click", exportTripsCsv);
+  document.getElementById("btnLogout").addEventListener("click", () => signOutAndRedirect("login.html"));
 
   if (btnAccept) {
     btnAccept.addEventListener('click', () => updateDriverStatus('accepted'));
@@ -297,36 +362,34 @@ btnStopTracking.addEventListener('click', async () => {
   }
 });
 
+  await loadProfile();
+  try {
+    await loadTrips();
+  } catch (e) {
+    console.warn('loadTrips failed but continuing UI init:', e?.message || e);
+    // Keep the page functional even if trips are not readable
+    const tbody = document.getElementById('tripRows');
+    if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Trips unavailable.</td></tr>`;
+  }
+
   /* Capacity FULL toggle (near map) */
   const capBadge = document.getElementById('capBadge');
   const btnToggleFull = document.getElementById('btnToggleFull');
   let fullState = false;
 
   function renderCapUI() {
-  if (fullState) {
-    capBadge.className = 'capacity-badge capacity-badge--full';  // Uses new CSS classes
-    capBadge.textContent = 'FULL';
-    btnToggleFull.className = 'capacity-btn capacity-btn--active';  // Solid red background
-    btnToggleFull.innerHTML = `
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M18 6L6 18M6 6l12 12"></path>
-      </svg>
-      <span>Set Available</span>
-    `;  // Icon + text (matches new design)
-  } else {
-    capBadge.className = 'capacity-badge capacity-badge--available';
-    capBadge.textContent = 'Available';
-    btnToggleFull.className = 'capacity-btn';  // Outlined style
-    btnToggleFull.innerHTML = `
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="10"></circle>
-        <line x1="15" y1="9" x2="9" y2="15"></line>
-        <line x1="9" y1="9" x2="15" y2="15"></line>
-      </svg>
-      <span>Mark FULL</span>
-    `;
+    if (fullState) {
+      capBadge.className = 'badge bg-danger';
+      capBadge.textContent = 'FULL';
+      btnToggleFull.className = 'btn btn-sm btn-danger';
+      btnToggleFull.textContent = 'Set Available';
+    } else {
+      capBadge.className = 'badge bg-success';
+      capBadge.textContent = 'Available';
+      btnToggleFull.className = 'btn btn-sm btn-outline-danger';
+      btnToggleFull.textContent = 'Mark FULL';
+    }
   }
-}
 
     onValue(ref(db, `drivers_location/${user.uid}`), (snap) => {
       const v = snap.exists() ? snap.val() : {};
@@ -377,47 +440,16 @@ btnStopTracking.addEventListener('click', async () => {
   }
 
   async function loadMyAssignment() {
-    try {
-        const assignBox = document.getElementById("assignBox");
-        if (!assignBox) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const mine = await myAssignments(today);
+    currentDispatch = mine[0] || null; // pick earliest if multiple
+    assignBox.innerHTML = fmtAssign(currentDispatch);
 
-        assignBox.innerHTML = "Loading..."; // Show loading state
-
-        const today = new Date().toISOString().slice(0, 10);
-        const mine = await myAssignments(today);
-        
-        if (!mine || mine.length === 0) {
-            assignBox.innerHTML = "No assignment for today.";
-            return;
-        }
-
-        currentDispatch = mine[0] || null; // pick earliest if multiple
-
-        if (currentDispatch) {
-            assignBox.innerHTML = `
-                Time: <strong>${currentDispatch.dep_time || "Not set"}</strong><br>
-                Route: <strong>${currentDispatch.route || "Not set"}</strong><br>
-                Jeep: <strong>${currentDispatch.jeep_id || "Not set"}</strong><br>
-                Status: <strong>${currentDispatch.status || "Not set"}</strong>
-            `;
-
-            // Update button states
-            const btnAccept = document.getElementById("btnAccept");
-            const btnEnroute = document.getElementById("btnEnroute");
-            const btnComplete = document.getElementById("btnComplete");
-
-            if (btnAccept) btnAccept.disabled = !currentDispatch || currentDispatch.status !== "assigned";
-            if (btnEnroute) btnEnroute.disabled = !currentDispatch || !["assigned", "accepted"].includes(currentDispatch.status);
-            if (btnComplete) btnComplete.disabled = !currentDispatch || currentDispatch.status !== "enroute";
-        } else {
-            assignBox.innerHTML = "No active assignment found.";
-        }
-    } catch (error) {
-        console.error('Failed to load assignment:', error);
-        assignBox.innerHTML = `<span class="text-danger">Error loading assignment: ${error.message}</span>`;
-        showAlert('Failed to load assignment: ' + error.message, 'danger');
-    }
-}
+    const has = !!currentDispatch;
+    document.getElementById("btnAccept").disabled   = !has || currentDispatch.status !== "assigned";
+    document.getElementById("btnEnroute").disabled  = !has || !["assigned", "accepted"].includes(currentDispatch.status);
+    document.getElementById("btnComplete").disabled = !has || currentDispatch.status !== "enroute";
+  }
 
   async function changeStatus(next) {
     if (!currentDispatch) return;
@@ -457,6 +489,7 @@ btnStopTracking.addEventListener('click', async () => {
     }
 
     await loadMyAssignment();
+    await loadTrips();
   }
 
   document.getElementById("btnAccept").addEventListener("click", () => changeStatus("accepted"));

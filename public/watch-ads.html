@@ -206,7 +206,7 @@
 <body>
   <a class="back" href="passenger-dashboard.html" aria-label="Back"><i class="bi bi-chevron-left fs-5"></i></a>
 
-  <!-- SUI Wallet chip -->
+  <!--   Wallet chip -->
   <div class="wallet" title="Your SUI coins">
     <div class="coin"><i class="bi bi-coin"></i></div>
     <div class="count" id="coinCount">5</div>
@@ -221,7 +221,7 @@
           <div class="cardx">
             <div class="title">Special Pack</div>
             <div class="d-flex justify-content-center gap-2 mb-2">
-              <span class="pill"><i class="bi bi-coin"></i> +2000 SUI</span>
+              <span class="pill"><i class="bi bi-coin"></i> +2000  </span>
               <span class="pill"><i class="bi bi-ticket-perforated"></i> 10 Tickets</span>
             </div>
             <div class="text-center"><button class="btn-buy" id="btnBuy">Use</button></div>
@@ -249,7 +249,7 @@
             <div class="rowx">
               <div class="left">
                 <div class="coin"><i class="bi bi-coin"></i></div>
-                <div><div class="fw-bold">+5 SUI</div><div class="subtitle">Watch an ad to earn</div></div>
+                <div><div class="fw-bold">+5  </div><div class="subtitle">Watch an ad to earn</div></div>
               </div>
               <button class="btn-watch" data-watch>Watch</button>
             </div>
@@ -258,15 +258,15 @@
             <div class="rowx">
               <div class="left">
                 <div class="coin"><i class="bi bi-coin"></i></div>
-                <div><div class="fw-bold">+5 SUI</div><div class="subtitle">Watch an ad to earn</div></div>
+                <div><div class="fw-bold">+5  </div><div class="subtitle">Watch an ad to earn</div></div>
               </div>
               <button class="btn-watch" data-watch>Watch</button>
             </div>
           </div>
           <!-- Locked samples -->
-          <div class="cardx"><div class="rowx"><div class="left"><div class="coin"><i class="bi bi-coin"></i></div><div><div class="fw-bold">+10 SUI</div><div class="subtitle">Locked</div></div></div><button class="btn-locked" disabled><i class="bi bi-lock"></i></button></div></div>
-          <div class="cardx"><div class="rowx"><div class="left"><div class="coin"><i class="bi bi-coin"></i></div><div><div class="fw-bold">+10 SUI</div><div class="subtitle">Locked</div></div></div><button class="btn-locked" disabled><i class="bi bi-lock"></i></button></div></div>
-          <div class="cardx"><div class="rowx"><div class="left"><div class="coin"><i class="bi bi-coin"></i></div><div><div class="fw-bold">+50 SUI</div><div class="subtitle">Locked</div></div></div><button class="btn-locked" disabled><i class="bi bi-lock"></i></button></div></div>
+          <div class="cardx"><div class="rowx"><div class="left"><div class="coin"><i class="bi bi-coin"></i></div><div><div class="fw-bold">+10  </div><div class="subtitle">Locked</div></div></div><button class="btn-locked" disabled><i class="bi bi-lock"></i></button></div></div>
+          <div class="cardx"><div class="rowx"><div class="left"><div class="coin"><i class="bi bi-coin"></i></div><div><div class="fw-bold">+10  </div><div class="subtitle">Locked</div></div></div><button class="btn-locked" disabled><i class="bi bi-lock"></i></button></div></div>
+          <div class="cardx"><div class="rowx"><div class="left"><div class="coin"><i class="bi bi-coin"></i></div><div><div class="fw-bold">+50  </div><div class="subtitle">Locked</div></div></div><button class="btn-locked" disabled><i class="bi bi-lock"></i></button></div></div>
         </div>
       </section>
 
@@ -419,7 +419,7 @@
     /* ---------- Pack button ---------- */
     useBtn?.addEventListener('click', async ()=>{
       await runTransaction(balRef, (curr)=> (Number(curr)||0) + PACK_COINS);
-      try { alert(`+${PACK_COINS} SUI added to your balance.`); } catch {}
+      try { alert(`+${PACK_COINS} added to your balance.`); } catch {}
     });
 
     /* ---------- Watch buttons ---------- */
@@ -430,7 +430,7 @@
         const adsAvail = e.exists()? (e.val().ads_available||0) : 0;
         if (adsAvail) {
           await consumeAdAvailabilityAndReward();
-          try { alert(`+${REWARD_PER_AD} SUI added to your balance.`); } catch {}
+          try { alert(`+${REWARD_PER_AD}   added to your balance.`); } catch {}
         } else {
           modal.show();
         }
