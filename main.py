@@ -1,7 +1,7 @@
 """
 Convenience entry point so `python main.py` from the repository root starts the
 Flask backend (and its prediction scheduler) exactly like running
-`python backend/main.py`.
+`python backend/main.py`. So I will run this to connect to the Flask backend
 """
 
 from pathlib import Path

@@ -213,10 +213,18 @@
   </main>
 
  <script type="module">
-    // Simplified script: Ensures the 'Tara Na' button works and no redirection logic runs.
+    // Add cache-busting and proper redirection
     const taraNaBtn = document.querySelector('.btn-tara-na-img');
     if(taraNaBtn){
-      taraNaBtn.addEventListener('click', ()=> window.location.href = 'login.html');
+      taraNaBtn.addEventListener('click', () => {
+        // Clear any stored credentials
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Add timestamp to prevent caching
+        const nocache = new Date().getTime();
+        window.location.href = `login.html?nocache=${nocache}`;
+      });
       taraNaBtn.style.cursor = 'pointer';
     }
   </script>
