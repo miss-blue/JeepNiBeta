@@ -27,12 +27,12 @@
      .login-wrap{min-height:100%; display:grid; place-items:center; padding:6vh 16px}
      .jeep-hero{max-width:520px; width:100%; margin:2vh auto 0; position:relative}
      .jeep-hero img{user-select:none; -webkit-user-drag:none}
-     .jeep-hero .bg-blur{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:blur(6px); opacity:.25; border-radius:18px}
+     .jeep-hero .bg-blur{display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:blur(6px); opacity:.25; border-radius:18px}
      .jeep-hero .jeep{position:relative; width:100%; height:auto; display:block; filter:drop-shadow(0 10px 22px rgba(0,0,0,.25)); margin-inline:auto}
 
     .banner-container {
         position: absolute;
-        left: 50%;
+        left: 55%;
         transform: translateX(-50%); 
         
         top: 10%;
@@ -56,7 +56,7 @@
     }
 
     .banner img {
-        width: 100%; 
+        width: 70%; 
         height: auto; 
         display: block; 
         transition: transform .25s ease, filter .25s ease; 
@@ -80,7 +80,7 @@
      }
 
      /* CARD */
-     .card-login{max-width:460px; width:100%; background:var(--card-bg); backdrop-filter: blur(10px); border:1px solid rgba(0,0,0,.06); border-radius:var(--radius); box-shadow:var(--shadow)}
+     .card-login{max-width:380px; width:100%; background:var(--card-bg); backdrop-filter: blur(10px); border:1px solid rgba(0,0,0,.06); border-radius:var(--radius); box-shadow:var(--shadow)}
      .card-login .header{display:flex; align-items:center; justify-content:space-between}
      .title{font-weight:800; color:var(--brand)}
      .btn-brand{background:var(--accent); border-color:var(--accent); color:#111; font-weight:700}
@@ -93,75 +93,170 @@
      .link{color:var(--brand); text-decoration:none}
      .link:hover{text-decoration:underline}
      .toggle-theme{border-color:var(--brand); color:var(--brand)}
-   </style>
+
+     .login-wrap {
+    min-height: 100%;
+    display: grid;
+    place-items: center;
+    padding: 2vh 16px;
+  }
+
+  .login-container {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .jeep-hero {
+    flex: 1;
+    max-width: 600px;
+    position: relative;
+    margin: 0;
+  }
+
+  .card-login {
+    flex: 1;
+    max-width: 460px;
+    margin: 0;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 992px) {
+    .login-container {
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .jeep-hero {
+      max-width: 420px;
+    }
+    
+    /* Add this to shrink the card */
+    .card-login {
+      max-width: 400px;
+      padding: 1.5rem !important; /* Reduce padding */
+    }
+  }
+
+  /* Add a new media query for even smaller screens */
+  @media (max-width: 768px) {
+    .card-login {
+      max-width: 360px;
+      padding: 1.25rem !important;
+    }
+    
+    .jeep-hero {
+      max-width: 360px;
+    }
+  }
+
+  /* For mobile phones */
+  @media (max-width: 576px) {
+    .card-login {
+      max-width: 100%;
+      padding: 1rem !important;
+    }
+    
+    .jeep-hero {
+      max-width: 100%;
+    }
+    
+    .banner-container {
+      width: 35%; /* Adjust banner size for mobile */
+    }
+  }
+
+  /* Adjust banner container position for side-by-side layout */
+  .banner-container {
+    top: 20%;
+    width: 40%;
+  }
+
+  /* Optional: Add some animation */
+  .jeep-hero {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+  }
+</style>
   <link rel="icon" href="/icons/JEEPNi.png" type="image/png">
 </head>
 <body>
   <div class="login-wrap">
-    <!-- HERO with clickable banners -->
-    <div class="mb-3 jeep-hero" aria-label="Choose role">
-      <img class="bg-blur" src="icons/Background1.png" alt="">
-      <!-- Combined jeep and humans image -->
-      <img class="jeep" src="icons/JeepNiWithTao.png" alt="Jeepney with driver and passenger">
-   
-      <div class="banner-container"> 
-        <a id="banPassenger" class="banner passenger" href="#" role="button" tabindex="0" aria-pressed="false" aria-label="Pasahero Para Po!">
-         <img src="icons/17 Passenger Button.png" alt="Pasahero Para Po!">
-        </a>
-        <a id="banDriver" class="banner driver" href="#" role="button" tabindex="0" aria-pressed="false" aria-label="Manong Driver">
-          <img src="icons/18 Driver Button.png" alt="Manong Driver">
-        </a>
+    <div class="login-container">
+      <!-- HERO with clickable banners -->
+      <div class="jeep-hero" aria-label="Choose role">
+        <img class="bg-blur" src="icons/Background1.png" alt="">
+        <img class="jeep" src="icons/JeepNiWithTao.png" alt="Jeepney with driver and passenger">
+        <div class="banner-container"> 
+          <a id="banPassenger" class="banner passenger" href="#" role="button" tabindex="0" aria-pressed="false" aria-label="Pasahero Para Po!">
+            <img src="icons/17 Passenger Button.png" alt="Pasahero Para Po!">
+          </a>
+          <a id="banDriver" class="banner driver" href="#" role="button" tabindex="0" aria-pressed="false" aria-label="Manong Driver">
+            <img src="icons/18 Driver Button.png" alt="Manong Driver">
+          </a>
+        </div>
       </div>
+
+      <!-- AUTH CARD -->
+      <div class="card-login p-3 p-md-4 auth-card">
+        <div class="header mb-3">
+          <a class="brand" href="index.html"><img src="/icons/JEEPNi.png" width="28" height="28" alt="JeepNi"><span class="fw-bold">JeepNi</span></a>
+          <button id="btnTheme" class="btn btn-sm toggle-theme" title="Toggle theme" aria-label="Toggle theme"><i class="bi bi-moon-stars"></i></button>
+        </div>
+        <h4 id="loginTitle" class="title mb-1">Welcome back</h4>
+        <div id="loginSub" class="muted mb-3">Sign in to continue</div>
+        <div data-role-chip class="small mb-2" style="display:inline-block; background:rgba(78,215,241,.15); color:#0f172a; padding:4px 8px; border-radius:999px; font-weight:600">Signing in as: Passenger</div>
+        <div id="alert" class="mb-2"></div>
+
+        <form id="loginForm" novalidate>
+          <div class="mb-3 input-icon">
+            <i class="bi bi-at"></i>
+            <label class="form-label">Email</label>
+            <input id="email" type="email" class="form-control" placeholder="you@example.com" autocomplete="email" required />
+            <div class="form-text">Use your registered email address</div>
+          </div>
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <label class="form-label mb-0">Password</label>
+              <a href="#" id="linkForgot" class="small link">Forgot password?</a>
+            </div>
+            <div class="input-group">
+              <span class="input-group-text bg-transparent"><i class="bi bi-lock"></i></span>
+              <input id="password" type="password" class="form-control" placeholder="••••••••" autocomplete="current-password" required />
+              <button class="btn btn-outline-secondary" type="button" id="togglePass" title="Show/Hide"><i class="bi bi-eye"></i></button>
+            </div>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="remember">
+              <label class="form-check-label" for="remember">Remember email</label>
+            </div>
+            <a href="register.html" class="small link">Create account</a>
+          </div>
+          <div class="d-grid">
+            <button class="btn btn-brand py-2" type="submit" id="btnLogin">
+              <span class="btn-text">Sign in</span>
+              <span class="spinner-border spinner-border-sm ms-2 d-none" id="spinner" role="status" aria-hidden="true"></span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
 
     <!-- Small Admin link under hero -->
     <div class="text-center mt-1">
-      <a id="linkAdminLogin" href="#" class="small link"><i class="bi bi-gear-wide-connected me-1"></i>Admin Login</a>
+      <a id="linkAdminLogin" href="#" class="small link"><i class=""></i></a>
     </div>
 
-    <!-- AUTH CARD -->
-    <div class="card-login p-4 p-md-5 auth-card mt-2">
-      <div class="header mb-3">
-        <a class="brand" href="index.html"><img src="/icons/JEEPNi.png" width="28" height="28" alt="JeepNi"><span class="fw-bold">JeepNi</span></a>
-        <button id="btnTheme" class="btn btn-sm toggle-theme" title="Toggle theme" aria-label="Toggle theme"><i class="bi bi-moon-stars"></i></button>
-      </div>
-      <h4 id="loginTitle" class="title mb-1">Welcome back</h4>
-      <div id="loginSub" class="muted mb-3">Sign in to continue</div>
-      <div data-role-chip class="small mb-2" style="display:inline-block; background:rgba(78,215,241,.15); color:#0f172a; padding:4px 8px; border-radius:999px; font-weight:600">Signing in as: Passenger</div>
-      <div id="alert" class="mb-2"></div>
-
-      <form id="loginForm" novalidate>
-        <div class="mb-3 input-icon">
-          <i class="bi bi-at"></i>
-          <label class="form-label">Email</label>
-          <input id="email" type="email" class="form-control" placeholder="you@example.com" autocomplete="email" required />
-          <div class="form-text">Use your registered email address</div>
-        </div>
-        <div class="mb-3">
-          <div class="d-flex justify-content-between align-items-center">
-            <label class="form-label mb-0">Password</label>
-            <a href="#" id="linkForgot" class="small link">Forgot password?</a>
-          </div>
-          <div class="input-group">
-            <span class="input-group-text bg-transparent"><i class="bi bi-lock"></i></span>
-            <input id="password" type="password" class="form-control" placeholder="••••••••" autocomplete="current-password" required />
-            <button class="btn btn-outline-secondary" type="button" id="togglePass" title="Show/Hide"><i class="bi bi-eye"></i></button>
-          </div>
-        </div>
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="remember">
-            <label class="form-check-label" for="remember">Remember email</label>
-          </div>
-          <a href="register.html" class="small link">Create account</a>
-        </div>
-        <div class="d-grid">
-          <button class="btn btn-brand py-2" type="submit" id="btnLogin">
-            <span class="btn-text">Sign in</span>
-            <span class="spinner-border spinner-border-sm ms-2 d-none" id="spinner" role="status" aria-hidden="true"></span>
-          </button>
-        </div>
-      </form>
-    </div>
+    
   </div>
 
   <script type="module">

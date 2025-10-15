@@ -438,3 +438,57 @@ body::before {
     border: 2px solid rgba(0, 0, 0, 0.3);
   }
 }
+
+/* Increase font sizes globally */
+body {
+  font-size: 1.1rem;
+}
+
+.navbar-brand {
+  font-size: 1.4rem;
+}
+
+.section-label {
+  font-size: 0.8rem;
+}
+
+.assignment-display {
+  font-size: 1.05rem;
+}
+
+.action-btn {
+  font-size: 0.95rem;
+}
+
+.capacity-badge {
+  font-size: 1rem;
+}
+
+.capacity-btn {
+  font-size: 1.05rem;
+}
+
+.destination-select {
+  font-size: 1.05rem;
+}
+
+.navigate-btn,
+.stop-tracking-btn {
+  font-size: 1.1rem;
+}
+
+@media (min-width: 1024px) {
+  .action-btn {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .action-btn {
+    font-size: 0.85rem;
+  }
+
+  .section-label {
+    font-size: 0.75rem;
+  }
+}

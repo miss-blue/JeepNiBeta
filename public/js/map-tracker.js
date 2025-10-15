@@ -462,6 +462,8 @@ function updateGeofenceCircle(lat, lng) {
   checkGeofenceOverlap(lat, lng);
 }
 
+// --------  passenger reached destination --------
+
 function checkGeofenceOverlap(lat, lng) {
   if (!myDestinationMarker) return;
   const destLatLng = myDestinationMarker.getLatLng();
@@ -1566,7 +1568,7 @@ if (typeof window !== "undefined") {
     stopPassengerTracking,
     isPassengerTracking,
     setPassengerWaitingCount,
-    setJustMeMode, // <-- ADD THIS LINE
+    setJustMeMode, 
     setDestination,
     clearDestination,
 

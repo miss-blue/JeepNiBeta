@@ -408,3 +408,60 @@
       background: transparent !important;
       border: none !important;
     }
+
+    /* Increase font sizes globally */
+    body {
+      font-size: 1.1rem;
+    }
+
+    .navbar-brand {
+      font-size: 1.4rem;
+    }
+
+    .control-eyebrow {
+      font-size: 0.8rem;
+    }
+
+    .control-identity {
+      font-size: 1.15rem;
+    }
+
+    .counter-input {
+      font-size: 1.3rem;
+    }
+
+    .panel-button {
+      font-size: 1.1rem;
+    }
+
+    .panel-button i {
+      font-size: 1.2rem;
+    }
+
+    .destination-item strong {
+      font-size: 1.05rem;
+    }
+
+    .destination-item small {
+      font-size: 0.85rem;
+    }
+
+    .legend-list span {
+      font-size: 1rem;
+    }
+
+    .arrival-notice {
+      font-size: 1.05rem;
+    }
+
+    .arrival-notice__icon {
+      font-size: 1.2rem;
+    }
+
+    .ghost-button {
+      font-size: 1rem;
+    }
+
+    .control-chip {
+      font-size: 1.05rem;
+    }

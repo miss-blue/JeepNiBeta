@@ -139,11 +139,14 @@
       <div class="col-12">
         <div class="card shadow-sm h-100">
           <div class="card-header d-flex align-items-center justify-content-between">
-            <h5 class="card-title mb-0"><i class="bi bi-people me-2"></i>Active Drivers</h5>
+            <h5 class="card-title mb-0"><i class="bi bi-people me-2"></i>List of Drivers List</h5>
             <div class="d-flex gap-2">
               <input id="searchDrivers" type="text" class="form-control form-control-sm" placeholder="Search drivers..." style="width: auto;">
               <button id="btnReloadDrivers" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-arrow-clockwise"></i> Reload
+              </button>
+              <button id="btnPrintDrivers" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-printer"></i> Print
               </button>
             </div>
           </div>
@@ -176,11 +179,14 @@
       <div class="col-12">
         <div class="card shadow-sm h-100">
           <div class="card-header d-flex align-items-center justify-content-between">
-            <h5 class="card-title mb-0"><i class="bi bi-people me-2"></i>Passengers</h5>
+            <h5 class="card-title mb-0"><i class="bi bi-people me-2"></i>List of Passengers</h5>
             <div class="d-flex gap-2">
               <input id="searchPassengers" type="text" class="form-control form-control-sm" placeholder="Search passengers..." style="width: auto;">
               <button id="btnReloadPassengers" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-arrow-clockwise"></i> Reload
+              </button>
+              <button id="btnPrintPassengers" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-printer"></i> Print
               </button>
             </div>
           </div>
@@ -231,6 +237,9 @@
                 <button id="btnLoadTrips" class="btn btn-outline-secondary btn-sm">Load Trips</button>
                 <button id="btnExportTripCSV" class="btn btn-outline-primary btn-sm" disabled>Export CSV</button>
                 <button id="btnExportTripAll" class="btn btn-outline-success btn-sm" disabled>Export All</button>
+                <button id="btnPrintTrips" class="btn btn-outline-info btn-sm" disabled>
+                  <i class="bi bi-printer"></i> Print
+                </button>
               </div>
             </div>
             <div class="table-responsive mt-3">
@@ -685,7 +694,7 @@
                   <small class="text-muted">Max 11 characters (optional)</small>
                 </div>
 
-                <div class="mb-3">
+                <!-- <div class="mb-3">
                   <label class="form-label">Add Recipient by Number</label>
                   <div class="input-group">
                     <input 
@@ -700,7 +709,7 @@
                     </button>
                   </div>
                   <small class="text-muted">Separate multiple numbers with commas or spaces. Numbers are normalised to 63XXXXXXXXXX.</small>
-                </div>
+                </div> -->
 
                 <div class="mb-3">
                   <label class="form-label">Selected Recipients</label>
@@ -1736,11 +1745,16 @@ if (btnConfirmRemoveAdmin) btnConfirmRemoveAdmin.addEventListener('click', remov
     const uid = document.querySelector('#tripDriver')?.value || '';
     const tbody = document.querySelector('#tripRows');
     const btnCSV = document.querySelector('#btnExportTripCSV');
+    const btnPrint = document.querySelector('#btnPrintTrips');
     if (!uid) {
       if (tbody) tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-3">Please select a driver.</td></tr>`;
       if (btnCSV) btnCSV.disabled = true;
+      if (btnPrint) btnPrint.disabled = true;
       return;
     }
+    if (tbody) tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-3">Loading...</td></tr>`;
+    if (btnCSV) btnCSV.disabled = true;
+    if (btnPrint) btnPrint.disabled = true;
     if (tbody) tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-3">Loading...</td></tr>`;
     if (btnCSV) btnCSV.disabled = true;
     try {
@@ -1802,9 +1816,27 @@ if (btnConfirmRemoveAdmin) btnConfirmRemoveAdmin.addEventListener('click', remov
           <td>${r.duration}</td>
         </tr>
       `).join('') : `<tr><td colspan="4" class="text-center text-muted py-3">No trips loaded.</td></tr>`;
+      
+      const btnPrint = document.querySelector('#btnPrintTrips');
+      
       if (btnCSV) {
         btnCSV.disabled = rows.length === 0;
         btnCSV.onclick = () => exportTripCSV(rows, date, uid);
+      }
+      
+      if (btnPrint) {
+        btnPrint.disabled = rows.length === 0;
+        btnPrint.onclick = async () => {
+          try {
+            const driverSnap = await get(ref(db, `drivers/${uid}`));
+            const driverData = driverSnap.exists() ? driverSnap.val() : {};
+            const driverName = driverData.name || driverData.email || uid.slice(0, 8);
+            printTrips(rows, date, driverName);
+          } catch (err) {
+            console.warn('Failed to get driver name:', err);
+            printTrips(rows, date, uid.slice(0, 8));
+          }
+        };
       }
     } catch (err) {
       console.error('loadTrips failed', err);
@@ -1825,6 +1857,88 @@ if (btnConfirmRemoveAdmin) btnConfirmRemoveAdmin.addEventListener('click', remov
       csv.push(cells.join(','));
     });
     downloadCSV(csv.join('\n'), `trips_${uid}_${date}.csv`);
+  }
+  function printTrips(rows, date, driverName) {
+    if (!rows || rows.length === 0) {
+      showAlert('No trips to print.', 'info');
+      return;
+    }
+
+    const printWindow = window.open('', '_blank');
+    const tripRows = rows.map(r => `
+      <tr>
+        <td>${r.id}</td>
+        <td>${fmt(r.start)}</td>
+        <td>${fmt(r.end)}</td>
+        <td>${r.duration}</td>
+      </tr>
+    `).join('');
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Trip Monitoring - ${date}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          h1 { color: #333; margin-bottom: 10px; }
+          .meta { color: #666; font-size: 14px; margin-bottom: 20px; }
+          .info-box { 
+            background-color: #f8f9fa; 
+            border-left: 4px solid #4ED7F1; 
+            padding: 10px; 
+            margin-bottom: 20px; 
+          }
+          .info-box strong { color: #333; }
+          table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          th { background-color: #4ED7F1; color: white; }
+          tr:nth-child(even) { background-color: #f9f9f9; }
+          .summary { 
+            margin-top: 20px; 
+            padding: 10px; 
+            background-color: #e9ecef; 
+            border-radius: 4px; 
+          }
+          @media print { 
+            body { margin: 0; }
+            button { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <h1>JeepNi - Trip Monitoring Report</h1>
+        <div class="meta">Generated: ${new Date().toLocaleString()}</div>
+        <div class="info-box">
+          <strong>Driver:</strong> ${driverName}<br>
+          <strong>Date:</strong> ${date}<br>
+          <strong>Total Trips:</strong> ${rows.length}
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Trip ID</th>
+              <th>Start</th>
+              <th>End</th>
+              <th>Duration</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tripRows}
+          </tbody>
+        </table>
+        <div class="summary">
+          <strong>Report Summary:</strong> ${rows.length} trip(s) recorded for ${date}
+        </div>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 250);
   }
 
   async function exportAllTripsForDriver() {
@@ -1891,6 +2005,90 @@ if (btnConfirmRemoveAdmin) btnConfirmRemoveAdmin.addEventListener('click', remov
     }
   }
 
+// Print functions
+function printDrivers() {
+  const table = document.querySelector('#rowsDrivers').closest('table');
+  if (!table) return;
+  
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Drivers List - ${new Date().toLocaleDateString()}</title>
+      <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; margin-bottom: 10px; }
+        .meta { color: #666; font-size: 14px; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #4ED7F1; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+        .badge-success { background-color: #28a745; color: white; }
+        .badge-secondary { background-color: #6c757d; color: white; }
+        .badge-info { background-color: #17a2b8; color: white; }
+        @media print { 
+          body { margin: 0; }
+          button { display: none; }
+        }
+      </style>
+    </head>
+    <body>
+      <h1>JeepNi - Active Drivers</h1>
+      <div class="meta">Generated: ${new Date().toLocaleString()}</div>
+      ${table.outerHTML}
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => {
+    printWindow.print();
+    printWindow.close();
+  }, 250);
+}
+
+function printPassengers() {
+  const table = document.querySelector('#rowsPassengers').closest('table');
+  if (!table) return;
+  
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Passengers List - ${new Date().toLocaleDateString()}</title>
+      <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; margin-bottom: 10px; }
+        .meta { color: #666; font-size: 14px; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #4ED7F1; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        small { color: #666; font-size: 12px; }
+        @media print { 
+          body { margin: 0; }
+          button { display: none; }
+        }
+      </style>
+    </head>
+    <body>
+      <h1>JeepNi - Passengers</h1>
+      <div class="meta">Generated: ${new Date().toLocaleString()}</div>
+      ${table.outerHTML}
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => {
+    printWindow.print();
+    printWindow.close();
+  }, 250);
+}
+
   // Event listeners
   const btnReloadDrivers = $("#btnReloadDrivers");
   if (btnReloadDrivers) btnReloadDrivers.addEventListener("click", loadDriversTable);
@@ -1900,6 +2098,10 @@ if (btnConfirmRemoveAdmin) btnConfirmRemoveAdmin.addEventListener('click', remov
   if (btnExportDrivers) btnExportDrivers.addEventListener("click", exportDrivers);
   const btnExportPassengers = $("#btnExportPassengers");
   if (btnExportPassengers) btnExportPassengers.addEventListener("click", exportPassengers);
+  const btnPrintDrivers = $("#btnPrintDrivers");
+  if (btnPrintDrivers) btnPrintDrivers.addEventListener("click", printDrivers);
+  const btnPrintPassengers = $("#btnPrintPassengers");
+  if (btnPrintPassengers) btnPrintPassengers.addEventListener("click", printPassengers);
   const btnLoadTripsEl = document.querySelector('#btnLoadTrips');
   if (btnLoadTripsEl) btnLoadTripsEl.addEventListener('click', loadTrips);
   const btnExportAll = document.querySelector('#btnExportTripAll');
@@ -2556,7 +2758,18 @@ async function getPredictions(date) {
     }
 
     try {
+      console.log("=== FETCHING SMS BALANCE ===");
+      console.log("Silent mode:", silent);
+      console.log("===========================");
+      
       const result = await getSMSBalance();
+
+      console.log("=== SMS BALANCE RESULT ===");
+      console.log("Result:", result);
+      console.log("Balance:", result?.balance);
+      console.log("Success:", result?.success);
+      console.log("Stale:", result?.stale);
+      console.log("========================");
 
       if (!result || result.success === false) {
         balanceEl.innerHTML = '<span class="text-muted">Unavailable</span>';
@@ -2589,7 +2802,10 @@ async function getPredictions(date) {
           showAlert(infoMessage, 'info');
         }
 
-        balanceRefreshTimer = setTimeout(() => loadSMSBalance(true), (waitSeconds * 1000) + 100);
+        // Only retry if wait time is reasonable (< 2 minutes)
+        if (waitSeconds > 0 && waitSeconds < 120) {
+          balanceRefreshTimer = setTimeout(() => loadSMSBalance(true), (waitSeconds * 1000) + 100);
+        }
       } else {
         if (result.localCooldown) {
           balanceEl.setAttribute('title', 'Balance was recently refreshed. Please wait a moment before checking again.');
@@ -2600,7 +2816,23 @@ async function getPredictions(date) {
     } catch (error) {
       console.error('Failed to load SMS balance:', error);
       const friendly = (error && error.message) ? error.message : 'Unable to reach SMS service.';
-      const isRateLimit = /rate limit/i.test(friendly);
+      const isNotConfigured = error.isConfigError || /not configured/i.test(friendly);
+      const isRateLimit = /rate limit/i.test(friendly) && !isNotConfigured;
+      
+      if (isNotConfigured) {
+        balanceEl.innerHTML = '<span class="text-warning">Not configured</span>';
+        balanceEl.setAttribute('title', 'SMS service requires Semaphore API configuration');
+        if (!silent) {
+          showAlert('SMS service needs configuration. Please add Semaphore API key to backend.', 'warning');
+        }
+        // Clear any pending retries
+        if (balanceRefreshTimer) {
+          clearTimeout(balanceRefreshTimer);
+          balanceRefreshTimer = null;
+        }
+        return;
+      }
+      
       balanceEl.innerHTML = isRateLimit
         ? '<span class="text-muted">Rate limited</span>'
         : '<span class="text-danger">Error</span>';
@@ -2608,11 +2840,12 @@ async function getPredictions(date) {
         showAlert(isRateLimit ? friendly : 'SMS balance unavailable. ' + friendly, isRateLimit ? 'info' : 'danger');
       }
 
-      // If rate limited, schedule a retry even when the message has no explicit seconds
-      if (isRateLimit) {
-        const match = friendly.match(/(\d+)\s*seconds?/i);
-        const waitSeconds = match ? parseInt(match[1], 10) : 5;
-        balanceRefreshTimer = setTimeout(() => loadSMSBalance(true), (waitSeconds * 1000) + 100);
+      // If rate limited, schedule a retry with reasonable limits
+      if (isRateLimit && error.retryAfter > 0) {
+        const waitSeconds = Math.min(Math.max(error.retryAfter, 5), 120);
+        if (waitSeconds >= 5 && waitSeconds <= 120) {
+          balanceRefreshTimer = setTimeout(() => loadSMSBalance(true), (waitSeconds * 1000) + 100);
+        }
       }
     }
   }
@@ -2989,8 +3222,22 @@ async function getPredictions(date) {
       btnSend.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Sending...';
 
       try {
+        console.log("=== SENDING SMS ===");
+        console.log("Recipients:", phoneArray);
+        console.log("Message:", message);
+        console.log("Sender:", senderName);
+        console.log("==================");
+        
         smsRateLimiter.recordRequest();
         const result = await sendSMS(phoneArray, message, senderName);
+
+        console.log("=== SMS SEND RESULT ===");
+        console.log("Result:", result);
+        console.log("Success:", result.success);
+        console.log("Accepted:", result.accepted);
+        console.log("Successful:", result.successful);
+        console.log("Failed:", result.failed);
+        console.log("======================");
 
         if (result.success) {
           const sentCount = result.successful ?? result.accepted ?? phoneArray.length;

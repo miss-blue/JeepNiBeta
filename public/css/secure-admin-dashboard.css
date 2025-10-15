@@ -721,3 +721,61 @@ body.theme-dark::before{
     padding: 0;
   }
 }
+
+/* Increase font sizes globally */
+body {
+  font-size: 1.1rem;
+}
+
+.navbar-brand {
+  font-size: 1.4rem;
+}
+
+.card-title {
+  font-size: 1.4rem;
+}
+
+.card-text {
+  font-size: 1.05rem;
+}
+
+.btn {
+  font-size: 1.05rem;
+}
+
+.btn-sm {
+  font-size: 0.95rem;
+}
+
+.table {
+  font-size: 1.05rem;
+}
+
+.form-label,
+.form-control,
+.form-select {
+  font-size: 1.05rem;
+}
+
+.form-control-sm,
+.form-select-sm {
+  font-size: 0.95rem;
+}
+
+.dashboard-topnav .nav-link {
+  font-size: 1.05rem;
+}
+
+.section-label,
+.control-eyebrow {
+  font-size: 0.8rem;
+}
+
+.badge {
+  font-size: 0.95rem;
+}
+
+.small,
+small {
+  font-size: 0.95rem;
+}
