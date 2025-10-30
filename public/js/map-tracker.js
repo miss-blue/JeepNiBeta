@@ -36,8 +36,35 @@ let _lastAccuracy = null;
 
 let _manualMode = false;
 let _manualClickHandler = null;
-let routing = null; // for routing shekret
+let routing = null; // retained for backwards compatibility (legacy control)
 let routingTarget = null;
+let lastRoutingOrigin = null;
+let lastRoutingTarget = null;
+const ROUTE_POS_EPSILON = 5e-5; // ~5 meters, reduces noisy re-routes
+const ROUTE_DEVIATION_TOLERANCE_METERS = 35;
+const ROUTE_MIN_PROGRESS_DELTA = 0.05;
+const ROUTE_BUFFER_KM = 0.08;
+let activeRouteLine = null;
+let routePolyline = null;
+let routeShadowPolyline = null;
+let lastRouteProgressMetric = -1;
+let latestRouteRequestId = 0;
+let routeEngine = null;
+let routeProviderIndex = 0;
+let lastRoutingNoticeAt = 0;
+let routeFallbackActive = false;
+let lastRoutingFailureAt = 0;
+const ROUTING_PROVIDERS = Object.freeze([
+  {
+    name: 'OSRM Demo',
+    serviceUrl: 'https://router.project-osrm.org/route/v1'
+  },
+  {
+    name: 'OSM De Routing',
+    serviceUrl: 'https://routing.openstreetmap.de/routed-car/route/v1'
+  }
+]);
+const ROUTING_FAILURE_COOLDOWN_MS = 60_000;
 
 // Smooth animation helpers
 const _lastPos = new WeakMap();
@@ -252,6 +279,11 @@ function computeOnline(record, windowMs = 30_000) {
 let _watchId = null;
 let _geoBlocked = false;
 let _geoNoticeShown = false;
+const GEO_OPTIONS = Object.freeze({
+  enableHighAccuracy: true,
+  maximumAge: 5000,
+  timeout: 12000
+});
 
 async function _queryGeoPermission() {
   try {
@@ -269,32 +301,41 @@ export async function isGeolocationBlocked() {
 
 function startWatch(onPoint) {
   if (_watchId != null || _geoBlocked) return;
+  if (typeof navigator === 'undefined' || !navigator.geolocation) {
+    console.warn('Geolocation not supported on this device.');
+    return;
+  }
 
-  _watchId = navigator.geolocation.watchPosition(
-    (pos) => {
-      const { latitude, longitude, accuracy } = pos.coords;
-      _lastAccuracy = accuracy; // Store accuracy
-      console.log(`Geolocation update: ${latitude}, ${longitude} (accuracy: ${accuracy}m)`);
-      onPoint(latitude, longitude);
-    },
-    (err) => {
-      if (err?.code === 1) {
-        _geoBlocked = true;
-        if (!_geoNoticeShown) {
-          console.info("Geolocation permission is blocked. Reset it via the site info (lock/tune icon) next to the URL.");
-          _geoNoticeShown = true;
+  try {
+    _watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude, longitude, accuracy } = pos.coords;
+        _lastAccuracy = accuracy;
+        _geoBlocked = false;
+        console.log(`Geolocation update: ${latitude}, ${longitude} (accuracy: ${accuracy}m)`);
+        onPoint(latitude, longitude);
+      },
+      (err) => {
+        if (err?.code === 1) {
+          _geoBlocked = true;
+          if (!_geoNoticeShown) {
+            console.info("Geolocation permission is blocked. Reset it via the site info (lock/tune icon) next to the URL.");
+            _geoNoticeShown = true;
+          }
+          document.dispatchEvent(new CustomEvent('jeepni:geo-denied'));
+        } else {
+          console.warn('watchPosition error', err);
         }
-        document.dispatchEvent(new CustomEvent('jeepni:geo-denied'));
-      } else {
-        console.warn('watchPosition error', err);
-      }
-    },
-    { 
-      enableHighAccuracy: true, 
-      maximumAge: 10000, // Allow slightly cached locations for better performance
-      timeout: 15000 // Longer timeout for continuous tracking
-    }
-  );
+        if (_watchId != null) {
+          stopWatch();
+        }
+      },
+      GEO_OPTIONS
+    );
+  } catch (err) {
+    console.warn('Failed to start geolocation watch:', err);
+    _watchId = null;
+  }
 }
 
 function stopWatch() {
@@ -593,25 +634,22 @@ async function onGeoPoint(lat, lng) {
       }
 
       await updateLocation(lat, lng, route);
-            checkNearbyPassengers(lat, lng);
+      checkNearbyPassengers(lat, lng);
 
-            // Update routing if target is set
-            if (routingTarget) {
-              ensureRouting({ lat, lng }, routingTarget);
-            }
-
-          } catch (e) {
-            console.warn("Driver tracking update failed:", e);
-          }
-        }
+      if (routingTarget) {
+        updateRouteProgress(lat, lng);
       }
+    } catch (e) {
+      console.warn("Driver tracking update failed:", e);
+    }
+  }
+}
 
 
 // -------- Create passenger icon with proper badge --------
 function createPassengerIcon() {
-  // Show badge only if there are companions (companionCount > 0)
   const showBadge = companionCount > 0;
-  const totalCount = companionCount; // passenger + companions
+  const totalCount = companionCount;
   
   return L.divIcon({
     html: `
@@ -794,6 +832,12 @@ const linkedPassengers = new Set();
 async function upsertPassenger(uid, rec) {
     if (!map || !rec || typeof rec.lat !== "number" || typeof rec.lng !== "number") return;
 
+    const currentUser = auth.currentUser;
+    if (currentUser && currentUser.uid === uid) {
+        removePassenger(uid);
+        return;
+    }
+
     // Add this check - only show online passengers
     const online = computeOnline(rec) && rec.online !== false;
     if (!online) {
@@ -806,15 +850,14 @@ async function upsertPassenger(uid, rec) {
         const linked = linkSnap.exists();
         linked ? linkedPassengers.add(uid) : linkedPassengers.delete(uid);
 
-        const cur = auth.currentUser;
-        if (linked && cur && cur.uid !== uid) {
+        if (linked && currentUser && currentUser.uid !== uid) {
             removePassenger(uid);
             return;
         }
     } catch {}
 
     const comps = Number(rec.companions || 0);
-    const totalCount = comps + 1; // passenger + companions
+    const totalCount = comps;
     const showBadge = comps > 0;
     
     // Create custom icon with badge for other passengers
@@ -895,6 +938,8 @@ onValue(ref(db, "passenger_driver_links"), async (snap) => {
 });
 //passenger tracking controls
 export async function startPassengerTracking(companions = 0) {
+  const requestedCompanions = Math.max(0, Number(companions) || 0);
+
   if (myRole !== 'passenger') {
     try {
       const u = auth.currentUser;
@@ -902,21 +947,33 @@ export async function startPassengerTracking(companions = 0) {
         const roleSnap = await get(ref(db, `all_users/${u.uid}/role`));
         if (roleSnap.exists()) myRole = String(roleSnap.val() || 'passenger');
       }
-    } catch {}
+    } catch (err) {
+      console.warn('Failed to resolve role for passenger tracking:', err);
+    }
     if (myRole !== 'passenger') {
       myRole = 'passenger';
     }
   }
 
+  if (passengerTrackingActive) {
+    if (requestedCompanions !== companionCount) {
+      setPassengerWaitingCount(requestedCompanions);
+    }
+    if (_watchId == null && !_geoBlocked) {
+      startWatch(onGeoPoint);
+    }
+    return;
+  }
+
   passengerTrackingActive = true;
-  companionCount = Math.max(0, Number(companions) || 0);
+  companionCount = requestedCompanions;
 
   console.log(`Starting passenger tracking with ${companionCount} companions`);
-  
+
   // Save tracking state for persistence
   await saveTrackingState('passenger', { companions: companionCount });
-  
-  // Try to get immediate location, but don't wait too long
+
+  // Try to get immediate location so the first marker placement is accurate
   let immediateLocation = null;
   try {
     immediateLocation = await getPreciseLocation();
@@ -924,81 +981,83 @@ export async function startPassengerTracking(companions = 0) {
     console.log("Immediate location failed, will use continuous tracking:", error);
   }
 
-  // Create marker immediately - either at precise location or default
   const iconWithBadge = createPassengerIcon();
-  
-  if (meMarker) {
-    map.removeLayer(meMarker);
-  }
+  const defaultLatLng = [16.043, 120.333];
 
-  if (immediateLocation && immediateLocation.coords) {
-    const { latitude, longitude } = immediateLocation.coords;
-    console.log(`Immediate location acquired: ${latitude}, ${longitude}`);
-    
-    meMarker = L.marker([latitude, longitude], {
-      icon: iconWithBadge, 
+  if (!meMarker) {
+    const startingLatLng = immediateLocation?.coords
+      ? [immediateLocation.coords.latitude, immediateLocation.coords.longitude]
+      : defaultLatLng;
+    meMarker = L.marker(startingLatLng, {
+      icon: iconWithBadge,
       zIndexOffset: 1000
     }).addTo(map);
-    
-    // Center map on location
+  } else {
+    meMarker.setIcon(iconWithBadge);
+    if (!map.hasLayer(meMarker)) {
+      meMarker.addTo(map);
+    }
+  }
+
+  const applyLocation = async (latitude, longitude) => {
+    meMarker.setLatLng([latitude, longitude]);
     map.setView([latitude, longitude], 16);
-    
     updateGeofenceCircle(latitude, longitude);
-    
-    try { 
-      await updateLocation(latitude, longitude); 
+    try {
+      await updateLocation(latitude, longitude);
     } catch (e) {
       console.warn("Failed to update location:", e);
     }
+  };
+
+  if (immediateLocation?.coords) {
+    const { latitude, longitude } = immediateLocation.coords;
+    console.log(`Immediate location acquired: ${latitude}, ${longitude}`);
+    await applyLocation(latitude, longitude);
   } else {
-    // Use default position but don't center - let continuous tracking handle it
-    const defaultLat = 16.043;
-    const defaultLng = 120.333;
-    
-    meMarker = L.marker([defaultLat, defaultLng], {
-      icon: iconWithBadge, 
-      zIndexOffset: 1000
-    }).addTo(map);
-    
     console.log("Using default position, waiting for continuous tracking...");
+    updateGeofenceCircle(defaultLatLng[0], defaultLatLng[1]);
   }
 
-// Start continuous GPS tracking
+  refreshPassengerMarkerView();
+
+  // Start continuous GPS tracking (idempotent inside startWatch)
   startWatch(onGeoPoint);
 
-  // If destination was set before tracking started, trigger routing now
-  if (myDestinationMarker) {
+  if (routingTarget && meMarker) {
+    const myPos = meMarker.getLatLng();
+    ensureRouting({ lat: myPos.lat, lng: myPos.lng }, routingTarget);
+  } else if (myDestinationMarker && meMarker) {
     const destPos = myDestinationMarker.getLatLng();
     const myPos = meMarker.getLatLng();
-    console.log('Triggering routing from startPassengerTracking');
-    ensureRouting({ lat: myPos.lat, lng: myPos.lng }, { lat: destPos.lat, lng: destPos.lng });
+    routingTarget = { lat: destPos.lat, lng: destPos.lng };
+    ensureRouting({ lat: myPos.lat, lng: myPos.lng }, routingTarget);
   }
 }
 
 // NEW: Function to get precise location with better accuracy
 function getPreciseLocation() {
   return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
       reject(new Error("Geolocation not supported"));
       return;
     }
 
-    // Use simpler, more reliable geolocation with shorter timeout
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        console.log("Location found:", position.coords);
-        resolve(position);
-      },
-      (error) => {
-        console.warn("Geolocation failed:", error);
-        reject(error);
-      },
-      { 
-        enableHighAccuracy: true,
-        timeout: 5000, // Shorter timeout
-        maximumAge: 30000 // Allow slightly cached locations for faster response
-      }
-    );
+    try {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          console.log("Location found:", position.coords);
+          resolve(position);
+        },
+        (error) => {
+          console.warn("Geolocation failed:", error);
+          reject(error);
+        },
+        GEO_OPTIONS
+      );
+    } catch (err) {
+      reject(err);
+    }
   });
 }
 
@@ -1028,18 +1087,8 @@ export async function stopPassengerTracking(options = {}) {
         myDestinationMarker = null; 
     }
     
-    // CRITICAL: Remove routing control
-    if (routing) {
-        try {
-            map.removeControl(routing);
-        } catch (e) {
-            console.warn('Failed to remove routing control:', e);
-        }
-        routing = null;
-    }
-    
-    // Clear routing target
-    routingTarget = null;
+    // Ensure routing artefacts are cleared
+    clearRoute({ removeControl: true });
     
     // Clear pending destination
     if (typeof window !== 'undefined') {
@@ -1069,21 +1118,22 @@ export function isPassengerTracking() {
   return passengerTrackingActive;
 }
 
+function refreshPassengerMarkerView() {
+  if (!meMarker || !map) return;
+  meMarker.setIcon(createPassengerIcon());
+  const popupText = companionCount === 0
+    ? `<strong>Passenger</strong><br>Just you (no companions)`
+    : `<strong>Passenger</strong><br>Companions: ${companionCount}`;
+  meMarker.bindPopup(popupText);
+}
+
 export function setPassengerWaitingCount(count = 0) {
   const newCount = Math.max(0, Number(count) || 0);
-  
-  // Update companionCount FIRST before any icon creation
   companionCount = newCount;
   console.log(`Companion count updated to: ${companionCount}`);
-  
-  if (meMarker && map && passengerTrackingActive) {
-    // Now create icon with the updated companionCount
-    const iconWithBadge = createPassengerIcon();
-    meMarker.setIcon(iconWithBadge);
-    const popupText = companionCount === 0 
-      ? `<strong>Passenger</strong><br>Just you (no companions)`
-      : `<strong>Passenger</strong><br>Companions: ${companionCount}`;
-    meMarker.bindPopup(popupText);
+
+  if (passengerTrackingActive) {
+    refreshPassengerMarkerView();
   }
   
   const u = auth.currentUser;
@@ -1096,19 +1146,53 @@ export function setPassengerWaitingCount(count = 0) {
 }
 
 export function setDestination(lat, lng, name = "Destination") {
-  if (myDestinationMarker) { map.removeLayer(myDestinationMarker); myDestinationMarker = null; }
-  myDestinationMarker = L.marker([lat, lng], { icon: DESTINATION_ICON, zIndexOffset: 400 }).addTo(map);
+  const destLat = Number(lat);
+  const destLng = Number(lng);
+
+  if (!Number.isFinite(destLat) || !Number.isFinite(destLng)) {
+    console.warn('Invalid destination coordinates provided:', lat, lng);
+    return;
+  }
+
+  if (myDestinationMarker) {
+    map.removeLayer(myDestinationMarker);
+    myDestinationMarker = null;
+  }
+
+  myDestinationMarker = L.marker([destLat, destLng], { icon: DESTINATION_ICON, zIndexOffset: 400 }).addTo(map);
   myDestinationMarker.bindPopup(`<strong>${name}</strong>`);
+
+  routingTarget = { lat: destLat, lng: destLng };
+
+  if (meMarker) {
+    const pos = meMarker.getLatLng();
+    ensureRouting({ lat: pos.lat, lng: pos.lng }, routingTarget);
+  }
+
+  if (typeof window !== 'undefined') {
+    window._pendingDestination = { lat: destLat, lng: destLng, name };
+  }
 }
 
 export function clearDestination() {
-  if (myDestinationMarker) { map.removeLayer(myDestinationMarker); myDestinationMarker = null; }
+  if (myDestinationMarker) {
+    map.removeLayer(myDestinationMarker);
+    myDestinationMarker = null;
+  }
+  clearRoute();
+  if (typeof window !== 'undefined') {
+    window._pendingDestination = null;
+  }
 }
 
 // -------- Driver sharing controls --------
 let _activeTripId = null;
 export function getActiveTripId() { return _activeTripId; }
 export function setActiveTripId(v) { _activeTripId = v; }
+
+function isTrackingActive() {
+  return passengerTrackingActive || !!_activeTripId;
+}
 
 // Persistence tracking state
 const TRACKING_STATE_KEY = 'tracking_state';
@@ -1267,19 +1351,7 @@ export async function stopSharing() {
     myDestinationMarker = null;
   }
   
-  // CRITICAL: Remove routing control
-  if (routing) {
-    try {
-      console.log('Removing routing control');
-      map.removeControl(routing);
-    } catch (e) {
-      console.warn('Failed to remove routing control:', e);
-    }
-    routing = null;
-  }
-  
-  // Clear routing target
-  routingTarget = null;
+  clearRoute({ removeControl: true });
   
   // Clear database presence completely
   await clearDriverPresence();
@@ -1386,10 +1458,8 @@ export function setJustMeMode() {
   companionCount = 0;
   
   // Force immediate icon update without badge
-  if (meMarker && map && passengerTrackingActive) {
-    const iconWithoutBadge = createPassengerIcon();
-    meMarker.setIcon(iconWithoutBadge);
-    meMarker.bindPopup(`<strong>Passenger</strong><br>Just you (no companions)`);
+  if (passengerTrackingActive) {
+    refreshPassengerMarkerView();
   }
   
   // Update in database
@@ -1405,60 +1475,314 @@ export function setJustMeMode() {
 // -------- Utilities --------
 export function getCurrentLocation() {
   return new Promise((resolve) => {
-    if (!navigator.geolocation) return resolve(null);
-    navigator.geolocation.getCurrentPosition(resolve, () => resolve(null), { 
-      enableHighAccuracy: true, 
-      timeout: 10000, 
-      maximumAge: 0 
-    });
+    if (typeof navigator === 'undefined' || !navigator.geolocation) return resolve(null);
+    try {
+      navigator.geolocation.getCurrentPosition(resolve, () => resolve(null), GEO_OPTIONS);
+    } catch (err) {
+      console.warn('getCurrentLocation failed:', err);
+      resolve(null);
+    }
   });
 }
 
+function positionsDiffer(a, b) {
+  if (!a || !b) return true;
+  return Math.abs(a.lat - b.lat) > ROUTE_POS_EPSILON || Math.abs(a.lng - b.lng) > ROUTE_POS_EPSILON;
+}
+
+function emitRoutingNotice(level, message) {
+  if (typeof window === 'undefined') return;
+  const now = Date.now();
+  if (now - lastRoutingNoticeAt < 15000) return;
+  lastRoutingNoticeAt = now;
+  try {
+    window.dispatchEvent(new CustomEvent('jeepni:routing-notice', {
+      detail: { level, message }
+    }));
+  } catch (err) {
+    console.warn('Failed to emit routing notice:', err, message);
+  }
+}
+
+function instantiateRoutingEngine(index = 0) {
+  const provider = ROUTING_PROVIDERS[index];
+  if (!provider) {
+    routeEngine = null;
+    return null;
+  }
+  try {
+    routeEngine = L.Routing.osrmv1({
+      serviceUrl: provider.serviceUrl,
+      profile: "driving",
+      timeout: 30,
+      useHints: true
+    });
+    routeProviderIndex = index;
+    console.info(`Routing engine initialised via ${provider.name} (${provider.serviceUrl})`);
+    return routeEngine;
+  } catch (err) {
+    console.warn(`Failed to initialise routing engine for ${provider.name}:`, err);
+    routeEngine = null;
+    return null;
+  }
+}
+
+function getRouteEngine() {
+  if (routeEngine) return routeEngine;
+  const now = Date.now();
+  if (routeFallbackActive && (now - lastRoutingFailureAt) < ROUTING_FAILURE_COOLDOWN_MS) {
+    return null;
+  }
+  if (routeFallbackActive && (now - lastRoutingFailureAt) >= ROUTING_FAILURE_COOLDOWN_MS) {
+    routeFallbackActive = false;
+    routeProviderIndex = 0;
+  }
+  return instantiateRoutingEngine(routeProviderIndex);
+}
+
+function switchRoutingProvider() {
+  const nextIndex = routeProviderIndex + 1;
+  if (nextIndex >= ROUTING_PROVIDERS.length) return false;
+  const provider = ROUTING_PROVIDERS[nextIndex];
+  emitRoutingNotice('warning', `Primary routing server timed out. Switching to ${provider.name}.`);
+  instantiateRoutingEngine(nextIndex);
+  return !!routeEngine;
+}
+
+function clearRouteDisplay() {
+  if (!map) return;
+  if (routePolyline) {
+    try { map.removeLayer(routePolyline); } catch {}
+    routePolyline = null;
+  }
+  if (routeShadowPolyline) {
+    try { map.removeLayer(routeShadowPolyline); } catch {}
+    routeShadowPolyline = null;
+  }
+}
+
+function updateRouteDisplay(latLngs) {
+  if (!map || !Array.isArray(latLngs) || latLngs.length < 2) return;
+
+  if (!routeShadowPolyline) {
+    routeShadowPolyline = L.polyline(latLngs, {
+      color: "#13315c",
+      weight: 8,
+      opacity: 0.18,
+      lineJoin: "round",
+      lineCap: "round",
+      smoothFactor: 1.2
+    }).addTo(map);
+  } else {
+    routeShadowPolyline.setLatLngs(latLngs);
+  }
+
+  if (!routePolyline) {
+    routePolyline = L.polyline(latLngs, {
+      color: "#ff5a5f",
+      weight: 5,
+      opacity: 0.95,
+      lineJoin: "round",
+      lineCap: "round",
+      smoothFactor: 1.2
+    }).addTo(map);
+  } else {
+    routePolyline.setLatLngs(latLngs);
+  }
+
+  if (routeShadowPolyline?.bringToBack) routeShadowPolyline.bringToBack();
+  if (routePolyline?.bringToFront) routePolyline.bringToFront();
+}
+
+function setActiveRouteFromCoordinates(coordsLatLng) {
+  if (!Array.isArray(coordsLatLng) || coordsLatLng.length < 2) {
+    activeRouteLine = null;
+    clearRouteDisplay();
+    return;
+  }
+  try {
+    activeRouteLine = turf.lineString(coordsLatLng.map(([lat, lng]) => [lng, lat]));
+    lastRouteProgressMetric = -1;
+  } catch (err) {
+    console.warn("Failed to create route line:", err);
+    activeRouteLine = null;
+    clearRouteDisplay();
+  }
+}
+
+function trimActiveRoute(lat, lng) {
+  if (!activeRouteLine) return null;
+  try {
+    const point = turf.point([lng, lat]);
+    const snapped = turf.nearestPointOnLine(activeRouteLine, point, { units: "meters" });
+    const coords = activeRouteLine.geometry?.coordinates;
+    if (!snapped || !coords || coords.length === 0) return null;
+
+    const index = typeof snapped.properties?.index === "number" ? snapped.properties.index : 0;
+    const trimmed = coords.slice(index);
+    if (!trimmed.length) return null;
+
+    trimmed[0] = snapped.geometry.coordinates;
+    const progress = index + (typeof snapped.properties?.t === "number" ? snapped.properties.t : 0);
+    lastRouteProgressMetric = Math.max(progress, lastRouteProgressMetric);
+
+    return trimmed;
+  } catch (err) {
+    console.warn("trimActiveRoute failed:", err);
+    return null;
+  }
+}
+
+function updateRouteProgress(currentLat, currentLng) {
+  if (!routingTarget) return;
+
+  if (!activeRouteLine) {
+    ensureRouting({ lat: currentLat, lng: currentLng }, routingTarget, { force: true });
+    return;
+  }
+
+  try {
+    const point = turf.point([currentLng, currentLat]);
+    const deviation = turf.pointToLineDistance(point, activeRouteLine, { units: "meters" });
+
+    if (deviation > ROUTE_DEVIATION_TOLERANCE_METERS) {
+      ensureRouting({ lat: currentLat, lng: currentLng }, routingTarget, { force: true });
+      return;
+    }
+
+    const trimmed = trimActiveRoute(currentLat, currentLng);
+    if (trimmed && trimmed.length >= 2) {
+      const latLngs = trimmed.map(([lng, lat]) => [lat, lng]);
+      updateRouteDisplay(latLngs);
+    } else if (trimmed) {
+      clearRouteDisplay();
+    }
+  } catch (err) {
+    console.warn("updateRouteProgress failed:", err);
+  }
+}
+
+function handleRoutingFailure(origin, target, contextMessage) {
+  lastRoutingFailureAt = Date.now();
+  routeFallbackActive = true;
+  routeEngine = null;
+  routeProviderIndex = 0;
+  const notice = contextMessage || 'Routing service is temporarily unavailable. We will retry shortly.';
+  emitRoutingNotice('warning', notice);
+  if (!activeRouteLine) {
+    clearRouteDisplay();
+  }
+}
+
 // -------- Routing functionality --------
-function ensureRouting(meLatLng, targetLatLng) {
+function ensureRouting(meLatLng, targetLatLng, options = {}) {
   if (!map || !targetLatLng) return;
 
-  const waypoints = [
-    L.latLng(meLatLng.lat, meLatLng.lng),
-    L.latLng(targetLatLng.lat, targetLatLng.lng)
-  ];
+  const force = options?.force === true;
+  const retryDepth = Number(options?.retryDepth || 0);
 
-  if (!routing) {
-    routing = L.Routing.control({
-      waypoints,
-      addWaypoints: false,
-      draggableWaypoints: false,
-      routeWhileDragging: false,
-      showAlternatives: false,
-      show: false,
-      collapsible: true,
-      fitSelectedRoutes: true,
-      router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/route/v1' })
-    })
-    .on('routesfound', (e) => {
-      try {
-        const route = e.routes[0];
-        const coords = route.coordinates.map(p => [p.lat, p.lng]);
+  const origin = {
+    lat: Number(meLatLng.lat),
+    lng: Number(meLatLng.lng)
+  };
+  const target = {
+    lat: Number(targetLatLng.lat),
+    lng: Number(targetLatLng.lng)
+  };
 
-        // Build corridor and filter passengers
-        const line = turf.lineString(coords.map(([lat, lng]) => [lng, lat]));
-        const corridor = turf.buffer(line, 0.08, { units: 'kilometers' });
-        refreshPassengersAlongRoute(corridor);
+  if (![origin.lat, origin.lng, target.lat, target.lng].every(Number.isFinite)) return;
 
-        // Dispatch ETA event
-        const { totalDistance, totalTime } = route.summary;
-        window.dispatchEvent(new CustomEvent('jeepni:eta', { detail: {
-          meters: Math.round(totalDistance), 
-          seconds: Math.round(totalTime)
-        }}));
-      } catch (err) { 
-        console.warn('routesfound handler error:', err); 
-      }
-    })
-    .addTo(map);
-  } else {
-    routing.setWaypoints(waypoints);
+  const shouldUpdate =
+    force ||
+    !activeRouteLine ||
+    positionsDiffer(origin, lastRoutingOrigin) ||
+    positionsDiffer(target, lastRoutingTarget);
+
+  if (!shouldUpdate) {
+    updateRouteProgress(origin.lat, origin.lng);
+    return;
   }
+
+  const now = Date.now();
+  if (routeFallbackActive && (now - lastRoutingFailureAt) < ROUTING_FAILURE_COOLDOWN_MS) {
+    if (!activeRouteLine) {
+      clearRouteDisplay();
+    }
+    return;
+  }
+
+  lastRoutingOrigin = origin;
+  lastRoutingTarget = target;
+  const engine = getRouteEngine();
+  if (!engine) {
+    handleRoutingFailure(origin, target, 'Routing service is busy. Trying again soon.');
+    return;
+  }
+
+  const requestId = ++latestRouteRequestId;
+
+  engine.route(
+    [
+      L.Routing.waypoint(L.latLng(origin.lat, origin.lng)),
+      L.Routing.waypoint(L.latLng(target.lat, target.lng))
+    ],
+    (err, routes) => {
+      if (requestId !== latestRouteRequestId) return;
+      if (err) {
+        const provider = ROUTING_PROVIDERS[routeProviderIndex];
+        console.warn(`Routing failed via ${provider?.name || 'provider'}:`, err);
+        if (switchRoutingProvider() && retryDepth < ROUTING_PROVIDERS.length) {
+          latestRouteRequestId += 1;
+          ensureRouting(origin, target, { force: true, retryDepth: retryDepth + 1 });
+        } else {
+          handleRoutingFailure(origin, target, 'Routing service timed out. Retrying shortly.');
+        }
+        return;
+      }
+      if (!routes || !routes.length) {
+        if (switchRoutingProvider() && retryDepth < ROUTING_PROVIDERS.length) {
+          latestRouteRequestId += 1;
+          ensureRouting(origin, target, { force: true, retryDepth: retryDepth + 1 });
+        } else {
+          handleRoutingFailure(origin, target, 'Routing data unavailable from the server right now.');
+        }
+        return;
+      }
+
+      try {
+        const route = routes[0];
+        const coordsLatLng = route.coordinates.map((p) => [p.lat, p.lng]);
+
+        setActiveRouteFromCoordinates(coordsLatLng);
+        routeFallbackActive = false;
+        lastRoutingFailureAt = 0;
+
+        const trimmed = trimActiveRoute(origin.lat, origin.lng);
+        const displayCoords = trimmed && trimmed.length >= 2
+          ? trimmed.map(([lng, lat]) => [lat, lng])
+          : coordsLatLng.map(([lat, lng]) => [lat, lng]);
+
+        updateRouteDisplay(displayCoords);
+
+        if (activeRouteLine) {
+          try {
+            const corridor = turf.buffer(activeRouteLine, ROUTE_BUFFER_KM, { units: "kilometers" });
+            refreshPassengersAlongRoute(corridor);
+          } catch (corridorErr) {
+            console.warn("Failed to refresh passengers along route:", corridorErr);
+          }
+        }
+
+        if (route.summary) {
+          const meters = Math.round(route.summary.totalDistance || 0);
+          const seconds = Math.round(route.summary.totalTime || 0);
+          window.dispatchEvent(new CustomEvent("jeepni:eta", { detail: { meters, seconds } }));
+        }
+      } catch (routeErr) {
+        console.warn("Failed to process route response:", routeErr);
+      }
+    }
+  );
 }
 
 export function routeTo(targetLat, targetLng) {
@@ -1467,6 +1791,16 @@ export function routeTo(targetLat, targetLng) {
     const me = meMarker.getLatLng();
     ensureRouting({ lat: me.lat, lng: me.lng }, routingTarget);
   }
+}
+
+function clearRoute({ removeControl = false } = {}) {
+  latestRouteRequestId += 1; // invalidate pending callbacks
+  routingTarget = null;
+  lastRoutingOrigin = null;
+  lastRoutingTarget = null;
+  activeRouteLine = null;
+  lastRouteProgressMetric = -1;
+  clearRouteDisplay();
 }
 
 function refreshPassengersAlongRoute(geojsonPolygon) {
@@ -1551,6 +1885,27 @@ export async function autoResumeTracking() {
   }
   
   return false;
+}
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && isTrackingActive() && _watchId == null && !_geoBlocked) {
+      startWatch(onGeoPoint);
+    }
+  });
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('pagehide', () => {
+    stopWatch();
+  });
+
+  window.addEventListener('pageshow', (event) => {
+    const shouldResume = event?.persisted || document.visibilityState === 'visible';
+    if (shouldResume && isTrackingActive() && _watchId == null && !_geoBlocked) {
+      startWatch(onGeoPoint);
+    }
+  });
 }
 
 // -------- Global API --------

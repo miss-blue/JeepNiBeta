@@ -192,7 +192,8 @@ function normaliseRecipients(phoneNumbers) {
 export async function sendSMS(
   phoneNumbers,
   message,
-  senderName = DEFAULT_SENDER
+  senderName = DEFAULT_SENDER,
+  options = {}
 ) {
   try {
     const trimmedMessage = typeof message === "string" ? message.trim() : "";
@@ -215,15 +216,39 @@ export async function sendSMS(
     }
 
     const recipients = normaliseRecipients(phoneNumbers);
+    const metadata = typeof options?.metadata === "object" ? { ...options.metadata } : {};
+    if (!metadata.uid && options?.uid) {
+      metadata.uid = options.uid;
+    }
+    if (!metadata.role && options?.role) {
+      metadata.role = options.role;
+    }
+
     const payload = {
       number: recipients.join(","),
       message: trimmedMessage,
       sender: resolveSenderName(senderName),
+      metadata,
     };
+
+    const headers = {
+      "Content-Type": "application/json",
+      ...(options?.headers || {}),
+    };
+
+    if (options?.role) {
+      headers["X-JeepNi-Role"] = String(options.role);
+    }
+    if (options?.uid) {
+      headers["X-JeepNi-UID"] = String(options.uid);
+    }
+    if (options?.idToken) {
+      headers.Authorization = `Bearer ${options.idToken}`;
+    }
 
     const response = await fetch(BACKEND_SMS_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify(payload),
       mode: "cors",
       cache: "no-store",
@@ -324,15 +349,37 @@ export async function sendSMS(
 }
 
 export async function getSMSBalance(options = {}) {
-  const { ignoreCooldown = false, forceRefresh = false } = options;
+  const {
+    ignoreCooldown = false,
+    forceRefresh = false,
+    role,
+    idToken,
+    uid,
+    headers: extraHeaders,
+  } = options;
   try {
     const query = forceRefresh ? "?force=1" : "";
     const url = `${BACKEND_SMS_BALANCE_URL}${query}`;
+    const headers = {
+      Accept: "application/json",
+      ...(extraHeaders || {}),
+    };
+
+    if (role) {
+      headers["X-JeepNi-Role"] = String(role);
+    }
+    if (uid) {
+      headers["X-JeepNi-UID"] = String(uid);
+    }
+    if (idToken) {
+      headers.Authorization = `Bearer ${idToken}`;
+    }
+
     const response = await fetch(url, {
       method: "GET",
       cache: "no-store",
       mode: "cors",
-      headers: { Accept: "application/json" },
+      headers,
     });
 
     const text = await response.text();

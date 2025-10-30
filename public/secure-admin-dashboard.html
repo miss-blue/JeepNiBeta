@@ -861,6 +861,52 @@
     } from "./js/sms-integration.js";
   import { smsRateLimiter } from "./js/rate-limiter.js";
 
+  let adminContext = {
+    uid: null,
+    role: "unknown",
+    idToken: null,
+  };
+
+  async function refreshAdminContext(options = {}) {
+    const {
+      forceRoleReload = false,
+      forceTokenRefresh = false,
+    } = options;
+
+    const user = auth.currentUser;
+    if (!user) {
+      adminContext = {
+        uid: null,
+        role: "anonymous",
+        idToken: null,
+      };
+      return adminContext;
+    }
+
+    try {
+      adminContext.idToken = forceTokenRefresh
+        ? await user.getIdToken(true)
+        : await user.getIdToken();
+    } catch (error) {
+      console.warn("Unable to retrieve Firebase ID token:", error);
+      adminContext.idToken = null;
+    }
+
+    adminContext.uid = user.uid;
+
+    if (forceRoleReload || !adminContext.role || adminContext.role === "unknown") {
+      try {
+        const roleSnap = await get(ref(db, `all_users/${user.uid}/role`));
+        adminContext.role = roleSnap.exists() ? roleSnap.val() : "unknown";
+      } catch (error) {
+        console.warn("Unable to resolve admin role:", error);
+        adminContext.role = "unknown";
+      }
+    }
+
+    return adminContext;
+  }
+
   const $ = (sel) => document.querySelector(sel);
   // Sanitize any mojibake or bad bytes to ASCII
   function cleanText(s) {
@@ -1275,6 +1321,10 @@ function toRadians(deg) {
   attachAdminBadge("#adminInfo");
   $("#btnLogout").addEventListener("click", async ()=>{ await signOutAndRedirect("login.html"); });
   await requireAdmin("login.html");
+  adminContext = await refreshAdminContext({ forceRoleReload: true, forceTokenRefresh: true });
+  if (!adminContext.role || !["admin", "super_admin"].includes(adminContext.role)) {
+    showAlert("SMS notifications are restricted to admin accounts.", "danger");
+  }
   // Theme: apply saved preference
   try {
     const saved = localStorage.getItem('theme') || 'light';
@@ -2761,8 +2811,23 @@ async function getPredictions(date) {
       console.log("=== FETCHING SMS BALANCE ===");
       console.log("Silent mode:", silent);
       console.log("===========================");
-      
-      const result = await getSMSBalance();
+
+      const context = await refreshAdminContext({
+        forceRoleReload: false,
+        forceTokenRefresh: false,
+      });
+
+      if (!context.role || !["admin", "super_admin"].includes(String(context.role).toLowerCase())) {
+        balanceEl.innerHTML = '<span class="text-muted">Restricted</span>';
+        showAlert('SMS balance is available to admin accounts only.', 'warning');
+        return;
+      }
+
+      const result = await getSMSBalance({
+        role: context.role,
+        idToken: context.idToken,
+        uid: context.uid,
+      });
 
       console.log("=== SMS BALANCE RESULT ===");
       console.log("Result:", result);
@@ -3228,8 +3293,27 @@ async function getPredictions(date) {
         console.log("Sender:", senderName);
         console.log("==================");
         
+        const context = await refreshAdminContext({
+          forceRoleReload: false,
+          forceTokenRefresh: true,
+        });
+        const roleLower = String(context.role || "").toLowerCase();
+        if (!["admin", "super_admin"].includes(roleLower)) {
+          showAlert('Only admin accounts may send SMS notifications.', 'danger');
+          return;
+        }
+
         smsRateLimiter.recordRequest();
-        const result = await sendSMS(phoneArray, message, senderName);
+        const result = await sendSMS(phoneArray, message, senderName, {
+          role: context.role,
+          idToken: context.idToken,
+          uid: context.uid,
+          metadata: {
+            source: "secure-admin-dashboard",
+            uid: context.uid,
+            role: context.role,
+          },
+        });
 
         console.log("=== SMS SEND RESULT ===");
         console.log("Result:", result);

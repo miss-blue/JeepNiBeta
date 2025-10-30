@@ -51,7 +51,13 @@ export async function listDispatches(date = dateKey()) {
   const snap = await get(ref(db, `schedules/${date}`));
   if (!snap.exists()) return [];
   const data = snap.val();
-  return Object.values(data).sort((a, b) => (a.dep_time || "").localeCompare(b.dep_time || ""));
+  return Object.entries(data)
+    .map(([id, value]) => ({
+      id,
+      date,
+      ...value
+    }))
+    .sort((a, b) => (a.dep_time || "").localeCompare(b.dep_time || ""));
 }
 
 /** Assign/change driver – call from ADMIN UI only */

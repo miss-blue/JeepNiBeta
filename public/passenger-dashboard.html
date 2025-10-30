@@ -291,8 +291,59 @@
   const btnPassengerStop = document.getElementById('btnPassengerStop');
   const arrivalNotice = document.getElementById('arrivalNotice');
   const arrivalNoticeClose = document.getElementById('arrivalNoticeClose');
+  const dashboardShell = document.querySelector('main.dashboard-shell');
   let arrivalNoticeTimer = null;
   let arrivalAudioCtx = null;
+  let trackingBanner = null;
+  let trackingBannerTimer = null;
+
+  function hideTrackingBanner() {
+    if (trackingBannerTimer) {
+      clearTimeout(trackingBannerTimer);
+      trackingBannerTimer = null;
+    }
+    if (trackingBanner) {
+      trackingBanner.remove();
+      trackingBanner = null;
+    }
+  }
+
+  function showTrackingBanner(message, options = {}) {
+    if (!dashboardShell) return null;
+    const {
+      background = 'rgba(78, 215, 241, 0.95)',
+      textColor = '#fff',
+      icon = 'bi bi-geo-alt-fill',
+      duration = 0
+    } = options;
+
+    hideTrackingBanner();
+
+    const banner = document.createElement('div');
+    banner.className = 'arrival-notice arrival-notice--banner show tracking-message';
+    banner.style.background = background;
+    banner.style.color = textColor;
+
+    const iconEl = document.createElement('div');
+    iconEl.className = 'arrival-notice__icon';
+    iconEl.innerHTML = `<i class="${icon}"></i>`;
+
+    const messageEl = document.createElement('div');
+    messageEl.className = 'arrival-notice__message';
+    messageEl.textContent = message;
+
+    banner.append(iconEl, messageEl);
+    dashboardShell.appendChild(banner);
+
+    if (duration > 0) {
+      trackingBannerTimer = window.setTimeout(() => {
+        hideTrackingBanner();
+      }, duration);
+    }
+
+    trackingBanner = banner;
+    return banner;
+  }
 
   function hideArrivalNotice() {
     if (!arrivalNotice) return;
@@ -353,24 +404,20 @@
   }
 
   window.addEventListener('jeepni:passenger-arrived', () => {
+    hideTrackingBanner();
     showArrivalNotice();
     playArrivalChime().catch(() => {});
   });
 
   window.addEventListener('jeepni:passenger-tracking-stopped', (evt) => {
-    // Find the tracking message element
-    const trackingMsg = document.querySelector('.tracking-message');
-    if (trackingMsg) {
-        // Update the message text and style
-        trackingMsg.textContent = 'Tracking stopped';
-        trackingMsg.style.background = 'rgba(108, 117, 125, 0.95)'; // grey background
-        
-        // Optionally remove the message after a delay
-        setTimeout(() => {
-            trackingMsg.remove();
-        }, 2000);
-    }
-});
+    hideTrackingBanner();
+    showTrackingBanner('Tracking stopped', {
+      background: 'rgba(108, 117, 125, 0.95)',
+      textColor: '#fff',
+      icon: 'bi bi-geo-alt-fill',
+      duration: 2000
+    });
+  });
 
   function clampWaitingValue(value) {
     if (typeof value === 'string') {
@@ -437,18 +484,11 @@ function applyWaitingValue(raw) {
     if (btnPassengerStart) {
       btnPassengerStart.addEventListener('click', async () => {
         const waiting = commitWaitingFromInput();
-        
-        // Show tracking message immediately
-        const trackingMsg = document.createElement('div');
-        trackingMsg.className = 'arrival-notice show';
-        trackingMsg.style.background = 'rgba(78, 215, 241, 0.95)';
-        trackingMsg.style.color = '#fff';
-        trackingMsg.innerHTML = `
-          <div class="arrival-notice__icon"><i class="bi bi-geo-alt-fill"></i></div>
-          <div class="arrival-notice__message">Tracking ongoing</div>
-        `;
-        document.querySelector('main.dashboard-shell').appendChild(trackingMsg);
-        
+        showTrackingBanner('Tracking ongoing', {
+          background: 'rgba(78, 215, 241, 0.95)',
+          textColor: '#fff'
+        });
+
         try {
           await beginPassengerTracking(Number(waiting || 0));
           
@@ -462,35 +502,14 @@ function applyWaitingValue(raw) {
           }
         } catch (err) {
           console.error('Failed to start passenger tracking', err);
-          trackingMsg.remove();
+          hideTrackingBanner();
         }
       });
     }
   if (btnPassengerStop) {
     btnPassengerStop.addEventListener('click', async () => {
         try {
-            // First, remove any existing tracking message
-            const existingTrackingMsg = document.querySelector('.arrival-notice.show');
-            if (existingTrackingMsg) {
-                existingTrackingMsg.remove();
-            }
-
-            // Then create and show the "Tracking stopped" message
-            const stoppedMsg = document.createElement('div');
-            stoppedMsg.className = 'arrival-notice show';
-            stoppedMsg.style.background = 'rgba(108, 117, 125, 0.95)';
-            stoppedMsg.innerHTML = `
-                <div class="arrival-notice__icon"><i class="bi bi-geo-alt-fill"></i></div>
-                <div class="arrival-notice__message">Tracking stopped</div>
-            `;
-            document.querySelector('main.dashboard-shell').appendChild(stoppedMsg);
-            
-            // Remove the stopped message after 2 seconds
-            setTimeout(() => {
-                stoppedMsg.remove();
-            }, 2000);
-            
-            // Stop the tracking
+            hideTrackingBanner();
             await stopPassengerTracking({ reason: 'manual' });
         } catch (err) {
             console.error('Failed to stop passenger tracking', err);
@@ -662,18 +681,11 @@ document.getElementById("btnLogout").addEventListener("click",()=>signOutAndRedi
                 waitingInput.value = String(state.companions);
               }
               
-              // Show tracking message
-              const trackingMsg = document.createElement('div');
-              trackingMsg.className = 'arrival-notice show';
-              trackingMsg.style.background = 'rgba(78, 215, 241, 0.95)';
-              trackingMsg.style.color = '#fff';
-              trackingMsg.innerHTML = `
-                <div class="arrival-notice__icon"><i class="bi bi-geo-alt-fill"></i></div>
-                <div class="arrival-notice__message">Tracking resumed from last location</div>
-              `;
-              document.querySelector('main.dashboard-shell').appendChild(trackingMsg);
-              
-              setTimeout(() => trackingMsg.remove(), 3000);
+              showTrackingBanner('Tracking resumed from last location', {
+                background: 'rgba(78, 215, 241, 0.95)',
+                textColor: '#fff',
+                duration: 3000
+              });
             }
           } else {
             // User declined - clear the tracking state
