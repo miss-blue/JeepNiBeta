@@ -8,8 +8,8 @@ import { API_BASE } from "./api_base.js";
 const SINGLE_SEGMENT_LIMIT = 160;
 const CONCAT_SEGMENT_SIZE = 153;
 
-const DEFAULT_SMS_ENDPOINT = "{$API_BASE}/api/send-sms";
-const DEFAULT_SMS_BALANCE_ENDPOINT = "{$API_BASE}/api/get-sms-balance";
+const DEFAULT_SMS_ENDPOINT = `${API_BASE}/api/send-sms`;
+const DEFAULT_SMS_BALANCE_ENDPOINT = `${API_BASE}/api/get-sms-balance`;
 
 function sanitiseConfigString(value) {
   if (typeof value !== "string") return "";
