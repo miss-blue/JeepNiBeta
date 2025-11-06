@@ -24,18 +24,19 @@
      body{background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;}
 
      /* HERO with merged jeep and humans */
-     .register-wrap{min-height:100%; display:grid; place-items:center; padding:6vh 16px}
-     .jeep-hero{max-width:520px; width:100%; margin:2vh auto 0; position:relative}
+     .register-wrap{min-height:100%; display:grid; place-items:center; padding:2vh 16px}
+     .register-container{display:flex; align-items:center; gap:2rem; max-width:1200px; width:100%; margin:0 auto;}
+     .jeep-hero{flex:1; max-width:600px; width:100%; position:relative; margin:0;}
      .jeep-hero img{user-select:none; -webkit-user-drag:none}
-     .jeep-hero .bg-blur{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:blur(6px); opacity:.25; border-radius:18px}
-     .jeep-hero .jeep{position:relative; width:100%; height:auto; display:block; filter:drop-shadow(0 10px 22px rgba(0,0,0,.25)); margin-inline:auto}
+     .jeep-hero .bg-blur{display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:blur(6px); opacity:.25; border-radius:18px}
+     .jeep-hero .jeep{position:relative; width:100%; height:auto; display:block; margin:0; filter:drop-shadow(0 10px 22px rgba(0,0,0,.25));}
 
     .banner-container {
         position: absolute;
-        left: 50%;
+        left: 55%;
         transform: translateX(-50%); 
         top: 20%;
-        width: 28%;
+        width: 40%;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -53,7 +54,7 @@
     }
 
     .banner img {
-        width: 100%; 
+        width: 70%; 
         height: auto; 
         display: block; 
         transition: transform .25s ease, filter .25s ease; 
@@ -77,7 +78,7 @@
      }
 
      /* CARD */
-     .card-register{max-width:460px; width:100%; background:var(--card-bg); backdrop-filter: blur(10px); border:1px solid rgba(0,0,0,.06); border-radius:var(--radius); box-shadow:var(--shadow)}
+     .card-register{flex:1; max-width:460px; width:100%; margin:0; background:var(--card-bg); backdrop-filter: blur(10px); border:1px solid rgba(0,0,0,.06); border-radius:var(--radius); box-shadow:var(--shadow)}
      .card-register .header{display:flex; align-items:center; justify-content:space-between}
      .title{font-weight:800; color:var(--brand)}
      .btn-brand{background:var(--accent); border-color:var(--accent); color:#111; font-weight:700}
@@ -91,13 +92,39 @@
      .link:hover{text-decoration:underline}
      .toggle-theme{border-color:var(--brand); color:var(--brand)}
      #driverFields{background-color:rgba(78, 215, 241, 0.1); border:1px solid var(--brand) !important;}
+
+     @media (max-width: 992px) {
+        .register-container{flex-direction:column; gap:1rem;}
+        .jeep-hero{max-width:420px;}
+        .card-register{max-width:400px; padding:1.5rem !important;}
+     }
+
+     @media (max-width: 768px) {
+        .card-register{max-width:360px; padding:1.25rem !important;}
+        .jeep-hero{max-width:360px;}
+     }
+
+     @media (max-width: 576px) {
+        .card-register{max-width:100%; padding:1rem !important;}
+        .jeep-hero{max-width:100%;}
+        .banner-container{width:35%;}
+     }
+
+     .jeep-hero{animation:float 6s ease-in-out infinite;}
+
+     @keyframes float {
+        0% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+        100% { transform: translateY(0); }
+     }
    </style>
   <link rel="icon" href="/icons/JEEPNi.png" type="image/png">
 </head>
 <body>
   <div class="register-wrap">
-    <!-- HERO with clickable banners -->
-    <div class="mb-3 jeep-hero" aria-label="Choose role">
+    <div class="register-container">
+      <!-- HERO with clickable banners -->
+      <div class="jeep-hero" aria-label="Choose role">
       <img class="bg-blur" src="icons/Background1.png" alt="">
       <!-- Combined jeep and humans image -->
       <img class="jeep" src="icons/JeepNiWithTao.png" alt="Jeepney with driver and passenger">
@@ -110,10 +137,10 @@
           <img src="icons/18 Driver Button.png" alt="Manong Driver">
         </a>
       </div>
-    </div>
+      </div>
 
-    <!-- AUTH CARD -->
-    <div class="card-register p-4 p-md-5 auth-card mt-2">
+      <!-- AUTH CARD -->
+      <div class="card-register p-4 p-md-5 auth-card">
       <div class="header mb-3">
         <a class="brand" href="index.html"><img src="/icons/JEEPNi.png" width="28" height="28" alt="JeepNi"><span class="fw-bold">JeepNi</span></a>
         <button id="btnTheme" class="btn btn-sm toggle-theme" title="Toggle theme" aria-label="Toggle theme"><i class="bi bi-moon-stars"></i></button>
@@ -141,6 +168,16 @@
             <input id="password" type="password" class="form-control" placeholder="••••••••" autocomplete="new-password" required>
             <button class="btn btn-outline-secondary" type="button" id="togglePass" title="Show/Hide"><i class="bi bi-eye"></i></button>
           </div>
+          <div class="password-strength mt-2">
+            <div class="d-flex justify-content-between small">
+              <span class="text-muted">Password strength</span>
+              <span id="passwordStrengthLabel" class="fw-semibold text-muted">—</span>
+            </div>
+            <div class="progress" style="height: 6px;">
+              <div id="passwordStrengthBar" class="progress-bar bg-secondary" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            <small class="text-muted">Use 8+ characters with upper & lower case letters, numbers, and a symbol.</small>
+          </div>
           <div class="form-text">Use at least 6 characters</div>
         </div>
 
@@ -148,11 +185,11 @@
         <div id="driverFields" class="rounded p-3 mb-3 d-none">
           <div class="mb-3">
             <label class="form-label"><i class="bi bi-card-text me-1"></i>License Number</label>
-            <input id="licenseNumber" class="form-control" placeholder="Enter your license number">
+            <input id="licenseNumber" class="form-control" placeholder="Enter your license number" style="text-transform: uppercase;">
           </div>
           <div class="mb-2">
             <label class="form-label"><i class="bi bi-key me-1"></i>Driver Code</label>
-            <input id="driverCode" class="form-control" placeholder="Enter driver code">
+            <input id="driverCode" class="form-control" placeholder="Enter driver code" style="text-transform: uppercase;">
           </div>
         </div>
 
@@ -172,6 +209,7 @@
           <a class="small link" href="login.html">Already have an account? Sign in</a>
         </div>
       </form>
+    </div>
     </div>
   </div>
 
@@ -213,14 +251,65 @@
       if (ico) ico.className = dark ? 'bi bi-brightness-high' : 'bi bi-moon-stars';
     });
 
-    // Show/Hide password
-    document.getElementById('togglePass').addEventListener('click', () => {
-      const passEl = document.getElementById('password');
-      const type = passEl.getAttribute('type') === 'password' ? 'text' : 'password';
-      passEl.setAttribute('type', type);
-      const icon = document.querySelector('#togglePass i');
-      if (icon) icon.className = type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
+  // Show/Hide password
+  document.getElementById('togglePass').addEventListener('click', () => {
+    const passEl = document.getElementById('password');
+    const type = passEl.getAttribute('type') === 'password' ? 'text' : 'password';
+    passEl.setAttribute('type', type);
+    const icon = document.querySelector('#togglePass i');
+    if (icon) icon.className = type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
+  });
+  const passwordInput = document.getElementById("password");
+  const strengthBar = document.getElementById("passwordStrengthBar");
+  const strengthLabel = document.getElementById("passwordStrengthLabel");
+
+  function evaluatePasswordStrength(value = "") {
+    let score = 0;
+    if (value.length >= 8) score++;
+    if (/[A-Z]/.test(value)) score++;
+    if (/[a-z]/.test(value)) score++;
+    if (/\d/.test(value)) score++;
+    if (/[^A-Za-z0-9]/.test(value)) score++;
+    return score;
+  }
+
+  function updateStrengthMeter(value = "") {
+    if (!strengthBar || !strengthLabel) return;
+    const score = evaluatePasswordStrength(value);
+    const states = [
+      { min: 0, label: "Too weak", color: "bg-secondary", width: "15%" },
+      { min: 2, label: "Weak", color: "bg-danger", width: "35%" },
+      { min: 3, label: "Medium", color: "bg-warning", width: "60%" },
+      { min: 4, label: "Strong", color: "bg-success", width: "85%" },
+      { min: 5, label: "Very strong", color: "bg-success", width: "100%" }
+    ];
+    const state = states.reduce((acc, curr) => (score >= curr.min ? curr : acc), states[0]);
+    strengthBar.className = `progress-bar ${state.color}`;
+    strengthBar.style.width = value ? state.width : "0%";
+    strengthLabel.textContent = value ? state.label : "—";
+    strengthBar.setAttribute("aria-valuenow", score);
+  }
+
+  if (passwordInput) {
+    passwordInput.addEventListener("input", (evt) => updateStrengthMeter(evt.target.value));
+    updateStrengthMeter(passwordInput.value || "");
+  }
+
+  const licenseInput = document.getElementById("licenseNumber");
+  if (licenseInput) {
+    licenseInput.addEventListener("input", () => {
+      const upper = licenseInput.value.toUpperCase();
+      if (licenseInput.value !== upper) licenseInput.value = upper;
     });
+  }
+
+  const driverCodeInput = document.getElementById("driverCode");
+  if (driverCodeInput) {
+    driverCodeInput.addEventListener("input", () => {
+      const upper = driverCodeInput.value.toUpperCase();
+      if (driverCodeInput.value !== upper) driverCodeInput.value = upper;
+    });
+  }
 
     // ------- Role UI -------
     function setTexts(role) {
@@ -320,11 +409,16 @@
       const params = new URLSearchParams(location.search);
       const isDriver = params.get('role') === 'driver';
 
-      const code = document.getElementById("driverCode").value.trim();
-      const license = document.getElementById("licenseNumber").value.trim();
+      const code = document.getElementById("driverCode").value.trim().toUpperCase();
+      const license = document.getElementById("licenseNumber").value.trim().toUpperCase();
 
       if (!name || !email || !pass) {
         showAlert("Please complete name, email and password.");
+        return;
+      }
+      if (evaluatePasswordStrength(pass) < 3) {
+        showAlert("Please choose a stronger password (8+ characters with letters, numbers, and a symbol).", "danger");
+        updateStrengthMeter(pass);
         return;
       }
       if (isDriver) {

@@ -433,6 +433,9 @@ export async function getSMSBalance(options = {}) {
     }
 
     const balanceRaw =
+      data.balance ??
+      data.credit_balance ??
+      data.raw?.credit_balance ??
       accountData.balance ??
       accountData.credit_balance ??
       accountData.credits ??

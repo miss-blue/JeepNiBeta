@@ -139,7 +139,7 @@
       <div class="col-12">
         <div class="card shadow-sm h-100">
           <div class="card-header d-flex align-items-center justify-content-between">
-            <h5 class="card-title mb-0"><i class="bi bi-people me-2"></i>List of Drivers List</h5>
+            <h5 class="card-title mb-0"><i class="bi bi-people me-2"></i>List of Drivers</h5>
             <div class="d-flex gap-2">
               <input id="searchDrivers" type="text" class="form-control form-control-sm" placeholder="Search drivers..." style="width: auto;">
               <button id="btnReloadDrivers" class="btn btn-outline-secondary btn-sm">
@@ -156,7 +156,6 @@
                 <thead>
                   <tr>
                     <th>Driver</th>
-                    <th>Route</th>
                     <th>Status</th>
                     <th>Last Update</th>
                   </tr>
@@ -294,7 +293,7 @@
               </div>
               <div class="mb-2">
                 <label class="form-label">Jeep / Plate</label>
-                <input id="schJeep" class="form-control form-control-sm" placeholder="e.g., ABC-1234">
+                <input id="schJeep" class="form-control form-control-sm" placeholder="e.g., ABC-1234" style="text-transform: uppercase;">
               </div>
               <div class="mb-2">
                 <label class="form-label">Assign Driver</label>
@@ -413,8 +412,6 @@
         </div>
       </div>
     </div>
-
-    </div>
   </div><!-- /tab-scheduling -->
 
     <!-- ===== Pane: Peak Hours ===== -->
@@ -455,32 +452,6 @@
                   <h3 class="text-white mb-0" id="ph_count">0</h3>
                 </div>
                 <i class="bi bi-graph-up"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-12 col-sm-6 col-xl-3">
-          <div class="card shadow-sm peak-metric-card bg-success text-white">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-start gap-2">
-                <div>
-                  <h6 class="card-title text-white mb-2">Registered Users</h6>
-                  <h3 class="text-white mb-0" id="ph_users">-</h3>
-                </div>
-                <i class="bi bi-people"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-12 col-sm-6 col-xl-3">
-          <div class="card shadow-sm peak-metric-card bg-info text-white">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-start gap-2">
-                <div>
-                  <h6 class="card-title text-white mb-2">Messages Sent</h6>
-                  <h3 class="text-white mb-0" id="ph_sent">0</h3>
-                </div>
-                <i class="bi bi-send"></i>
               </div>
             </div>
           </div>
@@ -687,11 +658,13 @@
                     id="smsSenderName" 
                     type="text" 
                     class="form-control" 
-                    value="SEMAPHORE" 
+                    value="JEEPNI" 
                     maxlength="11"
-                    placeholder="e.g., JEEPNI"
+                    placeholder="JEEPNI"
+                    readonly
+                    aria-readonly="true"
                   >
-                  <small class="text-muted">Max 11 characters (optional)</small>
+                  <small class="text-muted">Sender name is fixed to JEEPNI by policy.</small>
                 </div>
 
                 <!-- <div class="mb-3">
@@ -1590,11 +1563,15 @@ function sanitizeDocument() {
   function renderStatusBadge(status = "") {
     const key = (status || "").toString().trim().toLowerCase();
     let cls = "status-badge";
-    if (key === "full") cls += " status-badge--full";
-    else if (key === "available") cls += " status-badge--available";
-    else if (key === "offline" || key === "no signal") cls += " status-badge--offline";
+    if (["full"].includes(key)) cls += " status-badge--full";
+    else if (["available"].includes(key)) cls += " status-badge--available";
+    else if (["offline", "no signal"].includes(key)) cls += " status-badge--offline";
+    else if (["pending", "assigned"].includes(key)) cls += " status-badge--pending";
+    else if (["enroute", "started"].includes(key)) cls += " status-badge--enroute";
+    else if (["completed", "done"].includes(key)) cls += " status-badge--completed";
+    else if (["canceled", "cancelled"].includes(key)) cls += " status-badge--canceled";
     else cls += " status-badge--default";
-    const label = key ? key : "offline";
+    const label = key || "offline";
     return `<span class="${cls}">${label}</span>`;
   }
 
@@ -1653,7 +1630,6 @@ function sanitizeDocument() {
               <strong>${d.name}</strong>
               <br><small class="text-muted">UID: ${d.uid.slice(0,8)}...</small>
             </td>
-            <td>${renderRouteBadge(d.route)}</td>
             <td>
               ${renderStatusBadge(d.status || (d.online ? "online" : "offline"))}
             </td>
@@ -2228,8 +2204,10 @@ function printPassengers() {
   // This prevents the module from stalling and speeds up perceived load
   loadDriversForSelect().catch(console.warn);
   // Auto-load when trips tab becomes active
-  const tripsTabBtn = document.querySelector('#trips-tab');
-  if (tripsTabBtn) tripsTabBtn.addEventListener('shown.bs.tab', loadTrips);
+  const tripsTabBtn = document.querySelector('#tab-dashboard-tab');
+  if (tripsTabBtn) tripsTabBtn.addEventListener('shown.bs.tab', () => {
+    refreshAnalyticsSections({ withHistory: false }).catch(err => console.error('Dashboard analytics refresh failed:', err));
+  });
 
   // Live updates: refresh drivers presence and counters when locations change
   let refreshTimer = null;
@@ -2253,7 +2231,7 @@ function printPassengers() {
         date: $("#schDate").value,
         dep_time: $("#schTime").value,
         route: $("#schRoute").value,
-        jeep_id: $("#schJeep").value.trim(),
+        jeep_id: $("#schJeep").value.trim().toUpperCase(),
         driver_uid: $("#schDriver").value,
         notes: $("#schNotes").value.trim()
       };
@@ -2377,18 +2355,9 @@ async function loadPredictions() {
     const predictions = await response.json();
     predictionServiceAvailable = true;
     loadPredictions._alertedUnavailable = false;
-    // Update registered users count if container exists
-    try {
-      const usersSnap = await get(ref(db, 'passengers'));
-      const phUsersEl = document.getElementById('ph_users');
-      if (phUsersEl) phUsersEl.textContent = usersSnap.exists() ? Object.keys(usersSnap.val()).length : 0;
-    } catch {}
-    
     // Counters
-    const sentCount = Array.isArray(predictions) ? predictions.filter(p => p.is_sent || p.sent).length : 0;
     const totalStops = Array.isArray(predictions) ? new Set(predictions.map(p => p.stop_name || p.stop?.name || '')).size : 0;
     const phCountEl = document.getElementById('ph_count'); if (phCountEl) phCountEl.textContent = Array.isArray(predictions) ? predictions.length : 0;
-    const phSentEl = document.getElementById('ph_sent'); if (phSentEl) phSentEl.textContent = sentCount;
     const phStopsEl = document.getElementById('ph_stops'); if (phStopsEl) phStopsEl.textContent = totalStops || '-';
 
     if (!predictions || predictions.length === 0) {
@@ -2407,16 +2376,29 @@ async function loadPredictions() {
         const peak = p.peak_hour ?? p.peak ?? '-';
         const sent = !!(p.is_sent || p.sent);
         const border = sent ? 'sent border-success' : 'pending border-primary';
-        const badge = sent ? '<span class="badge bg-success"><i class="bi bi-check-lg me-1"></i>Sent</span>' : '<span class="badge bg-primary"><i class="bi bi-clock me-1"></i>Pending</span>';
+        const badge = sent
+          ? '<span class="badge bg-success" title="Sent"><i class="bi bi-check-lg"></i></span>'
+          : '<span class="badge bg-primary" title="Awaiting send"><i class="bi bi-clock"></i></span>';
+        const peakDisplay = peak === '-' ? '-' : `${peak}:00`;
+        const copyPayload = encodeURIComponent([
+          `Stop: ${stop}`,
+          `Peak: ${peakDisplay}`,
+          `Details: ${message}`
+        ].join('\\n'));
         return `
           <div class="col-md-6 col-lg-4">
             <div class="card h-100 prediction-card ${border}">
               <div class="card-body">
                 <h6 class="card-title"><i class="bi bi-geo-alt me-1"></i>${stop}</h6>
                 <p class="card-text">${message}</p>
-                <div class="d-flex justify-content-between align-items-center">
-                  <small class="text-muted"><i class="bi bi-clock me-1"></i>Peak: ${peak}:00</small>
-                  ${badge}
+                <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                  <small class="text-muted mb-0"><i class="bi bi-clock me-1"></i>Peak: ${peakDisplay}</small>
+                  <div class="d-flex align-items-center gap-2">
+                    ${badge}
+                    <button type="button" class="btn btn-sm btn-outline-primary copy-prediction" data-copy="${copyPayload}" title="Copy details">
+                      <i class="bi bi-clipboard"></i>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -2840,8 +2822,7 @@ async function getPredictions(date) {
       console.log("===========================");
 
       const context = await refreshAdminContext({
-        forceRoleReload: false,
-        forceTokenRefresh: false,
+        forceRoleReload: false
       });
 
       if (!context.role || !["admin", "super_admin"].includes(String(context.role).toLowerCase())) {
@@ -3268,6 +3249,38 @@ async function getPredictions(date) {
       }
     });
   }
+
+  document.addEventListener('click', async (event) => {
+    const copyBtn = event.target.closest('.copy-prediction');
+    if (!copyBtn) return;
+    event.preventDefault();
+
+    const payload = copyBtn.dataset.copy ? decodeURIComponent(copyBtn.dataset.copy) : '';
+    if (!payload) {
+      showAlert('No prediction details available to copy.', 'warning');
+      return;
+    }
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(payload);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = payload;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      showAlert('Prediction details copied to clipboard.', 'success');
+    } catch (error) {
+      console.error('Failed to copy prediction details:', error);
+      showAlert('Unable to copy prediction details. Please try again.', 'danger');
+    }
+  });
 
   const formSMS = document.getElementById('formSMS');
   if (formSMS) {
@@ -3746,6 +3759,16 @@ async function getPredictions(date) {
       loadDispatchHistory();
     });
   });
+
+  const schJeepInput = document.getElementById("schJeep");
+  if (schJeepInput) {
+    schJeepInput.addEventListener("input", () => {
+      const upper = schJeepInput.value.toUpperCase();
+      if (upper !== schJeepInput.value) {
+        schJeepInput.value = upper;
+      }
+    });
+  }
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>\r\n</body>
