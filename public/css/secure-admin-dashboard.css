@@ -142,6 +142,29 @@
 .table thead th { position: sticky; top: 0; z-index: 5; background: var(--card-bg); }
 .table-hover tbody tr:hover{ background-color: rgba(78,215,241,.08); }
 
+.table-drivers{
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.table-drivers thead th{
+  border-bottom: 2px solid #e2e8f0;
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: #64748b;
+}
+.table-drivers tbody tr{
+  background: #fff;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.table-drivers tbody tr:nth-child(even){
+  background: #f8fafc;
+}
+.table-drivers tbody tr:hover{
+  transform: translateX(2px);
+  box-shadow: inset 3px 0 0 #38bdf8;
+}
+
 /* Scrollable tables - Dashboard tab */
 #rowsDrivers,
 #rowsPassengers {
@@ -774,6 +797,48 @@ body {
 .badge {
   font-size: 0.95rem;
 }
+
+.route-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.85rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  letter-spacing: 0.04em;
+  box-shadow: 0 4px 8px rgba(15, 23, 42, 0.08);
+}
+
+.badge-route-longos { background: #fde2e4; color: #b8324f; border-color: #f5b4bf; }
+.badge-route-gueset { background: #d7efff; color: #0f5fa1; border-color: #a5d4ff; }
+.badge-route-boquig { background: #dff5dc; color: #2f6b36; border-color: #b8e8b1; }
+.badge-route-binloc { background: #fff4c4; color: #ad7a00; border-color: #ffe28a; }
+.badge-route-tondaligan { background: #f1e6ff; color: #5e3a8a; border-color: #dcc3ff; }
+.badge-route-default { background: #e5e7eb; color: #374151; border-color: #d1d5db; }
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.85rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  letter-spacing: 0.04em;
+  box-shadow: inset 0 -2px rgba(255,255,255,0.4), 0 4px 8px rgba(15,23,42,0.08);
+}
+
+.status-badge--full { background: #fde2e4; color: #b8324f; border-color: #f5b4bf; }
+.status-badge--available { background: #dff5dc; color: #1b5e20; border-color: #b8e8b1; }
+.status-badge--offline { background: #e5e7eb; color: #6b7280; border-color: #d1d5db; }
+.status-badge--default { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
+.status-badge--pending { background: #00c8ff; color: #ffffff; border-color: #00a3d4; }
+.status-badge--enroute { background: #c4f1f9; color: #0f766e; border-color: #86e0ef; }
+.status-badge--completed { background: #ffd84d; color: #111827; border-color: #fcbf24; }
+.status-badge--canceled { background: #94a3b8; color: #ffffff; border-color: #818c9c; }
 
 .small,
 small {

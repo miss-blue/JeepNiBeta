@@ -25,13 +25,32 @@
 <nav class="navbar navbar-light py-3">
   <div class="container d-flex align-items-center gap-3 flex-wrap">
     <span class="navbar-brand d-flex align-items-center gap-2">
-      <i class="bi bi-geo-alt-fill"></i>
-      JeepNi - Passenger Dashboard
+      <img src="icons/JEEPNi.png" alt="JeepNi" class="navbar-logo">
     </span>
-    <div class="ms-auto d-flex align-items-center gap-3 flex-wrap">
-      <span class="small text-light">Signed in as <span id="whoami" class="fw-semibold text-light">Loading...</span></span>
-      <a href="my-profile.html" class="btn btn-outline-light btn-sm">My Profile</a>
-      <button id="btnLogout" class="btn btn-outline-danger btn-sm">Logout</button>
+    <div class="ms-auto d-flex align-items-center gap-3 flex-nowrap user-actions">
+      <div class="dropdown user-menu">
+        <button class="user-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <span class="user-pill">
+            <span class="user-avatar user-avatar--pill" aria-hidden="true"><i class="bi bi-person-fill"></i></span>
+            <span id="whoami" class="user-email">Loading...</span>
+            <i class="bi bi-chevron-down user-caret" aria-hidden="true"></i>
+          </span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end user-menu__panel">
+          <li class="dropdown-header user-menu__header">
+            <div class="user-summary">
+              <span class="user-avatar user-avatar--panel" aria-hidden="true"><i class="bi bi-person-fill"></i></span>
+              <div>
+                <div id="whoamiPanel" class="user-email">Loading...</div>
+                <small class="text-muted">Passenger</small>
+              </div>
+            </div>
+          </li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item d-flex align-items-center gap-2" href="my-profile.html"><i class="bi bi-person-circle"></i> My Profile</a></li>
+          <li><button id="btnLogout" class="dropdown-item text-danger d-flex align-items-center gap-2" type="button"><i class="bi bi-box-arrow-right"></i> Logout</button></li>
+        </ul>
+      </div>
     </div>
   </div>
 </nav>

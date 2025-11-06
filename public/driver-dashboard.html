@@ -17,12 +17,32 @@
 <body>
 <nav class="navbar border-bottom">
   <div class="container">
-    <span class="navbar-brand fw-semibold">JeepNi — Driver Dashboard</span>
-    <div class="ms-auto d-flex align-items-center gap-2">
-      <span id="driverInfo" class="small text-muted">Checking session…</span>
-      <div class="ms-auto d-flex align-items-center gap-2">
-          <a href="my-profile.html" class="btn btn-outline-secondary btn-sm">My Profile</a>
-          <button id="btnLogout" class="btn btn-outline-danger btn-sm">Logout</button>
+    <span class="navbar-brand fw-semibold">
+      <img src="icons/JEEPNi.png" alt="JeepNi" class="navbar-logo">
+    </span>
+    <div class="ms-auto d-flex align-items-center gap-2 flex-nowrap user-actions">
+      <div class="dropdown user-menu">
+        <button class="user-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <span class="user-pill">
+            <span class="user-avatar user-avatar--pill" aria-hidden="true"><i class="bi bi-person-fill"></i></span>
+            <span id="driverInfo" class="user-email">Checking session…</span>
+            <i class="bi bi-chevron-down user-caret" aria-hidden="true"></i>
+          </span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end user-menu__panel">
+          <li class="dropdown-header user-menu__header">
+            <div class="user-summary">
+              <span class="user-avatar user-avatar--panel" aria-hidden="true"><i class="bi bi-person-fill"></i></span>
+              <div>
+                <div id="driverInfoPanel" class="user-email">Loading...</div>
+                <small class="text-muted">Driver</small>
+              </div>
+            </div>
+          </li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item d-flex align-items-center gap-2" href="my-profile.html"><i class="bi bi-person-circle"></i> My Profile</a></li>
+          <li><button id="btnLogout" class="dropdown-item text-danger d-flex align-items-center gap-2" type="button"><i class="bi bi-box-arrow-right"></i> Logout</button></li>
+        </ul>
       </div>
     </div>
   </div>
@@ -39,14 +59,24 @@
   <div class="driver-panel">
     <div class="driver-panel__inner">
       
-      <!-- Assignment Info -->
-      <div class="control-section">
-        <div class="section-label">Today's Assignment</div>
-        <div id="assignBox" class="assignment-display">Loading…</div>
+      <!-- Capacity Control -->
+      <div class="control-section control-section--priority">
+        <div class="section-label">Capacity</div>
+        <div class="capacity-control">
+          <span id="capBadge" class="capacity-badge capacity-badge--available">Available</span>
+          <button id="btnToggleFull" class="capacity-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="15" y1="9" x2="9" y2="15"></line>
+              <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+            <span>Mark FULL</span>
+          </button>
+        </div>
       </div>
 
       <!-- Trip Controls -->
-      <div class="control-section">
+      <div class="control-section control-section--priority">
         <div class="section-label">Trip Status</div>
         <div class="trip-actions">
           <button id="btnAccept" class="action-btn action-btn--accept">
@@ -71,42 +101,18 @@
         </div>
       </div>
 
-      <!-- Capacity Control -->
+      <!-- Assignment Info -->
       <div class="control-section">
-        <div class="section-label">Capacity</div>
-        <div class="capacity-control">
-          <span id="capBadge" class="capacity-badge capacity-badge--available">Available</span>
-          <button id="btnToggleFull" class="capacity-btn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="15" y1="9" x2="9" y2="15"></line>
-              <line x1="9" y1="9" x2="15" y2="15"></line>
-            </svg>
-            <span>Mark FULL</span>
-          </button>
-        </div>
+        <div class="section-label">Today's Assignment</div>
+        <div id="assignBox" class="assignment-display">Loading...</div>
       </div>
 
-      <!-- Navigation -->
+      <!-- Assignment History -->
       <div class="control-section">
-        <div class="section-label">Navigation</div>
-        <select id="destinationSelect" class="destination-select">
-          <option value="">Choose destination...</option>
-          <option value="16.0754843,120.3546182">Saint Gabriel Parish</option>
-          <option value="16.073742,120.351614">Alip, Boquig Waiting Shed</option>
-          <option value="16.076286,120.3557308">Bonuan Boquig Barangay Hall</option>
-          <option value="16.066106,120.353298">Sagor, Longos</option>
-          <option value="16.070591,120.359635">Centro, Longos</option>
-          <option value="16.044321,120.343607">SM Center Dagupan</option>
-          <option value="16.043786,120.344272">DBP</option>
-          <option value="16.042842,120.344109">Victory Bus Terminal</option>
-        </select>
-        <button id="btnNavigate" class="navigate-btn" disabled>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
-          </svg>
-          <span>Start Navigation</span>
-        </button>
+        <div class="section-label">Today's History</div>
+        <div id="historyList" class="history-list">
+          <div class="history-item history-item--empty">No completed assignments yet.</div>
+        </div>
       </div>
 
       <!-- Stop Tracking (shown when active) -->
@@ -127,7 +133,7 @@
   import { query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
   import { startTrip } from "./js/create-trip.js";
   import { endTrip } from "./js/trip-tracking.js";
-  import { myAssignments, setStatus } from "./js/scheduling.js";
+  import { myAssignments, setStatus, dateKey } from "./js/scheduling.js";
   // Use tracker helpers to begin/stop sharing tied to trips
   import { beginSharing, stopSharing, isSharing, setMyFull } from "./js/map-tracker.js";
 
@@ -149,54 +155,10 @@ const alertBox = document.getElementById("alerts");
   /* Auth */
   const { user } = await requireRole(['driver'], { onDeny: () => alert('Access denied. Drivers only.') });
   document.getElementById("driverInfo").textContent = user.email;
+  const driverInfoPanel = document.getElementById("driverInfoPanel");
+  if (driverInfoPanel) driverInfoPanel.textContent = user.email;
 
 /* ===== ROUTING FOR DRIVERS ===== */
-  const destinationSelect = document.getElementById('destinationSelect');
-  const btnNavigate = document.getElementById('btnNavigate');
-  const btnClearRoute = document.getElementById('btnClearRoute');
-  let currentRouteTarget = null;
-
-  // Enable navigate button when destination is selected
-  if (destinationSelect && btnNavigate) {
-    destinationSelect.addEventListener('change', () => {
-      const hasSelection = destinationSelect.value !== '';
-      btnNavigate.disabled = !hasSelection;
-    });
-  }
-
-  // Start navigation to selected destination
-  if (btnNavigate) {
-    btnNavigate.addEventListener('click', () => {
-      const coords = destinationSelect.value.split(',');
-      if (coords.length !== 2) return;
-      
-      const lat = parseFloat(coords[0]);
-      const lng = parseFloat(coords[1]);
-      const name = destinationSelect.options[destinationSelect.selectedIndex].text;
-      
-      if (!isNaN(lat) && !isNaN(lng)) {
-        try {
-          // Set destination marker
-          if (window.JeepNiTracker && window.JeepNiTracker.setDestination) {
-            window.JeepNiTracker.setDestination(lat, lng, name);
-          }
-          
-          // Start routing if sharing is active
-          if (window.JeepNiTracker && window.JeepNiTracker.isSharing() && window.JeepNiTracker.routeTo) {
-            window.JeepNiTracker.routeTo(lat, lng);
-            currentRouteTarget = { lat, lng, name };
-            showAlert(`Navigation started to ${name}`, 'success');
-          } else {
-            showAlert('Start your trip first (click "Start En-route")', 'warning');
-          }
-        } catch (err) {
-          console.error('Navigation error:', err);
-          showAlert('Failed to start navigation', 'danger');
-        }
-      }
-    });
-  }
-
   /* Button references */
   const btnAccept = document.getElementById('btnAccept');
   const btnEnroute = document.getElementById('btnEnroute');
@@ -204,10 +166,71 @@ const alertBox = document.getElementById("alerts");
   const btnStopTracking = document.getElementById('btnStopTracking');
   const capBadge = document.getElementById('capBadge');
   const btnToggleFull = document.getElementById('btnToggleFull');
+  const historyList = document.getElementById('historyList');
 
   let fullState = false;
   let currentDispatch = null;
   let activeTripId = null;
+  let todaysAssignments = [];
+  const COMPLETED_STATES = ['completed', 'canceled'];
+  const HISTORY_LIMIT = 3;
+
+  const slugStatus = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '');
+  const isCompletedStatus = (status) => COMPLETED_STATES.includes(slugStatus(status));
+
+  const compareAssignments = (a = {}, b = {}) => {
+    const timeA = a?.dep_time || '';
+    const timeB = b?.dep_time || '';
+    if (timeA && timeB) {
+      const diff = timeA.localeCompare(timeB);
+      if (diff !== 0) return diff;
+    }
+    const createdA = (a?.created_at || '').toString();
+    const createdB = (b?.created_at || '').toString();
+    return createdA.localeCompare(createdB);
+  };
+
+  const formatTimeLabel = (value) => {
+    if (!value) return 'Not set';
+    if (typeof value === 'number') {
+      return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    if (typeof value === 'string') {
+      if (value.length <= 5 && value.includes(':')) return value;
+      const parsed = Date.parse(value);
+      if (!Number.isNaN(parsed)) {
+        return new Date(parsed).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+      return value;
+    }
+    if (value?.seconds) {
+      return new Date(value.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    return 'Not set';
+  };
+
+  function renderHistory(entries = []) {
+    if (!historyList) return;
+    if (!entries.length) {
+      historyList.innerHTML = '<div class="history-item history-item--empty">No completed assignments yet.</div>';
+      return;
+    }
+    historyList.innerHTML = entries.map((item) => {
+      const status = slugStatus(item.status);
+      const label = status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Unknown';
+      const orderLabel = item._order ? `Assignment #${item._order}` : 'Assignment';
+      const timeLabel = formatTimeLabel(item.status_ts || item.finished_at || item.dep_time);
+      return `
+        <div class="history-item">
+          <div class="history-item__title">
+            <strong>${orderLabel}</strong>
+            <span class="history-item__status">${label}</span>
+          </div>
+          <div class="history-item__meta">${timeLabel}</div>
+        </div>
+      `;
+    }).join('');
+  }
 
   function updateActionButtons() {
     if (!btnAccept || !btnEnroute || !btnComplete) return;
@@ -226,7 +249,7 @@ const alertBox = document.getElementById("alerts");
     }
 
     const dispatchId = currentDispatch.id || currentDispatch.dispatch_id || null;
-    const assignmentDate = currentDispatch.date || new Date().toISOString().slice(0, 10);
+    const assignmentDate = currentDispatch.date || dateKey();
     const route = currentDispatch.route;
     if (!dispatchId || !assignmentDate) {
       showAlert('Assignment reference is incomplete. Please refresh.', 'danger');
@@ -274,6 +297,7 @@ const alertBox = document.getElementById("alerts");
       }
 
       currentDispatch.status = nextStatus;
+      updateActionButtons();
     } catch (err) {
       console.error('Failed to change status:', err);
       showAlert('Failed to change status: ' + err.message, 'danger');
@@ -389,27 +413,56 @@ const alertBox = document.getElementById("alerts");
 
       assignBox.innerHTML = "Loading...";
 
-      const today = new Date().toISOString().slice(0, 10);
+      const today = dateKey();
       const mine = await myAssignments(today);
+      todaysAssignments = Array.isArray(mine) ? [...mine] : [];
 
-      if (!mine || mine.length === 0) {
+      if (!todaysAssignments.length) {
         currentDispatch = null;
-        assignBox.innerHTML = "No assignment for today.";
+        assignBox.innerHTML = "No assignments scheduled for today.";
+        renderHistory([]);
         updateActionButtons();
         return;
       }
 
-      currentDispatch = { ...mine[0] };
-      currentDispatch.id = currentDispatch.id || currentDispatch.dispatch_id || null;
-      currentDispatch.date = currentDispatch.date || today;
+      const sorted = [...todaysAssignments].sort(compareAssignments);
+      const orderMap = new Map();
+      sorted.forEach((item, idx) => {
+        const key = item.id || item.dispatch_id;
+        if (key) orderMap.set(key, idx + 1);
+      });
 
-      assignBox.innerHTML = `
-        Time: <strong>${currentDispatch.dep_time || "Not set"}</strong><br>
-        Route: <strong>${currentDispatch.route || "Not set"}</strong><br>
-        Jeep: <strong>${currentDispatch.jeep_id || "Not set"}</strong><br>
-        Status: <strong>${currentDispatch.status || "Not set"}</strong>
-      `;
+      const current = sorted.find((item) => !isCompletedStatus(item.status)) || null;
 
+      if (!current) {
+        currentDispatch = null;
+        assignBox.innerHTML = "You're all caught up for today.";
+      } else {
+        currentDispatch = { ...current };
+        currentDispatch.id = currentDispatch.id || currentDispatch.dispatch_id || null;
+        currentDispatch.date = currentDispatch.date || today;
+        const assignmentNumber = orderMap.get(currentDispatch.id) || orderMap.get(currentDispatch.dispatch_id) || "—";
+        assignBox.innerHTML = `
+          <div class="assignment-heading">Assignment #${assignmentNumber}</div>
+          <div class="assignment-lines">
+            <span>Time: <strong>${currentDispatch.dep_time || "Not set"}</strong></span>
+            <span>Route: <strong>${currentDispatch.route || "Not set"}</strong></span>
+            <span>Jeep: <strong>${currentDispatch.jeep_id || "Not set"}</strong></span>
+            <span>Status: <strong>${currentDispatch.status || "Not set"}</strong></span>
+          </div>
+        `;
+      }
+
+      const historyEntries = sorted
+        .filter((item) => isCompletedStatus(item.status))
+        .map((item) => ({
+          ...item,
+          _order: orderMap.get(item.id || item.dispatch_id) || null
+        }))
+        .slice(-HISTORY_LIMIT)
+        .reverse();
+
+      renderHistory(historyEntries);
       updateActionButtons();
     } catch (error) {
       console.error('Failed to load assignment:', error);
@@ -488,8 +541,6 @@ const alertBox = document.getElementById("alerts");
     const em = String.fromCharCode(8212);
     try {
       document.title = `JeepNi ${em} Driver Dashboard`;
-      const brand = document.querySelector('.navbar .navbar-brand');
-      if (brand) brand.textContent = `JeepNi ${em} Driver Dashboard`;
     } catch (_) {}
   })();
 </script>
@@ -498,3 +549,4 @@ const alertBox = document.getElementById("alerts");
 </script>
 </body>
 </html>
+

@@ -152,7 +152,7 @@
           </div>
           <div class="card-body">
             <div class="table-responsive">
-              <table class="table table-striped table-hover table-sm align-middle">
+              <table class="table table-striped table-hover table-sm align-middle table-drivers">
                 <thead>
                   <tr>
                     <th>Driver</th>
@@ -1559,7 +1559,7 @@ if (btnConfirmRemoveAdmin) btnConfirmRemoveAdmin.addEventListener('click', remov
   setLoading('#predictionRows', 6);
 
   // Define sanitizeDocument to avoid mojibake artifacts and errors
-  function sanitizeDocument() {
+function sanitizeDocument() {
     const nodes = document.querySelectorAll('option, td, th, span, button, label, h1, h2, h3, h4, h5, h6');
     nodes.forEach(el => {
       const t = el.textContent || '';
@@ -1569,6 +1569,34 @@ if (btnConfirmRemoveAdmin) btnConfirmRemoveAdmin.addEventListener('click', remov
 
   const ONLINE_WINDOW_MS = 150000; // 2.5 minutes recency window
   const PASSENGER_STALE_MS = 5 * 60 * 1000; // ignore passenger points older than 5 minutes
+
+  const ROUTE_COLORS = {
+    "longos": "badge-route-longos",
+    "gueset": "badge-route-gueset",
+    "guest": "badge-route-gueset",
+    "boquig": "badge-route-boquig",
+    "bonuan boquig": "badge-route-boquig",
+    "binloc": "badge-route-binloc",
+    "tondaligan": "badge-route-tondaligan"
+  };
+
+  function renderRouteBadge(route = "") {
+    const label = typeof route === "string" ? route.trim() : "";
+    const key = label.toLowerCase();
+    const cls = ROUTE_COLORS[key] || "badge-route-default";
+    return `<span class="route-badge ${cls}">${label || "No route"}</span>`;
+  }
+
+  function renderStatusBadge(status = "") {
+    const key = (status || "").toString().trim().toLowerCase();
+    let cls = "status-badge";
+    if (key === "full") cls += " status-badge--full";
+    else if (key === "available") cls += " status-badge--available";
+    else if (key === "offline" || key === "no signal") cls += " status-badge--offline";
+    else cls += " status-badge--default";
+    const label = key ? key : "offline";
+    return `<span class="${cls}">${label}</span>`;
+  }
 
   // Presence helpers
   function computeOnline(rec) {
@@ -1625,11 +1653,9 @@ if (btnConfirmRemoveAdmin) btnConfirmRemoveAdmin.addEventListener('click', remov
               <strong>${d.name}</strong>
               <br><small class="text-muted">UID: ${d.uid.slice(0,8)}...</small>
             </td>
-            <td><span class="badge bg-info">${d.route}</span></td>
+            <td>${renderRouteBadge(d.route)}</td>
             <td>
-              <span class="badge ${d.online ? "bg-success" : "bg-secondary"}">
-                ${d.status || (d.online ? "Online" : "Offline")}
-              </span>
+              ${renderStatusBadge(d.status || (d.online ? "online" : "offline"))}
             </td>
             <td>${d.lastUpdate ? new Date(d.lastUpdate).toLocaleString() : '-'}</td>
           </tr>
@@ -3436,12 +3462,46 @@ async function getPredictions(date) {
     return driverIconCache.get(key);
   }
 
-  const passengerMarkerIcon = L.icon({
+  const defaultPassengerMarkerIcon = L.icon({
     iconUrl: '/icons/passenger.png',
     iconSize: [40, 40],
     iconAnchor: [20, 40],
     popupAnchor: [0, -38]
   });
+
+  function getPassengerMarkerIcon(companions) {
+    const raw = Number(companions);
+    if (!Number.isFinite(raw) || raw <= 0) {
+      return defaultPassengerMarkerIcon;
+    }
+    const safeCount = Math.min(99, Math.max(1, Math.round(raw)));
+    return L.divIcon({
+      className: '',
+      html: `
+        <div style="position:relative;width:40px;height:40px;">
+          <img src="/icons/passenger.png" alt="Passenger" style="width:100%;height:100%;object-fit:contain;">
+          <span style="
+            position:absolute;
+            top:-6px;
+            right:-6px;
+            background:#ff4f81;
+            color:#fff;
+            font-size:12px;
+            font-weight:700;
+            border-radius:999px;
+            min-width:20px;
+            padding:0 4px;
+            text-align:center;
+            line-height:20px;
+            box-shadow:0 2px 4px rgba(0,0,0,.35);
+          ">${safeCount}</span>
+        </div>
+      `,
+      iconSize: [40, 40],
+      iconAnchor: [20, 40],
+      popupAnchor: [0, -38]
+    });
+  }
 
   function renderDriverMarkers(drivers = latestDriversSnapshot) {
     if (!dashboardMap) return;
@@ -3478,15 +3538,44 @@ async function getPredictions(date) {
     dashboardMarkers.passengers.forEach(marker => marker.remove());
     dashboardMarkers.passengers.clear();
 
+    const normaliseCount = (value) => {
+      if (value == null) return null;
+      if (typeof value === 'number') return Number.isFinite(value) ? Math.max(0, Math.round(value)) : null;
+      if (typeof value === 'string' && value.trim() !== '') {
+        const parsed = Number(value.trim());
+        return Number.isFinite(parsed) ? Math.max(0, Math.round(parsed)) : null;
+      }
+      return null;
+    };
+
     for (const [uid, data] of Object.entries(latestPassengersSnapshot)) {
       if (!data || data.lat == null || data.lng == null) continue;
       if (!isPassengerOnline(data)) continue;
       const lat = Number(data.lat);
       const lng = Number(data.lng);
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-      const waitingText = data.waiting != null ? String(data.waiting) : 'Unknown';
-      const marker = L.marker([lat, lng], { icon: passengerMarkerIcon })
-        .bindPopup(`Passenger<br>Waiting: ${waitingText}`);
+
+      const companionCount = normaliseCount(
+        data.companions ?? data.groupSize ?? data.group_size ?? data.passengers
+      );
+      const waitingCount = normaliseCount(
+        data.waiting ?? data.waiting_count ?? data.queue_size ?? data.group_count
+      );
+      const displayCount = companionCount ?? waitingCount;
+
+      let waitingDescription = 'Waiting count unavailable';
+      if (companionCount != null) {
+        waitingDescription = companionCount === 0
+          ? 'Solo passenger (no companions reported)'
+          : `Companions reported: ${companionCount}`;
+      } else if (waitingCount != null) {
+        waitingDescription = waitingCount === 0
+          ? 'No waiting group reported'
+          : `Waiting group size: ${waitingCount}`;
+      }
+
+      const marker = L.marker([lat, lng], { icon: getPassengerMarkerIcon(displayCount) })
+        .bindPopup(`Passenger<br>${waitingDescription}`);
       marker.addTo(dashboardMap);
       dashboardMarkers.passengers.set(uid, marker);
     }
