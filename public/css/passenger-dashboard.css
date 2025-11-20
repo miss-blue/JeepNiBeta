@@ -422,6 +422,60 @@
     .legend-list span{
       font-size: 0.9rem;
     }
+    .location-permission-banner{
+      position: absolute;
+      top: clamp(1rem, 4vw, 2rem);
+      left: clamp(1rem, 4vw, 2rem);
+      display: none;
+      align-items: flex-start;
+      gap: 0.85rem;
+      width: min(360px, 92vw);
+      padding: 1rem 1.25rem;
+      border-radius: 20px;
+      background: rgba(15, 23, 42, 0.92);
+      color: #fff;
+      border: 1px solid rgba(78, 215, 241, 0.4);
+      box-shadow: var(--shadow);
+      z-index: 40;
+    }
+    .location-permission-banner.show{
+      display: flex;
+      animation: arrival-slide 0.2s ease-out;
+    }
+    .location-permission-banner__icon{
+      font-size: 1.4rem;
+      color: var(--brand);
+      line-height: 1;
+    }
+    .location-permission-banner__body{
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+    .location-permission-banner__body strong{
+      font-size: 1rem;
+    }
+    .location-permission-banner__body p{
+      margin: 0;
+      font-size: 0.92rem;
+      color: rgba(255, 255, 255, 0.92);
+    }
+    .location-permission-banner__dismiss{
+      border: none;
+      background: #fff;
+      color: var(--brand);
+      border-radius: 999px;
+      font-weight: 600;
+      padding: 0.45rem 0.9rem;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .location-permission-banner__dismiss:focus-visible{
+      outline: 2px solid rgba(255, 255, 255, 0.75);
+      outline-offset: 2px;
+    }
     .arrival-notice{
       position: absolute;
       top: clamp(1rem, 4vw, 2rem);
@@ -494,6 +548,13 @@
       }
       .arrival-notice{
         top: clamp(0.75rem, 4vw, 1.25rem);
+      }
+      .location-permission-banner{
+        position: relative;
+        top: auto;
+        left: auto;
+        width: 100%;
+        margin: 0 auto clamp(1rem, 3vw, 1.5rem);
       }
     }
     @media (max-width: 576px){

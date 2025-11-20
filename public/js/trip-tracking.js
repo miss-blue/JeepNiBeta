@@ -62,7 +62,16 @@ function normalizeCoordinate(value) {
 }
 
 /** Start a new trip for the current driver and return the trip id. */
-export async function startTrip({ route = '', startLat = null, startLng = null, jeep = 'modern', notes = '' } = {}) {
+export async function startTrip({
+  route = '',
+  startLat = null,
+  startLng = null,
+  jeep = 'modern',
+  jeepney_type = null,
+  notes = '',
+  assignment_id = null,
+  date = null
+} = {}) {
   const user = auth.currentUser;
   if (!user) {
     emitToast('You must be signed in to start a trip.');
@@ -72,16 +81,19 @@ export async function startTrip({ route = '', startLat = null, startLng = null, 
   const tripRef = push(ref(db, 'trip_logs'));
   const tripId = tripRef.key;
   const now = new Date();
-  const dateKey = now.toISOString().slice(0, 10);
+  const dateKey = (typeof date === 'string' && date.trim()) ? date.trim() : now.toISOString().slice(0, 10);
   const lat = normalizeCoordinate(startLat);
   const lng = normalizeCoordinate(startLng);
+  const jeepType = (jeepney_type || jeep || 'modern').toLowerCase();
 
   const skeleton = {
     trip_id: tripId,
     driver_uid: user.uid,
     route,
-    jeepney_type: (jeep || 'modern').toLowerCase(),
+    jeepney_type: jeepType,
     notes: notes || '',
+    assignment_id: assignment_id || null,
+    assignment_date: dateKey,
     status: 'active',
     date: dateKey,
     start: {
@@ -102,6 +114,8 @@ export async function startTrip({ route = '', startLat = null, startLng = null, 
       driver_uid: user.uid,
       route: skeleton.route,
       jeepney_type: skeleton.jeepney_type,
+      assignment_id: skeleton.assignment_id,
+      assignment_date: skeleton.assignment_date,
       status: skeleton.status,
       start: skeleton.start,
       distance_m: 0,
@@ -117,8 +131,14 @@ export async function startTrip({ route = '', startLat = null, startLng = null, 
       online: true,
       active: true,
       trip_id: tripId,
+      assignment_id: skeleton.assignment_id,
       last_update: serverTimestamp()
     });
+    if (lat !== null && lng !== null) {
+      // Seed the trip log with the starting point for better distance calculations
+      const locRef = push(ref(db, `trip_logs/${tripId}/locations`));
+      await set(locRef, { lat, lng, ts: serverTimestamp(), kind: 'start' });
+    }
     storeActiveTripId(tripId);
     return tripId;
   } catch (error) {

@@ -56,6 +56,14 @@
 </nav>
 
 <main class="dashboard-shell" aria-label="Passenger map">
+  <div id="locationPermissionBanner" class="location-permission-banner" role="alert" aria-live="assertive" aria-hidden="true" hidden>
+    <div class="location-permission-banner__icon" aria-hidden="true"><i class="bi bi-geo-alt"></i></div>
+    <div class="location-permission-banner__body">
+      <strong>Allow location access</strong>
+      <p>For the most accurate tracking, please enable location permissions for this browser on your phone so we can display your exact location.</p>
+    </div>
+    <button type="button" class="location-permission-banner__dismiss" id="locationPermissionDismiss" aria-label="Dismiss location reminder">Got it</button>
+  </div>
   <div id="map" role="presentation"></div>
   <div id="arrivalNotice" class="arrival-notice" role="status" aria-live="polite" hidden>
     <div class="arrival-notice__icon" aria-hidden="true"><i class="bi bi-check-circle-fill"></i></div>
@@ -299,6 +307,7 @@
 
   const { user } = await requireRole(['passenger']);
   const WAITING_COUNT_KEY = 'passenger_waiting_count';
+  const LOCATION_NOTICE_KEY = 'passenger_location_notice_ack';
   let storedWaiting = Number(localStorage.getItem(WAITING_COUNT_KEY) || '0');
   if (!Number.isFinite(storedWaiting) || storedWaiting < 0) storedWaiting = 0;
   setPassengerWaitingCount(storedWaiting);
@@ -310,11 +319,34 @@
   const btnPassengerStop = document.getElementById('btnPassengerStop');
   const arrivalNotice = document.getElementById('arrivalNotice');
   const arrivalNoticeClose = document.getElementById('arrivalNoticeClose');
+  const locationPermissionBanner = document.getElementById('locationPermissionBanner');
+  const locationPermissionDismiss = document.getElementById('locationPermissionDismiss');
   const dashboardShell = document.querySelector('main.dashboard-shell');
   let arrivalNoticeTimer = null;
   let arrivalAudioCtx = null;
   let trackingBanner = null;
   let trackingBannerTimer = null;
+
+  function hideLocationPermissionBanner() {
+    if (!locationPermissionBanner) return;
+    locationPermissionBanner.classList.remove('show');
+    locationPermissionBanner.setAttribute('aria-hidden', 'true');
+    locationPermissionBanner.hidden = true;
+  }
+
+  function showLocationPermissionBanner() {
+    if (!locationPermissionBanner) return;
+    locationPermissionBanner.hidden = false;
+    locationPermissionBanner.classList.add('show');
+    locationPermissionBanner.setAttribute('aria-hidden', 'false');
+  }
+
+  function maybeShowLocationPermissionBanner() {
+    if (!locationPermissionBanner) return;
+    if (!localStorage.getItem(LOCATION_NOTICE_KEY)) {
+      showLocationPermissionBanner();
+    }
+  }
 
   function hideTrackingBanner() {
     if (trackingBannerTimer) {
@@ -421,6 +453,15 @@
       hideArrivalNotice();
     });
   }
+
+  if (locationPermissionDismiss) {
+    locationPermissionDismiss.addEventListener('click', () => {
+      localStorage.setItem(LOCATION_NOTICE_KEY, new Date().toISOString());
+      hideLocationPermissionBanner();
+    });
+  }
+
+  maybeShowLocationPermissionBanner();
 
   window.addEventListener('jeepni:passenger-arrived', () => {
     hideTrackingBanner();

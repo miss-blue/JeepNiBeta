@@ -174,6 +174,9 @@ const alertBox = document.getElementById("alerts");
   let todaysAssignments = [];
   const COMPLETED_STATES = ['completed', 'canceled'];
   const HISTORY_LIMIT = 3;
+  const getCachedTripId = () => {
+    try { return localStorage.getItem('active_trip_id') || null; } catch (_) { return null; }
+  };
 
   const slugStatus = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '');
   const isCompletedStatus = (status) => COMPLETED_STATES.includes(slugStatus(status));
@@ -280,7 +283,18 @@ const alertBox = document.getElementById("alerts");
         showAlert('Trip started and location sharing enabled.', 'success');
       } else if (nextStatus === 'completed') {
         try {
-          await endTrip({ tripId: activeTripId || null, completed: true });
+          const lastLoc = window.JeepNiTracker?.getLastKnownLocation?.() || null;
+          const fallbackTripId = activeTripId || window.JeepNiTracker?.getActiveTripId?.() || getCachedTripId();
+          const endOpts = { tripId: fallbackTripId || null, completed: true };
+          if (lastLoc && Number.isFinite(lastLoc.lat) && Number.isFinite(lastLoc.lng)) {
+            endOpts.endLat = lastLoc.lat;
+            endOpts.endLng = lastLoc.lng;
+          }
+          if (endOpts.tripId) {
+            await endTrip(endOpts);
+          } else {
+            console.warn('No active trip id found; skipping endTrip call');
+          }
         } catch (endErr) {
           console.warn('Trip completion sync failed:', endErr);
         }
@@ -296,7 +310,7 @@ const alertBox = document.getElementById("alerts");
         showAlert(`Status updated to ${nextStatus}.`, 'success');
       }
 
-      currentDispatch.status = nextStatus;
+      if (currentDispatch) currentDispatch.status = nextStatus;
       updateActionButtons();
     } catch (err) {
       console.error('Failed to change status:', err);

@@ -3,7 +3,7 @@
 // FIXED: Instant precise location and companion count display
 
 // -------- Imports --------
-import { auth, db, ref, get, set, update, onValue } from "./authentication.js";
+import { auth, db, ref, get, set, update, onValue, push, serverTimestamp } from "./authentication.js";
 import {
   query,
   orderByChild,
@@ -55,6 +55,10 @@ let lastRoutingNoticeAt = 0;
 let routeFallbackActive = false;
 let lastRoutingFailureAt = 0;
 const ROUTING_PROVIDERS = Object.freeze([
+  {
+    name: 'Self-hosted OSRM',
+    serviceUrl: 'http://188.166.216.44:5000/route/v1'
+  },
   {
     name: 'OSRM Demo',
     serviceUrl: 'https://router.project-osrm.org/route/v1'
@@ -387,22 +391,40 @@ async function updateLocation(lat, lng, route) {
 
   if (myRole === "driver") {
     // Keep existing driver location update
+    const tripId = _activeTripId || null;
+    const normalizedRoute = normRouteName(route || "Gueset");
+
     await update(ref(db, `drivers_location/${u.uid}`), {
       lat, lng,
-      route: normRouteName(route || "Gueset"),
+      route: normalizedRoute,
       bearing: getLastBearing(),
       status: myFullBadge ? "full" : "available",
       full: myFullBadge,
       online: true,
+      active: true,
+      trip_id: tripId,
       last_update: timestamp
     });
+
+    if (tripId && Number.isFinite(lat) && Number.isFinite(lng)) {
+      try {
+        const locRef = push(ref(db, `trip_logs/${tripId}/locations`));
+        await set(locRef, {
+          lat,
+          lng,
+          ts: serverTimestamp()
+        });
+      } catch (err) {
+        console.warn("Failed to append trip log point:", err);
+      }
+    }
     
     // Update tracking state with latest location
-    if (_activeTripId) {
+    if (tripId) {
       await saveTrackingState('driver', { 
-        tripId: _activeTripId, 
-        route: route ? normRouteName(route) : null,
-        location: { lat, lng }
+        tripId,
+        route: normalizedRoute || null,
+        location: Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : undefined
       });
     }
   }
@@ -1197,6 +1219,23 @@ function isTrackingActive() {
 // Persistence tracking state
 const TRACKING_STATE_KEY = 'tracking_state';
 
+export function getLastKnownLocation() {
+  if (meMarker) {
+    const pos = meMarker.getLatLng();
+    return { lat: pos.lat, lng: pos.lng };
+  }
+  try {
+    const cached = localStorage.getItem(TRACKING_STATE_KEY);
+    if (cached) {
+      const state = JSON.parse(cached);
+      if (state?.location && Number.isFinite(state.location.lat) && Number.isFinite(state.location.lng)) {
+        return { lat: state.location.lat, lng: state.location.lng };
+      }
+    }
+  } catch (_) {}
+  return null;
+}
+
 async function saveTrackingState(role, data) {
   const u = auth.currentUser;
   if (!u) return;
@@ -1514,7 +1553,7 @@ function instantiateRoutingEngine(index = 0) {
     routeEngine = L.Routing.osrmv1({
       serviceUrl: provider.serviceUrl,
       profile: "driving",
-      timeout: 30,
+      timeout: 30 * 1000,
       useHints: true
     });
     routeProviderIndex = index;
@@ -1915,6 +1954,7 @@ if (typeof window !== "undefined") {
     beginSharing,
     stopSharing,
     isSharing,
+    getLastKnownLocation,
     setMyFull,
 
     // Passenger functions
