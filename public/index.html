@@ -141,6 +141,175 @@
     .foot{
       height: 10vh; 
     }
+
+    .feedback-trigger{
+      position: fixed;
+      bottom: 32px;
+      right: 32px;
+      width: 56px;
+      height: 56px;
+      background: var(--brand);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,.18);
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      z-index: 1200;
+      padding: 0;
+    }
+
+    .feedback-trigger:hover{
+      transform: translateY(-2px);
+      box-shadow: 0 14px 30px rgba(0,0,0,.22);
+    }
+
+    .feedback-trigger:active{
+      transform: translateY(0);
+      box-shadow: 0 8px 18px rgba(0,0,0,.2);
+    }
+
+    .feedback-card{
+      position: fixed;
+      bottom: 90px;
+      right: 32px;
+      width: min(360px, 92vw);
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 16px 40px rgba(0,0,0,.24);
+      padding: 18px 16px;
+      box-sizing: border-box;
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 1100;
+      border: 1px solid rgba(0,0,0,.05);
+    }
+
+    .feedback-card.active{
+      display: flex;
+    }
+
+    .feedback-header{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .feedback-title{
+      font-weight: 800;
+      font-size: 16px;
+      color: var(--text);
+    }
+
+    .feedback-close{
+      background: transparent;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      color: var(--muted);
+      padding: 4px 6px;
+      border-radius: 8px;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .feedback-close:hover{
+      background: rgba(0,0,0,.05);
+      color: var(--text);
+    }
+
+    .feedback-info{
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .feedback-label{
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .feedback-input,
+    .feedback-textarea{
+      width: 100%;
+      min-height: 120px;
+      resize: vertical;
+      border-radius: 12px;
+      border: 1px solid #d1d5db;
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 14px;
+      box-sizing: border-box;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .feedback-input:focus,
+    .feedback-textarea:focus{
+      outline: none;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(34,211,238,.25);
+    }
+
+    .feedback-input{
+      min-height: unset;
+      height: 44px;
+    }
+
+    .feedback-actions{
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .feedback-btn{
+      border: none;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
+    }
+
+    .feedback-btn.primary{
+      background: var(--brand);
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(34,211,238,.35);
+    }
+
+    .feedback-btn.secondary{
+      background: #f3f4f6;
+      color: var(--text);
+    }
+
+    .feedback-btn:hover{
+      transform: translateY(-1px);
+    }
+
+    .feedback-btn:active{
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    .feedback-status{
+      min-height: 18px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .feedback-status.success{
+      color: #16a34a;
+    }
+
+    .feedback-status.error{
+      color: #dc2626;
+    }
     
     @media (max-width: 768px){
       .logo img{
@@ -184,6 +353,16 @@
       .btn-tara-na-img{
         max-width: 160px;
       }
+
+      .feedback-trigger{
+        bottom: 24px;
+        right: 20px;
+      }
+
+      .feedback-card{
+        right: 20px;
+        bottom: 80px;
+      }
     }
 
   </style>
@@ -212,6 +391,29 @@
     <div class="foot"></div>
   </main>
 
+  <div class="feedback-card" id="feedback-card" aria-hidden="true">
+    <div class="feedback-header">
+      <div class="feedback-title">Share your JeepNi thoughts</div>
+      <button class="feedback-close" id="feedback-close" aria-label="Close message box">&times;</button>
+    </div>
+    <p class="feedback-info">JeepNi keeps drivers and commuters in sync so routes stay smooth. Send us your feedback, questions, or concerns and we will keep improving the ride.</p>
+    <label class="feedback-label" for="feedbackEmail">Your email</label>
+    <input id="feedbackEmail" class="feedback-input" type="email" placeholder="you@example.com" autocomplete="email">
+    <label class="feedback-label" for="feedbackMessage">Your message</label>
+    <textarea id="feedbackMessage" class="feedback-textarea" placeholder="Tell us how JeepNi can help, or report a route issue..."></textarea>
+    <div class="feedback-status" id="feedback-status" role="status" aria-live="polite"></div>
+    <div class="feedback-actions">
+      <button class="feedback-btn secondary" type="button" id="feedback-cancel">Close</button>
+      <button class="feedback-btn primary" type="button" id="feedback-send">Send</button>
+    </div>
+  </div>
+  <button class="feedback-trigger" id="feedback-btn" type="button" aria-label="Open feedback form">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M3 6.75A2.75 2.75 0 0 1 5.75 4h12.5A2.75 2.75 0 0 1 21 6.75v10.5A2.75 2.75 0 0 1 18.25 20H5.75A2.75 2.75 0 0 1 3 17.25V6.75Z" stroke="white" stroke-width="1.6" fill="none"/>
+      <path d="M4.5 7.25 11.2 12c.5.36 1.1.36 1.6 0l6.7-4.75" stroke="white" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>
+  </button>
+
  <script type="module">
     // Add cache-busting and proper redirection
     const taraNaBtn = document.querySelector('.btn-tara-na-img');
@@ -227,6 +429,132 @@
       });
       taraNaBtn.style.cursor = 'pointer';
     }
+
+    const feedbackBtn = document.getElementById('feedback-btn');
+    const feedbackCard = document.getElementById('feedback-card');
+    const feedbackClose = document.getElementById('feedback-close');
+    const feedbackCancel = document.getElementById('feedback-cancel');
+    const feedbackSend = document.getElementById('feedback-send');
+    const feedbackMessage = document.getElementById('feedbackMessage');
+    const feedbackEmail = document.getElementById('feedbackEmail');
+    const feedbackStatus = document.getElementById('feedback-status');
+
+    const openFeedback = () => {
+      if(!feedbackCard) return;
+      feedbackCard.classList.add('active');
+      feedbackCard.setAttribute('aria-hidden', 'false');
+      if(feedbackEmail){
+        feedbackEmail.focus();
+      }else{
+        feedbackMessage?.focus();
+      }
+    };
+
+    const closeFeedback = () => {
+      if(!feedbackCard) return;
+      feedbackCard.classList.remove('active');
+      feedbackCard.setAttribute('aria-hidden', 'true');
+    };
+
+    feedbackBtn?.addEventListener('click', openFeedback);
+    feedbackClose?.addEventListener('click', closeFeedback);
+    feedbackCancel?.addEventListener('click', closeFeedback);
+
+    const setStatus = (text, tone = '') => {
+      if(!feedbackStatus) return;
+      feedbackStatus.textContent = text;
+      feedbackStatus.classList.remove('success', 'error');
+      if(tone){
+        feedbackStatus.classList.add(tone);
+      }
+    };
+
+    // Client-only email sending via EmailJS (no backend changes needed).
+    // Replace these placeholders with your EmailJS keys/template IDs so messages go to management.
+    const EMAILJS_PUBLIC_KEY = 'Q4S8HA9VCIYVH3oas';
+    // NOTE: private keys must NOT be used client-side; only the public key is safe to embed.
+    const EMAILJS_SERVICE_ID = 'service_kje0gpq';
+    const EMAILJS_TEMPLATE_ID = 'template_f1gl5yh';
+    const EMAILJS_TO_EMAIL = 'cutest.rica@gmail.com';
+
+    const emailJsReady = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js';
+      s.onload = () => resolve();
+      s.onerror = (err) => reject(err);
+      document.head.appendChild(s);
+    });
+
+    const sendEmail = async (message, fromEmail, toEmail = EMAILJS_TO_EMAIL) => {
+      if(!EMAILJS_PUBLIC_KEY || EMAILJS_PUBLIC_KEY.includes('YOUR_PUBLIC_KEY')){
+        throw new Error('EmailJS public key is not configured.');
+      }
+      await emailJsReady;
+      if(typeof emailjs === 'undefined'){
+        throw new Error('EmailJS SDK failed to load.');
+      }
+      if(!EMAILJS_SERVICE_ID || EMAILJS_SERVICE_ID.includes('YOUR_SERVICE_ID')){
+        throw new Error('EmailJS service ID is not configured.');
+      }
+      if(!EMAILJS_TEMPLATE_ID || EMAILJS_TEMPLATE_ID.includes('YOUR_TEMPLATE_ID')){
+        throw new Error('EmailJS template ID is not configured.');
+      }
+      // Template variables: adjust to match your EmailJS template fields
+      const templateParams = {
+        to_email: toEmail,
+        message,
+        from_name: fromEmail || 'JeepNi user',
+        reply_to: fromEmail || 'no-reply@jeepni.local',
+        from_email: fromEmail || 'no-reply@jeepni.local'
+      };
+      // Pass the public key explicitly with the send call to avoid init timing issues.
+      return emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams, EMAILJS_PUBLIC_KEY);
+    };
+
+    feedbackSend?.addEventListener('click', async (event) => {
+      event.preventDefault();
+      const message = feedbackMessage?.value.trim();
+      const email = feedbackEmail?.value.trim();
+      if(!message){
+        setStatus('Please enter a message before sending.', 'error');
+        feedbackMessage?.focus();
+        return;
+      }
+      if(!email){
+        setStatus('Please enter your email so we can reply.', 'error');
+        feedbackEmail?.focus();
+        return;
+      }
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if(!emailPattern.test(email)){
+        setStatus('Please enter a valid email address.', 'error');
+        feedbackEmail?.focus();
+        return;
+      }
+
+      setStatus('Sending to JeepNi management...');
+      feedbackSend.disabled = true;
+      feedbackSend.textContent = 'Sending...';
+
+      try{
+        // Send to management with the user's email as sender/reply-to
+        await sendEmail(message, email, EMAILJS_TO_EMAIL);
+        // Send a copy to the user, still showing their own email as the sender
+        await sendEmail(`Copy of your message to JeepNi:\n\n${message}`, email, email);
+
+        setStatus('Message sent. A copy was emailed to you.', 'success');
+        if(feedbackMessage) feedbackMessage.value = '';
+        if(feedbackEmail) feedbackEmail.value = '';
+        setTimeout(closeFeedback, 1200);
+      }catch(err){
+        console.warn('Feedback send failed', err);
+        const errorText = err?.text || err?.message || 'Could not send right now. Please try again later.';
+        setStatus(errorText, 'error');
+      }finally{
+        feedbackSend.disabled = false;
+        feedbackSend.textContent = 'Send';
+      }
+    });
   </script>
 </body>
 </html>
